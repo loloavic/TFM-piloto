@@ -1,0 +1,30 @@
+# Variables y credenciales
+.env
+
+# Conservar la plantilla sin credenciales
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Registros y archivos generados
+*.log
+data/vector_store/
+data/logs/
+
+# Editores
+.vscode/
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

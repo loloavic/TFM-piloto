@@ -1,0 +1,47 @@
+Fuente: https://www.consulado.pe/es/turin/Paginas/Retiro-de-Documentos.aspx#dni
+Fecha de consulta: 30/06/2026
+Ámbito: Consulta de estado de trámite de DNI realizado en oficina consular
+
+Trámite: Consulta de estado de trámite de DNI.
+
+Este documento corresponde a consultas de ciudadanos que ya realizaron un trámite de DNI en una oficina consular y desean verificar el avance, disponibilidad o estado de entrega de su documento.
+
+Cuándo usar esta información:
+- Cuando el ciudadano indica que ya realizó el trámite de DNI.
+- Cuando pregunta si su DNI ya está listo.
+- Cuando desea consultar el estado, avance o disponibilidad de su DNI.
+- Cuando menciona que quiere saber si puede recoger su DNI.
+- Cuando pregunta dónde consultar el estado de su trámite.
+- Cuando consulte si su DNI ya 
+
+Consulta de estado:
+- El ciudadano puede hacer seguimiento al estado de su trámite de DNI en el portal de RENIEC.
+- URL oficial de consulta: https://serviciosportal.reniec.gob.pe/cetdnipi/inicio.htm
+- Para consultar, deberá ingresar el número de su DNI.
+
+Información mostrada por el portal:
+- Fecha en que realizó el trámite.
+- Local consular donde realizó el trámite.
+- Avance del trámite.
+- Estado de disponibilidad del DNI.
+
+Entrega del DNI:
+- El ciudadano debe verificar que el trámite alcance el 100%.
+- Cuando el trámite alcance el 100%, puede acercarse a la oficina consular para recoger su DNI.
+- La entrega del DNI se realiza de forma estrictamente personal.
+- Las entregas de DNI se realizan los martes y jueves por la tarde hasta las 3pm.
+
+Advertencias:
+- El asistente no debe solicitar el número de DNI al ciudadano.
+- El asistente no debe consultar directamente el estado del trámite.
+- El ciudadano debe ingresar personalmente su número de DNI en el portal oficial de RENIEC.
+- Si el trámite no figura al 100%, deberá esperar a que el avance se complete antes de acudir a recoger el DNI.
+- Si al realizar la consulta se muestra un mensaje como "Observado" comunicarse inmediatamente escribiendo a informes@conperturin.org
+
+PLAZO Y SEGUIMIENTO DEL TRÁMITE:
+
+El tiempo estimado para la entrega del DNI es de aproximadamente 3 a 4 meses desde la realización del trámite consular. Este plazo es referencial y puede variar según el procesamiento de RENIEC y el envío del documento a la oficina consular.
+
+El ciudadano debe consultar personalmente el estado del trámite en el portal oficial de RENIEC, ingresando allí su número de DNI. Antes de acudir a recoger el documento, debe verificar que el avance haya alcanzado el 100 %.
+
+El asistente no puede confirmar directamente si un DNI está listo, observado o disponible para entrega.
