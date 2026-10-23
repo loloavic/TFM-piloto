@@ -1,3 +1,5 @@
+from app.core.privacy import minimizar_texto
+
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
@@ -953,6 +955,12 @@ def verificar_respuesta(
     }
 
 
+def redactar_respuesta_minimizada(state: DNIState) -> DNIState:
+    resultado = redactar_respuesta(state)
+    resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"])
+    return resultado
+
+
 def construir_grafo_dni():
     """
     Construye el flujo LangGraph con memoria temporal.
@@ -979,7 +987,7 @@ def construir_grafo_dni():
 
     workflow.add_node(
         "redactar_respuesta",
-        redactar_respuesta,
+        redactar_respuesta_minimizada,
     )
 
     workflow.add_node(

@@ -3,6 +3,9 @@ from uuid import uuid4
 import gradio as gr
 
 from app.services.rag_service import RAGService
+from app.core.config import settings
+from app.core.privacy import minimizar_texto
+from app.services.session_service import SesionNoAutorizada
 
 
 # Se crea una sola instancia del servicio para mantener
@@ -10,17 +13,17 @@ from app.services.rag_service import RAGService
 rag = RAGService()
 
 
-def generar_session_id() -> str:
+def generar_session_id() -> dict:
     """
     Genera un identificador único para una conversación.
     """
-    return str(uuid4())
+    return {"id": str(uuid4()), "token": None}
 
 
 def responder_consulta(
     pregunta: str,
     historial: list[dict] | None,
-    session_id: str | None,
+    session_id: dict | None,
 ):
     """
     Procesa una consulta, conserva el historial visual de Gradio
@@ -37,7 +40,7 @@ def responder_consulta(
             "Ingrese una consulta válida de al menos 3 caracteres.",
         )
 
-    pregunta = pregunta.strip()
+    pregunta = minimizar_texto(pregunta.strip())
 
     # Si por alguna razón la sesión todavía no existe,
     # se genera una nueva.
@@ -47,9 +50,11 @@ def responder_consulta(
     try:
         resultado = rag.responder(
             pregunta=pregunta,
-            session_id=session_id,
+            session_id=session_id["id"],
+            session_token=session_id["token"],
         )
 
+        session_id = {"id": resultado["session_id"], "token": resultado["session_token"]}
         respuesta = resultado["respuesta"]
 
         # El formato actual de gr.Chatbot utiliza mensajes con
@@ -87,7 +92,7 @@ def responder_consulta(
             f'{resultado["intencion"]}\n'
             f'Verificación: '
             f'{resultado["verificacion"]}\n'
-            f'Sesión temporal: {session_id}'
+            f'Sesión temporal: {session_id["id"]}'
         )
 
         return (
@@ -98,7 +103,7 @@ def responder_consulta(
             metadatos,
         )
 
-    except Exception as error:
+    except Exception:
         mensaje_error = (
             "Se produjo un error al procesar la consulta. "
             "Revise que el entorno, el índice FAISS y la "
@@ -116,10 +121,7 @@ def responder_consulta(
             },
         ]
 
-        metadatos = (
-            f"Error técnico: "
-            f"{type(error).__name__}: {error}"
-        )
+        metadatos = "Consulta no completada. Inicie una nueva conversación si la sesión caducó."
 
         return (
             "",
@@ -130,13 +132,22 @@ def responder_consulta(
         )
 
 
-def nueva_conversacion():
+def eliminar_estado_sesion(estado):
+    if estado and estado.get("token"):
+        try:
+            rag.sessions.delete(estado["id"], estado["token"])
+        except SesionNoAutorizada:
+            pass
+
+
+def nueva_conversacion(estado=None):
     """
     Limpia la interfaz y genera un nuevo identificador.
 
     Al cambiar el session_id, LangGraph deja de recuperar
     el contexto de la conversación anterior.
     """
+    eliminar_estado_sesion(estado)
     nuevo_session_id = generar_session_id()
 
     return (
@@ -146,7 +157,7 @@ def nueva_conversacion():
         "",
         (
             "Nueva conversación iniciada.\n"
-            f"Sesión temporal: {nuevo_session_id}"
+            f"Sesión temporal: {nuevo_session_id['id']}"
         ),
     )
 
@@ -168,6 +179,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Gradio conserva su valor durante la sesión del usuario.
     session_id_state = gr.State(
         value=generar_session_id,
+        time_to_live=settings.session_ttl_seconds,
+        delete_callback=eliminar_estado_sesion,
     )
 
     chatbot = gr.Chatbot(
@@ -249,7 +262,7 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Inicio de una conversación independiente.
     boton_nueva_conversacion.click(
         fn=nueva_conversacion,
-        inputs=[],
+        inputs=[session_id_state],
         outputs=[
             chatbot,
             session_id_state,
@@ -261,4 +274,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
 
 
 if __name__ == "__main__":
-    demo.launch()
+    rag.sessions.start(settings.session_cleanup_interval_seconds)
+    try:
+        demo.launch()
+    finally:
+        rag.sessions.close()

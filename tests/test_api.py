@@ -1,3 +1,5 @@
+import pytest
+
 from uuid import UUID
 
 from fastapi.testclient import TestClient
@@ -32,6 +34,7 @@ def test_health():
     assert "version" in data
 
 
+@pytest.mark.integration
 def test_consulta_requisitos_renovacion_dni_menor():
     payload = {
         "pregunta": (
@@ -68,6 +71,7 @@ def test_consulta_requisitos_renovacion_dni_menor():
     )
 
 
+@pytest.mark.integration
 def test_consulta_costo_dni_menor_primera_vez():
     payload = {
         "pregunta": (
@@ -106,6 +110,7 @@ def test_consulta_costo_dni_menor_primera_vez():
     )
 
 
+@pytest.mark.integration
 def test_consulta_estado_no_recibe_dni():
     payload = {
         "pregunta": (
@@ -170,6 +175,7 @@ def test_consulta_fuera_de_alcance_pasaporte():
     )
 
 
+@pytest.mark.integration
 def test_api_genera_sesion_si_no_se_envia():
     payload = {
         "pregunta": (
@@ -194,6 +200,7 @@ def test_api_genera_sesion_si_no_se_envia():
     )
 
 
+@pytest.mark.integration
 def test_api_reutiliza_session_id_enviado():
     session_id = (
         "12345678-1234-5678-1234-567812345678"
@@ -221,6 +228,7 @@ def test_api_reutiliza_session_id_enviado():
     )
 
 
+@pytest.mark.integration
 def test_consultas_independientes_generan_sesiones_distintas():
     primera_response = client.post(
         "/api/v1/consultas",
@@ -283,7 +291,7 @@ def test_rechazar_solicitud_sin_pregunta():
 
 def test_endpoint_resumen_evaluacion():
     response = client.get(
-        "/api/v1/evaluacion/resumen"
+        "/api/v1/evaluacion/resumen", headers={"Authorization": "Bearer test-admin-only"}
     )
 
     assert response.status_code == 200
@@ -314,7 +322,7 @@ def test_endpoint_resumen_evaluacion():
 
 def test_endpoint_consultas_registradas():
     response = client.get(
-        "/api/v1/evaluacion/consultas?limite=5"
+        "/api/v1/evaluacion/consultas?limite=5", headers={"Authorization": "Bearer test-admin-only"}
     )
 
     assert response.status_code == 200
