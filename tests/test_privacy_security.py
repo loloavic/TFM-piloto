@@ -157,7 +157,7 @@ def test_no_se_promete_anonimizacion_general():
 
 
 def test_minimizacion_antes_del_proveedor_y_de_cada_checkpoint(client, generacion_local):
-    raw = 'Quiero renovar el DNI de mi hijo. DNI 12345678 correo ejemplo@example.test'
+    raw = 'Quiero renovar el DNI de mi hijo menor. DNI 12345678 correo ejemplo@example.test'
     r = client.post(PUBLIC, json={'pregunta': raw})
     assert r.status_code == 200
     assert generacion_local

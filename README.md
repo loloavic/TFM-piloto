@@ -548,3 +548,12 @@ frontera HTTP adicional de cookie y namespaces de sesión. No publicar
 no revocan conversaciones válidas y un vencimiento durante la consulta devuelve
 410 sin credencial. Los contactos oficiales aprobados se conservan en las
 salidas. Ver [instrucciones Windows/Conda y Linux, políticas y límites](docs/seguridad-fase-1.md).
+
+## Fase 1B.1–1B.2: clasificación y continuidad conversacional
+
+La clasificación distingue trámite activo, tema de la pregunta y categoría del
+titular. Las repreguntas sobre plazo, coste y cita conservan el procedimiento;
+las menciones de documentos de apoyo no se tratan automáticamente como un
+trámite distinto. Si falta edad u operación se pide aclaración; los trámites de
+adultos identificados no reciben requisitos de menores ni amplían el corpus.
+Ver [modelo de estado, compatibilidad, pruebas y límites](docs/clasificacion-contexto-1b.md).

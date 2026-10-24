@@ -179,7 +179,7 @@ def test_consulta_fuera_de_alcance_pasaporte():
 def test_api_genera_sesion_si_no_se_envia():
     payload = {
         "pregunta": (
-            "Quiero renovar el DNI de mi hijo."
+            "Quiero renovar el DNI de mi hijo menor."
         )
     }
 
@@ -208,7 +208,7 @@ def test_api_reutiliza_session_id_enviado():
 
     payload = {
         "pregunta": (
-            "Quiero renovar el DNI de mi hijo."
+            "Quiero renovar el DNI de mi hijo menor."
         ),
         "session_id": session_id,
     }
@@ -234,7 +234,7 @@ def test_consultas_independientes_generan_sesiones_distintas():
         "/api/v1/consultas",
         json={
             "pregunta": (
-                "Quiero renovar el DNI de mi hijo."
+                "Quiero renovar el DNI de mi hijo menor."
             )
         },
     )
@@ -243,7 +243,7 @@ def test_consultas_independientes_generan_sesiones_distintas():
         "/api/v1/consultas",
         json={
             "pregunta": (
-                "Mi hijo necesita el DNI "
+                "Mi hijo menor necesita el DNI "
                 "por primera vez."
             )
         },
