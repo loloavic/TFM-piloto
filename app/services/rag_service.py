@@ -1,3 +1,5 @@
+import logging
+
 from uuid import uuid4
 
 from app.core.config import settings
@@ -14,6 +16,7 @@ class RAGService:
         self.sessions = SessionStore(
             self.grafo.checkpointer.delete_thread,
             settings.session_ttl_seconds, settings.session_max_count,
+            wait_seconds=settings.session_wait_seconds,
         )
 
     def responder(
@@ -29,16 +32,23 @@ class RAGService:
                 {"pregunta": minimizar_texto(pregunta)},
                 config={"configurable": {"thread_id": session_id}},
             )
-            respuesta = minimizar_texto(resultado["respuesta_final"])
+            respuesta = minimizar_texto(resultado["respuesta_final"], permitir_oficiales=True)
             fuentes = resultado.get("fuentes", [])
             intencion = resultado.get("intencion", "general")
             verificacion = resultado.get("verificacion", "sin_verificacion")
-            registrar_consulta(
-                pregunta="", respuesta="", intencion=intencion,
-                verificacion=verificacion, fuentes=fuentes,
-            )
+            metricas_registradas = True
+            try:
+                registrar_consulta(
+                    pregunta="", respuesta="", intencion=intencion,
+                    verificacion=verificacion, fuentes=fuentes,
+                )
+            except OSError:
+                # No registrar la excepción: podría contener rutas/datos privados.
+                logging.getLogger(__name__).warning("Métricas no disponibles; conversación conservada")
+                metricas_registradas = False
             return {
                 "session_id": session_id, "session_token": token,
+                "metricas_registradas": metricas_registradas,
                 "respuesta": respuesta, "fuentes": fuentes,
                 "intencion": intencion, "verificacion": verificacion,
             }

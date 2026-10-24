@@ -25,6 +25,7 @@ def crear_indice_faiss(
     embeddings = OpenAIEmbeddings(
         model=settings.openai_embedding_model,
         api_key=settings.openai_api_key.get_secret_value(),
+        request_timeout=settings.provider_timeout_seconds, max_retries=0,
     )
 
     docs = [

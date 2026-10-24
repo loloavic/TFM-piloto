@@ -539,3 +539,12 @@ Los ejemplos de evaluación y el número de pruebas de las secciones anteriores
 corresponden al piloto original; no constituyen resultados de esta fase. Por
 defecto `pytest` ejecuta las pruebas deterministas sin OpenAI. Las seis pruebas
 que requieren proveedor e índice se seleccionan con `pytest -m integration`.
+
+### Correcciones de segunda revisión R1–R5
+
+La entrada soportada de Gradio sigue siendo `python -m app.ui`, ahora con una
+frontera HTTP adicional de cookie y namespaces de sesión. No publicar
+`demo.launch()` directamente. La coordinación es por hilo, las métricas fallidas
+no revocan conversaciones válidas y un vencimiento durante la consulta devuelve
+410 sin credencial. Los contactos oficiales aprobados se conservan en las
+salidas. Ver [instrucciones Windows/Conda y Linux, políticas y límites](docs/seguridad-fase-1.md).

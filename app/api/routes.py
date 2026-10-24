@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Response, Query
 
 from app.core.privacy import minimizar_texto
 from app.core.security import exigir_admin
-from app.services.session_service import SesionNoAutorizada, CapacidadSesionesAgotada
+from app.services.session_service import SesionNoAutorizada, CapacidadSesionesAgotada, SesionCaducada, SesionOcupada
 
 from app.models import (
     ConsultaRequest,
@@ -56,10 +56,16 @@ def crear_consulta(
         )
     except SesionNoAutorizada:
         raise HTTPException(403, "Sesión no disponible o credencial inválida") from None
+    except SesionCaducada:
+        raise HTTPException(410, "Sesión caducada; inicie una conversación nueva",
+                            headers={"Cache-Control": "no-store"}) from None
+    except SesionOcupada:
+        raise HTTPException(409, "Sesión ocupada; reintente más tarde") from None
     except CapacidadSesionesAgotada:
         raise HTTPException(503, "Capacidad temporalmente agotada") from None
     response.headers["X-Session-Token"] = resultado["session_token"]
     response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Metrics-Status"] = "ok" if resultado["metricas_registradas"] else "unavailable"
 
     return ConsultaResponse(
         id_consulta=str(uuid4()),
@@ -161,4 +167,6 @@ def eliminar_sesion(
         rag.sessions.delete(session_id, session_token)
     except SesionNoAutorizada:
         raise HTTPException(403, "Sesión no disponible o credencial inválida") from None
+    except SesionOcupada:
+        raise HTTPException(409, "Sesión ocupada; reintente más tarde") from None
     return Response(status_code=204, headers={"Cache-Control": "no-store"})

@@ -38,3 +38,20 @@ def test_gradio_no_acepta_id_ajeno_sin_credencial(monkeypatch):
         assert not list(service.grafo.checkpointer.list(None))
     finally:
         service.sessions.close()
+
+
+def test_reinicio_ocupado_no_afirma_borrado(monkeypatch):
+    import pytest
+    from unittest.mock import Mock
+    from app.services.session_service import SesionOcupada
+    store = Mock()
+    store.delete.side_effect = SesionOcupada()
+    monkeypatch.setattr(ui, 'rag', Mock(sessions=store))
+    with pytest.raises(ui.gr.Error):
+        ui.nueva_conversacion({'id': 'ficticio', 'token': 'credencial-ficticia'})
+
+
+def test_cola_gradio_permite_sesiones_independientes():
+    functions = [fn for fn in ui.demo.fns.values() if fn.fn is ui.responder_consulta]
+    assert functions
+    assert all(fn.concurrency_limit == 8 and fn.concurrency_id == 'consultas' for fn in functions)

@@ -5,7 +5,7 @@ import gradio as gr
 from app.services.rag_service import RAGService
 from app.core.config import settings
 from app.core.privacy import minimizar_texto
-from app.services.session_service import SesionNoAutorizada
+from app.services.session_service import SesionNoAutorizada, SesionOcupada, SesionCaducada
 
 
 # Se crea una sola instancia del servicio para mantener
@@ -103,6 +103,9 @@ def responder_consulta(
             metadatos,
         )
 
+    except (SesionCaducada, SesionNoAutorizada):
+        return ("", [], generar_session_id(), "",
+                "Consulta no completada. Sesión no disponible; recargue la interfaz para continuar.")
     except Exception:
         mensaje_error = (
             "Se produjo un error al procesar la consulta. "
@@ -132,12 +135,15 @@ def responder_consulta(
         )
 
 
-def eliminar_estado_sesion(estado):
+def eliminar_estado_sesion(estado, tolerar_ocupada=True):
     if estado and estado.get("token"):
         try:
             rag.sessions.delete(estado["id"], estado["token"])
         except SesionNoAutorizada:
             pass
+        except SesionOcupada:
+            if not tolerar_ocupada:
+                raise
 
 
 def nueva_conversacion(estado=None):
@@ -147,7 +153,10 @@ def nueva_conversacion(estado=None):
     Al cambiar el session_id, LangGraph deja de recuperar
     el contexto de la conversación anterior.
     """
-    eliminar_estado_sesion(estado)
+    try:
+        eliminar_estado_sesion(estado, tolerar_ocupada=False)
+    except SesionOcupada:
+        raise gr.Error("Conversación en curso; espere y vuelva a iniciar otra conversación.") from None
     nuevo_session_id = generar_session_id()
 
     return (
@@ -228,6 +237,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Envío mediante el botón.
     boton_enviar.click(
         fn=responder_consulta,
+        concurrency_limit=8,
+        concurrency_id="consultas",
         inputs=[
             pregunta,
             chatbot,
@@ -245,6 +256,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Envío mediante la tecla Enter.
     pregunta.submit(
         fn=responder_consulta,
+        concurrency_limit=8,
+        concurrency_id="consultas",
         inputs=[
             pregunta,
             chatbot,
@@ -273,9 +286,25 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     )
 
 
+def crear_app_gradio():
+    """Único punto HTTP soportado; no publicar demo.launch() sin esta frontera."""
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+    from app.core.gradio_security import GradioOwnerMiddleware
+
+    @asynccontextmanager
+    async def lifespan(app):
+        rag.sessions.start(settings.session_cleanup_interval_seconds)
+        try:
+            yield
+        finally:
+            rag.sessions.close()
+
+    mounted = gr.mount_gradio_app(FastAPI(lifespan=lifespan), demo, path="/")
+    return GradioOwnerMiddleware(mounted, ttl=settings.session_ttl_seconds,
+                                 secure=settings.gradio_cookie_secure)
+
+
 if __name__ == "__main__":
-    rag.sessions.start(settings.session_cleanup_interval_seconds)
-    try:
-        demo.launch()
-    finally:
-        rag.sessions.close()
+    import uvicorn
+    uvicorn.run(crear_app_gradio(), host="127.0.0.1", port=7860)

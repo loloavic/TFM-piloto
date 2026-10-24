@@ -957,7 +957,7 @@ def verificar_respuesta(
 
 def redactar_respuesta_minimizada(state: DNIState) -> DNIState:
     resultado = redactar_respuesta(state)
-    resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"])
+    resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"], permitir_oficiales=True)
     return resultado
 
 

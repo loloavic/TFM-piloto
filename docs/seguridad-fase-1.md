@@ -1,78 +1,125 @@
-# Seguridad y privacidad: fase 1
+# Seguridad y privacidad: fase 1 y correcciones R1–R5
 
-## Alcance y compatibilidad
+## Contrato público y límites de alcance
 
-La clasificación, enriquecimiento, recuperación RAG, embeddings, prompt funcional y generación del LLM mantienen su implementación. Se añade una frontera de minimización a la entrada del servicio y a la salida del nodo generador, antes de que LangGraph guarde su resultado.
+La consulta inicial `POST /api/v1/consultas` sigue siendo pública. Su cabecera de respuesta `X-Session-Token` contiene una credencial aleatoria de 256 bits; continuar requiere esa cabecera y el `session_id` del JSON. El UUID no es autorización. Solo se guarda el hash SHA-256 de la credencial, con comparación en tiempo constante. Una sesión existente sin su credencial devuelve 403. Los IDs de cliente deben ser UUID con guiones; se recomienda dejar que el servidor los genere.
 
-La consulta inicial `POST /api/v1/consultas` sigue siendo pública y conserva el esquema JSON de respuesta. La cabecera de respuesta **`X-Session-Token`** contiene una credencial aleatoria de 256 bits. Para continuar hay que enviar esa cabecera y el `session_id` del JSON. El UUID es un identificador, no una autorización. El servidor guarda únicamente el SHA-256 de la credencial y compara los hashes en tiempo constante. La credencial autoriza únicamente su sesión; no es identidad civil ni autenticación de una cuenta.
+`DELETE /api/v1/sesiones/{session_id}` exige esa credencial y elimina checkpoints, escrituras, blobs y autorización. Devuelve 204; sesión inexistente o token incorrecto devuelve 403. Si el mismo hilo está ocupado más allá de la espera configurada devuelve 409 y puede reintentarse. No se borra debajo de una ejecución activa.
 
-Cambios de contrato intencionados:
+Los dos endpoints de evaluación requieren `Authorization: Bearer <INTERNAL_API_TOKEN>`. Sin secreto configurado están deshabilitados (503); sin credencial válida devuelven 401. Nunca distribuir el secreto administrativo a clientes públicos. Las respuestas de consulta y evaluación incluyen `Cache-Control: no-store`. No almacenar tokens en URLs, trazas o almacenamiento compartido.
 
-- Continuar una sesión existente sin credencial correcta devuelve **403**, antes de ejecutar el grafo. Un token de otra sesión tampoco sirve. Una sesión desconocida presentada con una credencial antigua no se recrea. Se inicia una conversación nueva omitiendo ambos campos, o presentando un UUID nuevo sin token.
-- Los identificadores elegidos por el cliente deben ser UUID con guiones; clientes con identificadores arbitrarios deben dejar que el servidor genere el UUID.
-- El campo `pregunta` de la respuesta y las respuestas generadas pasan por redacción parcial. Por ello pueden contener marcadores de redacción.
-- `GET /api/v1/evaluacion/resumen` y `/api/v1/evaluacion/consultas` requieren `Authorization: Bearer <INTERNAL_API_TOKEN>`. Sin secreto configurado se deshabilitan con **503**; sin credencial o con una incorrecta, **401**. No poner el secreto administrativo en Gradio, JavaScript público ni n8n público.
-- Los registros nuevos conservan fecha, intención de una lista cerrada y estado reducido de verificación. Las columnas históricas `pregunta`, `respuesta` y `fuentes` se conservan en el esquema, pero están vacías o contienen `[]`. El resumen por fuentes deja de disponer de ese detalle. `limite` se acota a 1–100.
-- `DELETE /api/v1/sesiones/{session_id}` requiere la misma cabecera de sesión y devuelve **204** tras eliminar sus checkpoints, escrituras, blobs y autorización. Sin credencial válida devuelve **403** sin revelar si existe.
+No cambian las funciones de clasificación, enriquecimiento, selección de documentos, algoritmo FAISS ni los prompts funcionales. En los constructores de OpenAI y embeddings se añaden únicamente timeout y desactivación de reintentos. Los cambios intencionados de contrato y salida se describen a continuación.
 
-Las respuestas autorizadas de consulta y evaluación tienen `Cache-Control: no-store`. El cliente debe mantener el token fuera de URLs, registros y almacenamiento compartido. No imprimir el diccionario completo devuelto por `RAGService`, que incluye la credencial para clientes internos; seleccionar los campos necesarios.
+## R1. Frontera HTTP de Gradio
 
-## Minimización, no anonimización completa
+**Arranque soportado: `python -m app.ui`. No publicar `demo.launch()` directamente**: ese método omitiría la frontera añadida. Para un servidor ASGI también se admite `python -m uvicorn app.ui:crear_app_gradio --factory --host 127.0.0.1 --port 7860 --workers 1`.
 
-`app/core/privacy.py` redacta correos electrónicos, secuencias numéricas contiguas de al menos ocho dígitos, ciertos identificadores alfanuméricos etiquetados como DNI/pasaporte/NIE/NIF y teléfonos internacionales con `+`. Se conserva el texto restante para no sustituir el clasificador ni el prompt.
+`crear_app_gradio()` monta Gradio bajo `GradioOwnerMiddleware`. Se entrega una cookie de propietario firmada con HMAC, aleatoria, HttpOnly y SameSite=Strict. Su duración es absoluta y la clave es efímera por proceso. En HTTPS debe activarse `GRADIO_COOKIE_SECURE=true`; en HTTP local debe permanecer false. Robar la cookie permite actuar como su propietario: sigue siendo una credencial bearer, no una identidad civil.
 
-Esto es **redacción parcial**, no anonimización. No detecta de forma exhaustiva nombres, domicilios, identificadores escritos con palabras, formatos fragmentados o datos inferibles. También puede producir falsos positivos, incluso ocultar un correo oficial en la salida. La advertencia de no introducir datos personales sigue siendo necesaria. El proveedor recibe el texto reducido y su historial reducido; todavía podría recibir datos que no detecten estos filtros. No usar esta fase como justificación de cumplimiento normativo o para admitir datos sensibles reales sin evaluación adicional.
+Antes de que Gradio recupere estado, cada `session_hash` de JSON, consulta SSE o ruta heartbeat se transforma mediante HMAC con el propietario. Dos navegadores que envían el mismo hash acceden a namespaces distintos. Reenviar el hash interno de otro navegador tampoco selecciona ese estado: se vuelve a transformar bajo el propietario actual. Las peticiones mutantes sin cookie válida, con cookie caducada/alterada o con un Origin ajeno se rechazan. Una cookie caducada requiere volver a abrir la interfaz y comenzar una conversación nueva.
 
-El texto original se procesa transitoriamente en la petición HTTP, pero no se pasa como entrada al grafo. El nodo generador reduce su salida antes de crear checkpoints; los turnos posteriores usan ese historial reducido. Los registros de aplicación nuevos no almacenan texto libre, identificadores de sesión ni tokens. Esto no controla los registros de un proxy, APM, servidor externo o proveedor LLM: deben configurarse por separado.
+El token de la conversación queda en `gr.State` y no se muestra, pero la garantía de aislamiento procede de la frontera HTTP, no de ese almacenamiento. Los callbacks de nueva conversación y expiración siguen borrando el hilo. Si un reinicio manual encuentra el hilo ocupado, muestra un error controlado y no afirma haberlo eliminado; la expiración diferida queda a cargo del barrido del servicio. API y Gradio mantienen servicios separados, sin continuidad entre canales.
 
-## Política real de retención
+Se bloquean las rutas no necesarias para este piloto: exportación deep-link, archivos, uploads, streaming multimedia, API simple por event_id, reset/cancel externos, monitoring y otras superficies auxiliares indicadas en el middleware. El chat utiliza eventos JSON y cola/SSE, con hasta ocho consultas concurrentes y exclusión por hilo. No se soportan extensiones multimedia, llamadas Gradio Client ni otras rutas sin ampliar antes la política y sus pruebas. Una lectura SSE sin una cola registrada en su namespace se rechaza antes de llegar a Gradio.
 
-Se usa la capacidad pública `InMemorySaver.delete_thread(thread_id)` de la versión instalada de LangGraph. Se comprobó que borra sus tres almacenes: `storage`, `writes` y `blobs`. No se manipulan sus estructuras privadas en producción.
+Las pruebas HTTP usan el Gradio instalado, dos clientes con cookies independientes, callbacks reales y cola/SSE. No son pruebas de navegador JavaScript completo ni una auditoría exhaustiva del framework. Una actualización de Gradio requiere revisar de nuevo sus rutas y volver a ejecutar estas regresiones. No hay garantía si se publica otra entrada HTTP que evite el middleware.
 
-- Duración **absoluta** por sesión: `SESSION_TTL_SECONDS`, 1800 segundos por defecto. Consultar la sesión no renueva su vencimiento.
-- Barrido periódico: `SESSION_CLEANUP_INTERVAL_SECONDS`, 30 segundos por defecto, incluso sin peticiones nuevas. También se limpia al acceder o borrar sesiones y al terminar una operación.
-- Durante una sesión se conservan los checkpoints de sus ejecuciones. La lista funcional de seis turnos no equivale a seis checkpoints. Al vencer se borra **todo** el hilo; no se promete eliminación de cada turno tras salir de esa lista.
-- Autorización, ejecución del grafo y borrado están serializados mediante un cerrojo. Así el barrido no borra un hilo mientras una ejecución pudiera volver a escribirlo. Una llamada en curso no se cancela al vencer: el borrado ocurre al finalizar y limpiar. En reposo la demora habitual máxima es TTL más un intervalo de barrido, sujeta al planificador. No se promete una cota estricta durante llamadas externas bloqueadas.
-- Un fallo después de entrar al grafo elimina también checkpoints parciales y revoca la sesión; el cliente debe iniciar una nueva. Un fallo de autorización no borra una sesión válida.
-- Cerrar el servicio elimina todos sus hilos. FastAPI arranca/detiene el barrido en su lifespan. El servicio también lo inicia de forma diferida en su primera consulta para cubrir uso directo desde Python. Llamar a `service.sessions.close()` al finalizar ese uso.
-- `SESSION_MAX_COUNT`, 256 por defecto, limita sesiones simultáneas. Al alcanzar el máximo se responde 503; no se expulsa arbitrariamente una sesión válida.
+## R2. Concurrencia y borrado
 
-El borrado elimina referencias de los almacenes de Python; no constituye borrado forense de RAM, swap, volcados o snapshots. La política no controla retención en OpenAI ni copias de seguridad.
+El registro de sesiones usa un cerrojo de duración corta. Cada sesión tiene su propio cerrojo de ejecución. No se mantiene el cerrojo global durante inferencia, métricas o espera de otro hilo. El barrido toma los cerrojos por sesión sin bloquear: una sesión A activa no impide procesar B ni eliminar C vencida e inactiva.
 
-## Gradio
+Después de adquirir un cerrojo se comprueba que sigue siendo el mismo objeto de sesión registrado. Así una operación que esperaba no puede resucitar un hilo borrado o reemplazado. El borrado del mismo hilo se coordina con su ejecución y tiene espera acotada. Los checkpoints de otros hilos permanecen intactos.
 
-La credencial se conserva junto al UUID en un `gr.State` de servidor y no se incluye en la conversación ni en los metadatos mostrados. Nueva conversación elimina explícitamente el hilo previo. El estado tiene TTL y callback de eliminación; el servicio conserva además su barrido propio. Los errores públicos ya no muestran el texto de excepciones internas.
+`PROVIDER_TIMEOUT_SECONDS=30` configura el timeout de las peticiones de generación y embeddings. `max_retries=0` evita multiplicar llamadas con reintentos automáticos. Estos son límites de transporte del SDK, no una garantía de tiempo total de toda la conversación: puede haber sucesivas llamadas y una respuesta que sigue transmitiendo puede durar más que un timeout de lectura. No se matan threads Python ni se borran checkpoints debajo de una llamada todavía activa. El cierre ordenado espera las operaciones del mismo hilo. Un deadline duro requeriría aislamiento/cancelación adicionales.
 
-Las sesiones de API y Gradio pertenecen a servicios distintos, como antes. No hay continuidad de sesión entre canales. El historial que ya recibió el navegador no puede revocarse con el borrado del servidor; el usuario debe cerrar o limpiar su conversación. Proteger también la infraestructura de Gradio, sus sesiones y acceso a red.
+## R3. Minimización e información oficial
 
-## Variables y despliegue
+La redacción sigue siendo **parcial, no anonimización**. Cubre correos, números contiguos de al menos ocho dígitos, algunos identificadores etiquetados y teléfonos internacionales. No detecta exhaustivamente nombres, domicilios, formatos fragmentados o información inferible. No introducir datos personales reales en las pruebas o validación inicial.
 
-| Variable | Valor por defecto | Requisito |
+Las entradas de usuario se reducen antes del grafo, embeddings y LLM. Las salidas se reducen antes de sus checkpoints e historial. Solo en las salidas se conservan coincidencias exactas con `app/core/official_contacts.py`, una lista controlada por revisión de código y procedente del corpus consular aprobado. No se añade un contacto porque el usuario o el modelo lo llame oficial. Las URLs con parámetros personales adicionales no heredan la autorización de su URL base.
+
+La lista contiene el contacto de consultas observadas y los enlaces documentados de RENIEC, Bookeo y fuentes consulares. Cambiarla exige verificar el documento fuente y revisar el cambio. No se ha contrastado su vigencia en la web en esta fase. El verificador funcional original sigue intacto, incluida su regla que marca correos como observados: preservar el contacto no equivale a cambiar ese verificador.
+
+Persisten posibles falsos positivos/negativos fuera de la lista aprobada. La minimización no controla registros del proxy/APM, retención de OpenAI, snapshots, ni texto ya recibido por el navegador. No constituye una certificación normativa.
+
+## R4. Métricas y fallos de escritura
+
+El nuevo fichero es `data/logs/consultas_metricas.csv`, con fecha, intención de lista cerrada y estado reducido. No contiene preguntas, respuestas, fuentes en texto libre, IDs de sesión ni credenciales. Las columnas históricas de texto quedan vacías o con `[]`; el resumen por fuentes pierde ese detalle. La consulta de registros se limita a 1–100 filas.
+
+Un `OSError` al registrar métricas (incluido PermissionError por permisos o bloqueo de archivo en Windows, o disco lleno) no invalida una respuesta ya producida ni elimina sus checkpoints. La consulta continúa con 200 y `X-Metrics-Status: unavailable`. Con éxito devuelve `X-Metrics-Status: ok`. Solo se emite una advertencia fija sin excepción, ruta ni datos personales. El cliente Python recibe `metricas_registradas` como booleano. El JSON público de consulta no cambia.
+
+Los fallos de ejecución del grafo siguen borrando checkpoints parciales y revocando la sesión. La excepción de métricas es deliberadamente más acotada: no oculta fallos arbitrarios de programación. La política no asegura disponibilidad del almacenamiento ni recupera métricas perdidas.
+
+## R5. Retención y vencimiento durante una consulta
+
+El TTL es **absoluto**, desde la creación: usar una sesión no lo renueva. El barrido periódico y las comprobaciones en acceso/salida eliminan hilos vencidos mediante `InMemorySaver.delete_thread()`, que elimina storage, writes y blobs. Dentro del TTL se conservan los checkpoints; seis turnos funcionales no significan seis checkpoints.
+
+Si el TTL vence durante una operación, al terminar se descarta el resultado, se elimina todo el hilo y se responde **410**, sin `X-Session-Token`. El cliente debe iniciar otra conversación sin ID/token antiguos. Gradio descarta el estado/credencial vencidos y pide recargar la interfaz; la cookie de propietario puede haber caducado también. Una continuación posterior con la credencial revocada recibe 403. No se rota ni renueva silenciosamente la credencial. Esta política puede descartar trabajo o consumo del proveedor ya realizado.
+
+El barrido no elimina una ejecución activa. Su limpieza queda diferida hasta su finalización, pero no bloquea el borrado de otras sesiones. El cierre elimina los hilos restantes. No se promete borrado forense de RAM/swap ni una cota temporal estricta durante una operación externa bloqueada.
+
+## Configuración y despliegue
+
+| Variable | Default | Uso |
 |---|---|---|
-| `INTERNAL_API_TOKEN` | Ausente | Secreto administrativo fuerte y exclusivo, generado con un CSPRNG; ausencia o cadena vacía deshabilita evaluación. |
-| `SESSION_TTL_SECONDS` | `1800` | Entero entre 1 y 86400. |
-| `SESSION_CLEANUP_INTERVAL_SECONDS` | `30` | Entero entre 1 y 300. |
-| `SESSION_MAX_COUNT` | `256` | Entero entre 1 y 10000. |
+| `INTERNAL_API_TOKEN` | Ausente | Secreto administrativo fuerte. Sin él se deshabilita evaluación. |
+| `SESSION_TTL_SECONDS` | 1800 | Duración absoluta; entre 1 y 86400. |
+| `SESSION_CLEANUP_INTERVAL_SECONDS` | 30 | Barrido; entre 1 y 300. |
+| `SESSION_MAX_COUNT` | 256 | Capacidad simultánea; entre 1 y 10000. |
+| `SESSION_WAIT_SECONDS` | 5 | Espera del mismo hilo antes de 409; mayor que 0 y hasta 30. |
+| `PROVIDER_TIMEOUT_SECONDS` | 30 | Timeout de transporte; mayor que 0 y hasta 120. |
+| `GRADIO_COOKIE_SECURE` | false | true detrás de HTTPS; false exclusivamente para HTTP local. |
 
-No se añaden dependencias. Inyectar el secreto con el gestor de secretos del despliegue; no incluir valores reales en Git ni en chat. Rotarlo requiere reiniciar el proceso y actualizar los clientes administrativos.
+Sin dependencias nuevas ni cambios de versiones. No se modifica ningún `.env` privado. Inyectar secretos con el mecanismo local o del despliegue; no publicarlos, imprimirlos ni ponerlos en scripts versionados.
 
-Este backend es de **un solo proceso por canal**: ejecutar FastAPI con `--workers 1` y una sola réplica. No usar balanceo entre instancias con almacenes independientes. Reiniciar elimina conversaciones y credenciales en memoria; un token anterior se rechaza. Antes de escalar hay que sustituir conjuntamente sesiones, coordinación y checkpointer por un almacenamiento compartido con las mismas garantías de autorización, TTL y eliminación. El cerrojo global reduce la concurrencia y una llamada lenta puede retrasar otras; no se afirma haber resuelto disponibilidad bajo abuso. TLS, límites de petición y cuotas en el proxy siguen siendo necesarios.
+Ejecutar **un worker y una réplica por canal**. Reiniciar revoca cookies y sesiones; no hay almacenamiento compartido entre procesos. No escalar sin sustituir conjuntamente registro, coordinación, cookies y checkpoints. Las cuotas por cliente, TLS y protección del proxy siguen siendo necesarias. El límite de sesiones no limita por sí solo todos los checkpoints o peticiones dentro del TTL.
 
-### Datos anteriores y puesta en marcha
+Antes de desplegar, detener las instancias antiguas. Inventariar y eliminar/custodiar mediante una política autorizada `consultas_log.csv`, CSV de evaluación, notebooks con salidas y copias anteriores. No se destruyen archivos previos automáticamente. No copiarlos al nuevo fichero de métricas. El lector nuevo no expone las columnas de texto aunque se le proporcione explícitamente un fichero antiguo.
 
-1. Detener las instancias antiguas de FastAPI/Gradio antes de desplegar. Sus checkpoints no son migrados ni autorizados por el nuevo servicio.
-2. Inventariar `data/logs/consultas_log.csv`, CSV de evaluación, notebooks con salidas y copias/snapshots existentes. Pueden contener texto personal. Esta implementación **no los destruye automáticamente**: deben retirarse del servicio y eliminarse o custodiarse con una política autorizada, incluida la gestión de copias. No copiarlos al nuevo fichero de métricas.
-3. El nuevo servicio escribe y lee únicamente `data/logs/consultas_metricas.csv`. El lector además elimina columnas de texto si se le proporciona un fichero antiguo. El archivo histórico no vuelve a exponerse mediante estos endpoints.
-4. Configurar secreto, TTL y límites, y reiniciar con una sola réplica. Verificar sin credencial el rechazo de evaluación, y después con un cliente autorizado. Evitar captura de cabeceras y cuerpos en proxies/APM.
-5. Adaptar clientes para capturar/reutilizar `X-Session-Token` y para borrar conversaciones al terminar. Un cliente n8n, si se implementa, debe almacenar cada par de credenciales de forma aislada; no reutilizar una sesión global.
+## Windows PowerShell y Conda
 
-## Pruebas reproducibles sin OpenAI
+Desde la raíz del repositorio, con Conda instalado:
 
-```bash
-GRADIO_ANALYTICS_ENABLED=False PYTHONDONTWRITEBYTECODE=1 \
-  .venv/bin/python -B -m pytest -q -p no:cacheprovider
+```powershell
+conda create -n tfm-piloto python=3.11 -y
+conda activate tfm-piloto
+python -m pip install -r requirements.txt
+$env:GRADIO_ANALYTICS_ENABLED = "False"
+$env:PYTHONDONTWRITEBYTECODE = "1"
+python -B -m pytest -q -p no:cacheprovider
 ```
 
-La selección predeterminada excluye seis pruebas marcadas `integration`, que siguen requiriendo OpenAI e índice FAISS. Se pueden seleccionar explícitamente con `pytest -m integration` en un entorno autorizado; no se han ejecutado durante esta fase.
+No se necesita OpenAI para esa suite. Para ejecutar servicios en terminales independientes, activar el mismo entorno y usar:
 
-Las pruebas unitarias usan el grafo y checkpointer reales, proveedor/recuperación simulados cuando procede, datos ficticios y ficheros temporales. Cubren autorización administrativa, credenciales de sesión, accesos cruzados, borrado selectivo, caducidad absoluta, barrido en reposo, artefactos parciales, cierre, minimización del prompt y checkpoints, métricas sin texto y estado privado de Gradio. No prueban calidad factual del LLM ni detección exhaustiva de datos personales.
+```powershell
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+# En otra terminal Conda:
+python -m app.ui
+```
+
+Para la funcionalidad LLM/RAG real, configurar localmente la clave OpenAI y generar el índice según el README; no imprimir la clave. Configurar el secreto administrativo si se van a consultar métricas. La prueba marcada como fallo Windows simula PermissionError; no certifica una ejecución nativa en Windows. Las pruebas de esta corrección se ejecutan en Linux con Python 3.11; la validación Windows/Conda queda como paso manual pendiente.
+
+## Linux
+
+Con Python 3.11 y dependencias ya instaladas, usar `python` del entorno activo. Si se prepara desde cero, `requirements.txt` es UTF-16 e incluye pywinpty de Windows. Generar una copia temporal para Linux sin alterar el archivo versionado:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -c "from pathlib import Path; s=Path('requirements.txt').read_text(encoding='utf-16'); Path('/tmp/tfm-requirements-linux.txt').write_text('\n'.join(x for x in s.splitlines() if not x.lower().startswith('pywinpty=='))+'\n', encoding='utf-8')"
+python -m pip install -r /tmp/tfm-requirements-linux.txt
+export GRADIO_ANALYTICS_ENABLED=False
+export PYTHONDONTWRITEBYTECODE=1
+python -B -m pytest -q -p no:cacheprovider
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+# En otra terminal con el entorno activado:
+python -m app.ui
+```
+
+Las seis pruebas `integration` siguen separadas y requieren proveedor e índice reales. Se seleccionan explícitamente con `python -m pytest -m integration`. No se ejecutan ni se certifican durante esta fase. Las pruebas deterministas usan datos ficticios, archivos temporales, grafo/checkpointer reales y proveedor simulado cuando corresponde; no miden exactitud factual del LLM ni calidad semántica del RAG.
+
+## Evidencia de esta corrección
+
+Ejecutado en Linux/Python 3.11: **55 pruebas aprobadas y 6 de integración excluidas**, sin servicios externos ni claves reales. Incluye HTTP real mediante ASGI/TestClient con dos navegadores lógicos y cola/SSE de Gradio, exclusión por hilo y concurrencia A/B/C, borrado sin resurrección, contactos oficiales, PermissionError/disco lleno simulados, caducidad con reloj simulado y descarte del estado vencido en Gradio. Se observaron advertencias de deprecación de dependencias; no fallos.
+
+La comparación AST contra `8c08972` confirma que las funciones de clasificación, enriquecimiento, selección documental, generación/prompt y verificación permanecen idénticas. El algoritmo de recuperación no cambia: las modificaciones de embeddings se limitan al timeout y ausencia de reintentos en sus constructores. `git diff --check` correcto. No se ejecutó Windows nativo, navegador JavaScript completo ni OpenAI real; el dictamen es preparación para validación local, no aprobación de producción ni ausencia garantizada de defectos.
