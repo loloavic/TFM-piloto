@@ -2,6 +2,8 @@ from uuid import uuid4
 
 import gradio as gr
 
+from app.core.gradio_conversation import ConversationBlocks
+
 from app.services.rag_service import RAGService
 from app.core.config import settings
 from app.core.privacy import minimizar_texto
@@ -17,7 +19,7 @@ def generar_session_id() -> dict:
     """
     Genera un identificador único para una conversación.
     """
-    return {"id": str(uuid4()), "token": None}
+    return {"id": str(uuid4()), "token": None, "history": []}
 
 
 def responder_consulta(
@@ -29,7 +31,10 @@ def responder_consulta(
     Procesa una consulta, conserva el historial visual de Gradio
     y reutiliza el mismo session_id en las repreguntas.
     """
-    historial = historial or []
+    # El navegador puede enviar un Chatbot obsoleto en un segundo evento.
+    # La copia autoritativa procede del gr.State leído dentro del cerrojo HTTP.
+    session_id = session_id or generar_session_id()
+    historial = session_id.get("history", [])
 
     if not pregunta or len(pregunta.strip()) < 3:
         return (
@@ -41,11 +46,6 @@ def responder_consulta(
         )
 
     pregunta = minimizar_texto(pregunta.strip())
-
-    # Si por alguna razón la sesión todavía no existe,
-    # se genera una nueva.
-    if not session_id:
-        session_id = generar_session_id()
 
     try:
         resultado = rag.responder(
@@ -80,6 +80,8 @@ def responder_consulta(
                 for fuente in resultado["fuentes"]
             ]
         )
+
+        session_id["history"] = historial_actualizado
 
         if not fuentes:
             fuentes = (
@@ -124,6 +126,7 @@ def responder_consulta(
             },
         ]
 
+        session_id["history"] = historial_actualizado
         metadatos = "Consulta no completada. Inicie una nueva conversación si la sesión caducó."
 
         return (
@@ -171,7 +174,7 @@ def nueva_conversacion(estado=None):
     )
 
 
-with gr.Blocks() as demo:
+with ConversationBlocks() as demo:
     gr.Markdown(
         """
 # Asistente Consular DNI - Piloto TFM
