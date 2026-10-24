@@ -1,7 +1,11 @@
+from contextlib import asynccontextmanager
+
+from app.core.config import settings
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from app.api.routes import router
+from app.api.routes import rag, router
 
 
 class HealthResponse(BaseModel):
@@ -10,7 +14,17 @@ class HealthResponse(BaseModel):
     version: str
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    rag.sessions.start(settings.session_cleanup_interval_seconds)
+    try:
+        yield
+    finally:
+        rag.sessions.close()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Asistente Consular DNI",
     description="API del piloto experimental del TFM",
     version="0.1.0",

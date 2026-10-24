@@ -17,7 +17,9 @@ class ConsultaRequest(BaseModel):
 
     session_id: str | None = Field(
         default=None,
-        description="Identificador temporal de la conversación",
+        description="Identificador temporal; continuar requiere X-Session-Token",
+        max_length=128,
+        pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
     )
 
 

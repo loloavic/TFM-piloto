@@ -4,11 +4,11 @@ from pathlib import Path
 import pandas as pd
 
 
-LOG_PATH = Path("data/logs/consultas_log.csv")
+from app.services.log_service import LOG_PATH
 
 
-def cargar_log_consultas(ruta_log: str | Path = LOG_PATH) -> pd.DataFrame:
-    ruta_log = Path(ruta_log)
+def cargar_log_consultas(ruta_log: str | Path | None = None) -> pd.DataFrame:
+    ruta_log = Path(ruta_log) if ruta_log is not None else LOG_PATH
 
     if not ruta_log.exists():
         return pd.DataFrame(
@@ -37,10 +37,14 @@ def cargar_log_consultas(ruta_log: str | Path = LOG_PATH) -> pd.DataFrame:
         if columna not in df.columns:
             df[columna] = ""
 
+    # Defensa adicional: nunca exponer texto de un archivo importado o antiguo.
+    for columna in ("pregunta", "respuesta"):
+        df[columna] = ""
+    df["fuentes"] = "[]"
     return df
 
 
-def generar_resumen_evaluacion(ruta_log: str | Path = LOG_PATH) -> dict:
+def generar_resumen_evaluacion(ruta_log: str | Path | None = None) -> dict:
     df = cargar_log_consultas(ruta_log)
 
     total_consultas = len(df)
@@ -108,7 +112,7 @@ def extraer_archivos_fuente(fuentes_json: str) -> list[str]:
     return archivos
 
 
-def generar_resumen_fuentes(ruta_log: str | Path = LOG_PATH) -> pd.DataFrame:
+def generar_resumen_fuentes(ruta_log: str | Path | None = None) -> pd.DataFrame:
     df = cargar_log_consultas(ruta_log)
 
     registros = []

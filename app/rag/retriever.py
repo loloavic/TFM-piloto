@@ -9,6 +9,7 @@ def cargar_vector_store(ruta_indice: str = VECTOR_STORE_PATH) -> FAISS:
     embeddings = OpenAIEmbeddings(
         model=settings.openai_embedding_model,
         api_key=settings.openai_api_key.get_secret_value(),
+        request_timeout=settings.provider_timeout_seconds, max_retries=0,
     )
 
     return FAISS.load_local(

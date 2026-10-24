@@ -526,3 +526,25 @@ El prototipo cuenta con:
 Este prototipo constituye una prueba funcional de una arquitectura conversacional basada en LangGraph y RAG aplicada a la orientación de ciudadanos en trámites de DNI en contexto consular.
 
 El sistema no busca reemplazar los canales oficiales, sino demostrar la viabilidad técnica de un asistente capaz de reducir consultas repetitivas, orientar al ciudadano hacia el trámite correcto, entregar enlaces oficiales y evitar la captura innecesaria de datos personales.
+## Endurecimiento de seguridad y privacidad — fase 1
+
+Consultar [el contrato, variables y política de retención](docs/seguridad-fase-1.md)
+antes de desplegar esta rama. La consulta inicial sigue siendo pública; continuar
+una conversación requiere ahora `session_id` y la cabecera `X-Session-Token`
+recibida en la primera respuesta. Los endpoints de evaluación requieren un secreto
+administrativo y los registros nuevos no guardan preguntas ni respuestas.
+
+La minimización de texto es parcial: no debe describirse como anonimización.
+Los ejemplos de evaluación y el número de pruebas de las secciones anteriores
+corresponden al piloto original; no constituyen resultados de esta fase. Por
+defecto `pytest` ejecuta las pruebas deterministas sin OpenAI. Las seis pruebas
+que requieren proveedor e índice se seleccionan con `pytest -m integration`.
+
+### Correcciones de segunda revisión R1–R5
+
+La entrada soportada de Gradio sigue siendo `python -m app.ui`, ahora con una
+frontera HTTP adicional de cookie y namespaces de sesión. No publicar
+`demo.launch()` directamente. La coordinación es por hilo, las métricas fallidas
+no revocan conversaciones válidas y un vencimiento durante la consulta devuelve
+410 sin credencial. Los contactos oficiales aprobados se conservan en las
+salidas. Ver [instrucciones Windows/Conda y Linux, políticas y límites](docs/seguridad-fase-1.md).

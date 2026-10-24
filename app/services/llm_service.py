@@ -9,7 +9,8 @@ class LLMService:
             raise ValueError("OPENAI_API_KEY no está configurada.")
 
         self.client = OpenAI(
-            api_key=settings.openai_api_key.get_secret_value()
+            api_key=settings.openai_api_key.get_secret_value(),
+            timeout=settings.provider_timeout_seconds, max_retries=0
         )
         self.model = settings.openai_model
 

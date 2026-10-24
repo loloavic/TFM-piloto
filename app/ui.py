@@ -2,7 +2,12 @@ from uuid import uuid4
 
 import gradio as gr
 
+from app.core.gradio_conversation import ConversationBlocks
+
 from app.services.rag_service import RAGService
+from app.core.config import settings
+from app.core.privacy import minimizar_texto
+from app.services.session_service import SesionNoAutorizada, SesionOcupada, SesionCaducada
 
 
 # Se crea una sola instancia del servicio para mantener
@@ -10,23 +15,26 @@ from app.services.rag_service import RAGService
 rag = RAGService()
 
 
-def generar_session_id() -> str:
+def generar_session_id() -> dict:
     """
     Genera un identificador único para una conversación.
     """
-    return str(uuid4())
+    return {"id": str(uuid4()), "token": None, "history": []}
 
 
 def responder_consulta(
     pregunta: str,
     historial: list[dict] | None,
-    session_id: str | None,
+    session_id: dict | None,
 ):
     """
     Procesa una consulta, conserva el historial visual de Gradio
     y reutiliza el mismo session_id en las repreguntas.
     """
-    historial = historial or []
+    # El navegador puede enviar un Chatbot obsoleto en un segundo evento.
+    # La copia autoritativa procede del gr.State leído dentro del cerrojo HTTP.
+    session_id = session_id or generar_session_id()
+    historial = session_id.get("history", [])
 
     if not pregunta or len(pregunta.strip()) < 3:
         return (
@@ -37,19 +45,16 @@ def responder_consulta(
             "Ingrese una consulta válida de al menos 3 caracteres.",
         )
 
-    pregunta = pregunta.strip()
-
-    # Si por alguna razón la sesión todavía no existe,
-    # se genera una nueva.
-    if not session_id:
-        session_id = generar_session_id()
+    pregunta = minimizar_texto(pregunta.strip())
 
     try:
         resultado = rag.responder(
             pregunta=pregunta,
-            session_id=session_id,
+            session_id=session_id["id"],
+            session_token=session_id["token"],
         )
 
+        session_id = {"id": resultado["session_id"], "token": resultado["session_token"]}
         respuesta = resultado["respuesta"]
 
         # El formato actual de gr.Chatbot utiliza mensajes con
@@ -76,6 +81,8 @@ def responder_consulta(
             ]
         )
 
+        session_id["history"] = historial_actualizado
+
         if not fuentes:
             fuentes = (
                 "No se recuperaron fuentes documentales "
@@ -87,7 +94,7 @@ def responder_consulta(
             f'{resultado["intencion"]}\n'
             f'Verificación: '
             f'{resultado["verificacion"]}\n'
-            f'Sesión temporal: {session_id}'
+            f'Sesión temporal: {session_id["id"]}'
         )
 
         return (
@@ -98,7 +105,10 @@ def responder_consulta(
             metadatos,
         )
 
-    except Exception as error:
+    except (SesionCaducada, SesionNoAutorizada):
+        return ("", [], generar_session_id(), "",
+                "Consulta no completada. Sesión no disponible; recargue la interfaz para continuar.")
+    except Exception:
         mensaje_error = (
             "Se produjo un error al procesar la consulta. "
             "Revise que el entorno, el índice FAISS y la "
@@ -116,10 +126,8 @@ def responder_consulta(
             },
         ]
 
-        metadatos = (
-            f"Error técnico: "
-            f"{type(error).__name__}: {error}"
-        )
+        session_id["history"] = historial_actualizado
+        metadatos = "Consulta no completada. Inicie una nueva conversación si la sesión caducó."
 
         return (
             "",
@@ -130,13 +138,28 @@ def responder_consulta(
         )
 
 
-def nueva_conversacion():
+def eliminar_estado_sesion(estado, tolerar_ocupada=True):
+    if estado and estado.get("token"):
+        try:
+            rag.sessions.delete(estado["id"], estado["token"])
+        except SesionNoAutorizada:
+            pass
+        except SesionOcupada:
+            if not tolerar_ocupada:
+                raise
+
+
+def nueva_conversacion(estado=None):
     """
     Limpia la interfaz y genera un nuevo identificador.
 
     Al cambiar el session_id, LangGraph deja de recuperar
     el contexto de la conversación anterior.
     """
+    try:
+        eliminar_estado_sesion(estado, tolerar_ocupada=False)
+    except SesionOcupada:
+        raise gr.Error("Conversación en curso; espere y vuelva a iniciar otra conversación.") from None
     nuevo_session_id = generar_session_id()
 
     return (
@@ -146,12 +169,12 @@ def nueva_conversacion():
         "",
         (
             "Nueva conversación iniciada.\n"
-            f"Sesión temporal: {nuevo_session_id}"
+            f"Sesión temporal: {nuevo_session_id['id']}"
         ),
     )
 
 
-with gr.Blocks() as demo:
+with ConversationBlocks() as demo:
     gr.Markdown(
         """
 # Asistente Consular DNI - Piloto TFM
@@ -168,6 +191,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Gradio conserva su valor durante la sesión del usuario.
     session_id_state = gr.State(
         value=generar_session_id,
+        time_to_live=settings.session_ttl_seconds,
+        delete_callback=eliminar_estado_sesion,
     )
 
     chatbot = gr.Chatbot(
@@ -215,6 +240,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Envío mediante el botón.
     boton_enviar.click(
         fn=responder_consulta,
+        concurrency_limit=8,
+        concurrency_id="consultas",
         inputs=[
             pregunta,
             chatbot,
@@ -232,6 +259,8 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Envío mediante la tecla Enter.
     pregunta.submit(
         fn=responder_consulta,
+        concurrency_limit=8,
+        concurrency_id="consultas",
         inputs=[
             pregunta,
             chatbot,
@@ -249,7 +278,7 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     # Inicio de una conversación independiente.
     boton_nueva_conversacion.click(
         fn=nueva_conversacion,
-        inputs=[],
+        inputs=[session_id_state],
         outputs=[
             chatbot,
             session_id_state,
@@ -260,5 +289,25 @@ atender repreguntas. No introduzca números de DNI ni otros datos personales.
     )
 
 
+def crear_app_gradio():
+    """Único punto HTTP soportado; no publicar demo.launch() sin esta frontera."""
+    from contextlib import asynccontextmanager
+    from fastapi import FastAPI
+    from app.core.gradio_security import GradioOwnerMiddleware
+
+    @asynccontextmanager
+    async def lifespan(app):
+        rag.sessions.start(settings.session_cleanup_interval_seconds)
+        try:
+            yield
+        finally:
+            rag.sessions.close()
+
+    mounted = gr.mount_gradio_app(FastAPI(lifespan=lifespan), demo, path="/")
+    return GradioOwnerMiddleware(mounted, ttl=settings.session_ttl_seconds,
+                                 secure=settings.gradio_cookie_secure)
+
+
 if __name__ == "__main__":
-    demo.launch()
+    import uvicorn
+    uvicorn.run(crear_app_gradio(), host="127.0.0.1", port=7860)

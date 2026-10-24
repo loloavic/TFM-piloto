@@ -1,6 +1,10 @@
 from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, Query
+
+from app.core.privacy import minimizar_texto
+from app.core.security import exigir_admin
+from app.services.session_service import SesionNoAutorizada, CapacidadSesionesAgotada, SesionCaducada, SesionOcupada
 
 from app.models import (
     ConsultaRequest,
@@ -35,6 +39,8 @@ rag = RAGService()
 )
 def crear_consulta(
     consulta: ConsultaRequest,
+    response: Response,
+    session_token: str | None = Header(default=None, alias="X-Session-Token", max_length=128),
 ):
     # Si la interfaz envía un session_id, se reutiliza.
     # Si es la primera consulta, se genera uno nuevo.
@@ -44,15 +50,27 @@ def crear_consulta(
         else str(uuid4())
     )
 
-    resultado = rag.responder(
-        pregunta=consulta.pregunta,
-        session_id=session_id,
-    )
+    try:
+        resultado = rag.responder(
+            pregunta=consulta.pregunta, session_id=session_id, session_token=session_token,
+        )
+    except SesionNoAutorizada:
+        raise HTTPException(403, "Sesión no disponible o credencial inválida") from None
+    except SesionCaducada:
+        raise HTTPException(410, "Sesión caducada; inicie una conversación nueva",
+                            headers={"Cache-Control": "no-store"}) from None
+    except SesionOcupada:
+        raise HTTPException(409, "Sesión ocupada; reintente más tarde") from None
+    except CapacidadSesionesAgotada:
+        raise HTTPException(503, "Capacidad temporalmente agotada") from None
+    response.headers["X-Session-Token"] = resultado["session_token"]
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Metrics-Status"] = "ok" if resultado["metricas_registradas"] else "unavailable"
 
     return ConsultaResponse(
         id_consulta=str(uuid4()),
         session_id=session_id,
-        pregunta=consulta.pregunta,
+        pregunta=minimizar_texto(consulta.pregunta),
         estado="respondida_con_langgraph_rag",
         respuesta=resultado["respuesta"],
         intencion=resultado["intencion"],
@@ -64,6 +82,7 @@ def crear_consulta(
 @router.get(
     "/evaluacion/resumen",
     response_model=EvaluacionResumenResponse,
+    dependencies=[Depends(exigir_admin)],
 )
 def obtener_resumen_evaluacion():
     resumen = generar_resumen_evaluacion()
@@ -104,9 +123,10 @@ def obtener_resumen_evaluacion():
 @router.get(
     "/evaluacion/consultas",
     response_model=ConsultasLogResponse,
+    dependencies=[Depends(exigir_admin)],
 )
 def obtener_consultas_registradas(
-    limite: int = 10,
+    limite: int = Query(default=10, ge=1, le=100),
 ):
     df = cargar_log_consultas()
 
@@ -137,3 +157,16 @@ def obtener_consultas_registradas(
         total=len(df),
         consultas=consultas,
     )
+
+@router.delete("/sesiones/{session_id}", status_code=204)
+def eliminar_sesion(
+    session_id: str,
+    session_token: str | None = Header(default=None, alias="X-Session-Token", max_length=128),
+):
+    try:
+        rag.sessions.delete(session_id, session_token)
+    except SesionNoAutorizada:
+        raise HTTPException(403, "Sesión no disponible o credencial inválida") from None
+    except SesionOcupada:
+        raise HTTPException(409, "Sesión ocupada; reintente más tarde") from None
+    return Response(status_code=204, headers={"Cache-Control": "no-store"})
