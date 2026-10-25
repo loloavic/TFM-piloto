@@ -162,3 +162,7 @@ GRADIO_ANALYTICS_ENABLED=False XDG_CACHE_HOME=/tmp/tfm-cache PYTHONDONTWRITEBYTE
 Las finalidades y negaciones se interpretan mediante patrones, no comprensión lingüística general. Persisten riesgos en referencias a varios titulares, cambios de destinatario sin marcas claras y paráfrasis fuera de la matriz. La categoría de edad no identifica por sí sola a una persona. La aclaración conservadora puede pedir información en frases que una persona comprendería. El corpus adulto sigue ausente y no se habilita ningún nuevo procedimiento. No se ha modificado ni validado de nuevo la calidad factual del generador/verificador; continúa pendiente la Fase 1B.3.
 
 Preparado para revisión y repetición de validación local Windows/Conda/Python 3.11 con los comandos de esta guía. No se ha ejecutado Windows nativo, OpenAI real ni integración FAISS/embeddings externa. Aprobar esta matriz no garantiza ausencia de defectos ni calidad factual del modelo.
+
+## P2.6 y confirmación de ambigüedades
+
+La evolución posterior a `51b14f0`, su esquema de decisión, política de confirmación, matriz de 225 pruebas aprobadas y guía de validación están en [P2.6 y política de confirmación conversacional](ambiguedades-contexto-1b.md). Los resultados anteriores se conservan como evidencia de cada revisión, no como el resultado actual de la suite.

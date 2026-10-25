@@ -29,12 +29,8 @@ def tipo_consulta(texto: str) -> str:
     return next((tema for tema, pattern in temas if re.search(pattern, texto)), 'otra')
 
 
-def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
-    """Solo categoría de edad y destinatario, nunca edad exacta o identidad.
-
-    Una edad del progenitor/documento de apoyo no se asigna al menor. Se busca
-    el titular explícito; no se infiere minoría de edad a partir de 'hijo'.
-    """
+def identificar_roles(texto: str) -> tuple[str, bool]:
+    """Texto relativo al titular y señal de ambigüedad documental."""
     # Excluir personas con un rol de apoyo explícito antes de buscar al titular.
     # Solo se enmascara la mención vinculada al rol, no todo el enunciado:
     # puede contener también al menor cuyo DNI se solicita. Esto no autoriza
@@ -68,10 +64,20 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
             documento_ambiguo = True
         return match.group(0)
 
-    texto = re.sub(r'\b(?:presentar|llevar|mostrar|adjuntar)\s+(?:el\s+)?dni\s+de\s+('
+    texto = re.sub(r'\b(?:presentar|llevar|mostrar|adjuntar)\s+(?:el\s+)?dni'
+                   r'(?:\s+(?:vencido|caducado|expirado|vigente))?\s+de\s+('
                    + persona + r')', documento, texto)
+    return texto, documento_ambiguo
+
+
+def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
+    """Solo categoría de edad y destinatario, nunca edad exacta o identidad.
+
+    Una edad del progenitor/documento de apoyo no se asigna al menor. Se busca
+    el titular explícito; no se infiere minoría de edad a partir de 'hijo'.
+    """
+    texto, documento_ambiguo = identificar_roles(texto)
     if documento_ambiguo:
-        # No elegir entre el titular activo y el dueño del documento por inercia.
         return {'grupo_edad': previo.get('grupo_edad', 'desconocido'),
                 'destinatario': previo.get('destinatario', 'desconocido')}, False, True
     # Una negación del grupo no lo convierte en contexto afirmativo.
@@ -93,6 +99,10 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
     if not own_dni and re.search(r'\b(?:llevar|presentar|mostrar|adjuntar|fotocopia)\b', texto):
         # El DNI de quien acompaña es apoyo documental, no un cambio de titular.
         own = False
+    if (len(re.findall(r'\b(?:mi|su|el|la|un|una|otro|otra)\s+(?:hijo|hija|menor|nino|nina)\b', texto)) > 1
+            or (own_dni and child_dni and ' y ' in texto)):
+        return {'grupo_edad': previo.get('grupo_edad', 'desconocido'),
+                'destinatario': previo.get('destinatario', 'desconocido')}, False, True
     explicit = False
     target = previo.get('destinatario', 'desconocido')
     segment = texto
@@ -144,7 +154,24 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
     return {'grupo_edad': group, 'destinatario': target}, explicit, conflict
 
 
-def operacion(texto: str) -> tuple[str, bool, set[str]]:
+def dni_vencido(texto: str, contexto_dni: bool = False) -> bool:
+    """Evidencia de tenencia, limitada al DNI y nunca a otro documento."""
+    texto = re.sub(r'\b(?:no|tampoco)\s+(?:(?:esta|ha|se)\s+)?'
+                   r'(?:vencid[oa]|caducad[oa]|expirad[oa]|vencio|caduco|expiro)\b', ' ', texto)
+    if re.search(r'\b(?:pasaporte|visa|foto|documento de apoyo|persona de apoyo|padre|madre|representante|acompanante)\b', texto):
+        return False
+    estado = r'(?:vencid[oa]|caducad[oa]|expirad[oa]|vencio|caduco|expiro)'
+    if re.search(r'\bdni\b[^.;?!]{0,80}\b' + estado + r'\b', texto):
+        return True
+    return bool(contexto_dni and re.fullmatch(
+        r'[¿¡]?(?:(?:su|mi|el) dni )?(?:(?:ya|esta|ha|se|me|le)\s+){1,3}'
+        + estado + r'[.!?]?', texto))
+
+
+def operacion(texto: str, contexto_dni: bool = False) -> tuple[str, bool, set[str]]:
+    # Las operaciones expresadas como solicitud se conservan, pero el estado
+    # de un documento de apoyo no prueba tenencia del DNI del titular.
+    texto_roles, _ = identificar_roles(texto)
     # La máscara elimina solo la expresión negada, no su corrección posterior.
     neg_renew = r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
     neg_first = (r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|corresponde)\s+){0,3}'
@@ -158,7 +185,8 @@ def operacion(texto: str) -> tuple[str, bool, set[str]]:
     texto = re.sub(neg_duplicate, ' ', texto)
     positive = re.sub(neg_first, ' ', re.sub(neg_renew, ' ', texto))
     first = bool(re.search(r'primera vez|primera inscripcion|primer dni|\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive))
-    renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni|dni vencido|dni caducado|ya (?:tuvo|tuve|tiene|tengo) (?:un |su )?dni)\b', positive))
+    renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni|ya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni)\b', positive))
+    renewal = renewal or (dni_vencido(texto_roles, contexto_dni) and 'renovacion' not in denied)
     duplicate = bool(re.search(r'\bduplicado\s+(?:(?:de|del|mi|su|el|un)\s+)*dni\b|\bdni duplicado\b', positive))
     if duplicate:
         return ('', True, denied) if first or renewal else ('duplicado', False, denied)
@@ -167,7 +195,7 @@ def operacion(texto: str) -> tuple[str, bool, set[str]]:
     return ('primera_vez' if first and not renewal else 'renovacion' if renewal and not first else ''), first and renewal, denied
 
 
-def clasificar(state: dict) -> dict:
+def _clasificar_candidato(state: dict) -> dict:
     pregunta = state['pregunta'].strip()
     text = normalizar(pregunta)
     previous = state.get('tramite_actual', '')
@@ -198,7 +226,7 @@ def clasificar(state: dict) -> dict:
     holder, explicit_holder, conflict_age = solicitante(text, context)
     if explicit_holder and re.search(r'\b(?:ahora|otro|otra|en cambio)\b', text):
         holder, _, conflict_age = solicitante(text, {})
-    operation, conflict_op, denied = operacion(text)
+    operation, conflict_op, denied = operacion(text, bool(previous))
     scope = dni or bool(previous)
     if not scope:
         operation = ''
@@ -245,3 +273,142 @@ def clasificar(state: dict) -> dict:
             'contexto_solicitante': holder, 'tipo_consulta': topic,
             'requiere_aclaracion': bool(reason), 'motivo_aclaracion': reason,
             'tramite_documentado': documented, 'estado_documental': status}
+
+
+CONSULTAS = {
+    'coste': '¿Cuánto cuesta?', 'plazo': '¿Cuánto demora?',
+    'cita': '¿Dónde solicito la cita?', 'requisitos': '¿Cuáles son los requisitos?',
+    'seguimiento': '¿Cómo consulto el estado del trámite?',
+}
+
+
+def _operacion_confirmada(tramite: str) -> str:
+    return next((op for op in ('primera_vez', 'renovacion', 'duplicado')
+                 if tramite.endswith('_' + op)), '')
+
+
+def clasificar(state: dict) -> dict:
+    """Proponer, contrastar y confirmar; una hipótesis no sustituye el activo.
+
+    La decisión conserva códigos de evidencia y tema pendiente, nunca una
+    segunda copia de la pregunta ni nuevos datos personales. Los campos
+    requiere_aclaracion/motivo_aclaracion son la única puerta de confirmación.
+    """
+    text = normalizar(state['pregunta'])
+    if re.fullmatch(r'(?:olvida|olvidemos|cancela|dejemos) (?:lo anterior|la consulta|la aclaracion)[.!]?', text):
+        state = {**state, 'tramite_actual': '', 'operacion_dni': '',
+                 'contexto_solicitante': {}, 'tipo_consulta': 'otra',
+                 'requiere_aclaracion': False, 'decision': {}}
+    previous = state.get('tramite_actual', '')
+    pending = state.get('decision', {})
+    waiting = state.get('requiere_aclaracion', False)
+    # Dar contexto a las aclaraciones sin presentar la hipótesis como confirmada.
+    working = {**state, 'tramite_actual': previous or pending.get('tramite_candidato', '')}
+    result = _clasificar_candidato(working)
+    if result['intencion'] == 'fuera_alcance':
+        return {**result, 'decision': {
+            'tramite_candidato': '', 'evidencias': ['fuera_alcance'],
+            'faltantes': [], 'contradicciones': [], 'consulta_pendiente': '',
+        }}
+
+    operation, conflict, denied = operacion(text, bool(working['tramite_actual']))
+    holder, explicit_holder, conflict_holder = solicitante(text, state.get('contexto_solicitante', {}))
+    changed = bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad)\b', text))
+    topic = tipo_consulta(text)
+    explicit_change = changed and bool(operation or explicit_holder or topic == 'seguimiento') and not (conflict or conflict_holder)
+    evidence = []
+    if operation:
+        evidence.append('operacion:' + operation)
+    evidence.extend('negacion:' + op for op in sorted(denied))
+    if explicit_holder:
+        evidence.append('titular_explicito')
+    if previous:
+        evidence.append('contexto_confirmado')
+    possession = dni_vencido(text, bool(previous)) or bool(re.search(
+        r'\bya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni\b|'
+        r'\bnunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve) (?:un |su )?dni\b', text))
+    if possession:
+        evidence.append('tenencia_dni')
+    candidate = result['tramite_actual']
+    reason = result['motivo_aclaracion']
+    if conflict:
+        reason = 'operacion'
+    if conflict_holder:
+        if len(re.findall(r'\b(?:mi|su)\s+(?:hijo|hija|menor)\b', text)) > 1:
+            reason = 'titular'
+        elif re.search(r'\b(?:presentar|llevar|mostrar|adjuntar)\b', text):
+            reason = 'documento'
+        else:
+            reason = 'edad'
+    prior_reason = state.get('motivo_aclaracion', '')
+    answer = bool(operation or (explicit_holder and not conflict_holder))
+    # Preguntar por coste/estado no confirma ninguno de los datos en disputa.
+    if waiting and not explicit_change:
+        resolves = answer and not (conflict or conflict_holder)
+        if prior_reason in {'dni_previo', 'operacion'}:
+            resolves = bool(operation) and not (conflict or conflict_holder)
+        if prior_reason == 'edad':
+            resolves = explicit_holder and holder['grupo_edad'] != 'desconocido' and not conflict_holder
+        if prior_reason == 'tramite':
+            resolves = bool(re.search(r'\bdni\b', text)) and not (conflict or conflict_holder)
+        if not resolves:
+            reason = prior_reason
+            candidate = pending.get('tramite_candidato', candidate)
+
+    old_operation = _operacion_confirmada(previous)
+    # Un hecho incompatible pide confirmación; una solicitud/rectificación
+    # inequívoca o respuesta a la aclaración puede cambiar el procedimiento.
+    if (possession and operation and old_operation and operation != old_operation
+            and not waiting and not explicit_change and old_operation not in denied
+            and not re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text)):
+        reason = 'dni_previo'
+
+    pending_topic = pending.get('consulta_pendiente', '') if waiting and not explicit_change else ''
+    if reason:
+        pending_topic = topic if topic in CONSULTAS else pending_topic
+        # El tópico anterior sigue pendiente al detectarse una contradicción.
+        pending_topic = pending_topic or (state.get('tipo_consulta', '') if state.get('tipo_consulta') in CONSULTAS else 'otra')
+        if previous:
+            result['tramite_actual'] = previous
+            # No reemplazar al titular confirmado por un candidato contradictorio.
+            if reason in {'dni_previo', 'titular', 'documento', 'contradiccion'}:
+                result['contexto_solicitante'] = state.get('contexto_solicitante', {})
+            if reason == 'edad' and conflict_holder:
+                result['contexto_solicitante'] = state.get('contexto_solicitante', {})
+                # La duda es de edad: no perder además una operación confirmada
+                # que el ciudadano no ha rechazado.
+                if old_operation not in denied and not conflict:
+                    result['operacion_dni'] = state.get('operacion_dni', old_operation)
+        else:
+            result['tramite_actual'] = ''
+        if reason == 'dni_previo':
+            result['operacion_dni'] = state.get('operacion_dni', old_operation)
+        result.update(intencion='general', requiere_aclaracion=True,
+                      motivo_aclaracion=reason, tramite_documentado=False,
+                      estado_documental='pendiente_aclaracion')
+    elif waiting and pending_topic and topic == 'otra':
+        result['tipo_consulta'] = pending_topic
+        if pending_topic == 'seguimiento':
+            result.update(intencion='dni_consulta_estado', estado_documental='disponible')
+    else:
+        pending_topic = ''
+
+    contradictions = [reason] if reason and (conflict or conflict_holder or reason not in {'edad', 'operacion', 'tramite'}) else []
+    if reason and not contradictions and waiting and reason == prior_reason:
+        contradictions = pending.get('contradicciones', [])
+    result['decision'] = {
+        'tramite_candidato': candidate,
+        'evidencias': evidence,
+        'faltantes': [reason] if reason in {'edad', 'operacion', 'tramite'} and not contradictions else [],
+        'contradicciones': contradictions,
+        'consulta_pendiente': pending_topic,
+    }
+    return result
+
+
+def pregunta_contextual(state: dict) -> str:
+    """Recuperar un tema aclarado incluso si salió del historial limitado."""
+    pending = state.get('decision', {}).get('consulta_pendiente', '')
+    if not state.get('requiere_aclaracion') and pending in CONSULTAS:
+        return f'Consulta pendiente: {CONSULTAS[pending]}\nAclaración recibida: {state["pregunta"]}'
+    return state['pregunta']

@@ -6,6 +6,15 @@ class ContextoSolicitante(TypedDict, total=False):
     destinatario: Literal["descendiente", "menor", "adulto", "propio", "desconocido"]
 
 
+class DecisionClasificacion(TypedDict):
+    # Códigos semánticos; no copiar la pregunta ni almacenar nuevas identidades.
+    tramite_candidato: str
+    evidencias: list[str]
+    faltantes: list[str]
+    contradicciones: list[str]
+    consulta_pendiente: str  # Tema del pedido original, recuperable sin texto personal.
+
+
 class DNIState(TypedDict, total=False):
     pregunta: str
 
@@ -20,6 +29,7 @@ class DNIState(TypedDict, total=False):
     estado_documental: str
     requiere_aclaracion: bool
     motivo_aclaracion: str
+    decision: DecisionClasificacion
     historial: list[dict]
 
     pregunta_busqueda: str

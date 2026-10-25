@@ -4,7 +4,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
-from app.graph.classification import clasificar
+from app.graph.classification import clasificar, pregunta_contextual
 from app.rag.retriever import recuperar_contexto
 from app.services.llm_service import LLMService
 
@@ -65,7 +65,7 @@ def enriquecer_busqueda(
     Añade el trámite identificado para evitar que una repregunta
     breve recupere documentos pertenecientes a otro procedimiento.
     """
-    pregunta = state["pregunta"]
+    pregunta = pregunta_contextual(state)
     pregunta_lower = pregunta.lower()
     intencion = state.get(
         "intencion",
@@ -255,7 +255,7 @@ def recuperar_documentos(
     """
     intencion = state["intencion"]
 
-    if intencion in {
+    if state.get("requiere_aclaracion") or intencion in {
         "fuera_alcance",
         "general",
     }:
@@ -421,6 +421,9 @@ def redactar_respuesta(
             "operacion": "Indique si es su primer DNI o la renovación de un DNI que ya tuvo.",
             "contradiccion": "Por favor, aclare un único trámite, si el titular es menor o adulto y si ya tuvo DNI.",
             "tramite": "Indique si desea orientación sobre DNI y cuál es el trámite solicitado.",
+            "dni_previo": "¿Su hijo ya tiene un DNI peruano vencido o está solicitando su primer DNI?" if state.get("contexto_solicitante", {}).get("destinatario") == "descendiente" else "¿El titular ya tenía DNI peruano o está solicitando su primer DNI?",
+            "titular": "¿De cuál de las personas mencionadas es el DNI que desea tramitar?",
+            "documento": "¿El DNI mencionado es el que desea tramitar o es un documento de apoyo?",
         }
         return {**state, "respuesta_borrador": "Para poder orientarle, " + aclaraciones[state["motivo_aclaracion"]]}
 
@@ -705,7 +708,13 @@ def verificar_respuesta(
 
 
 def redactar_respuesta_minimizada(state: DNIState) -> DNIState:
-    resultado = redactar_respuesta(state)
+    # La pregunta almacenada no se duplica ni se sustituye en el historial.
+    # Solo la entrada al redactor recupera el tema pendiente ya aclarado.
+    entrada = {**state, "pregunta": pregunta_contextual(state)}
+    if state.get("requiere_aclaracion"):
+        entrada["intencion"] = "general"
+    resultado = redactar_respuesta(entrada)
+    resultado["pregunta"] = state["pregunta"]
     resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"], permitir_oficiales=True)
     return resultado
 

@@ -674,3 +674,304 @@ def test_p24_p25_matriz_grafo_sesion_y_fuentes(motor_local, questions, intents):
     assert other['session_id'] != sid
     assert other['intencion'] == 'general' and not other['fuentes']
     assert not graph_state(service, other['session_id'])['operacion_dni']
+
+
+@pytest.mark.parametrize('expiration', [
+    'Su DNI está vencido', 'Su DNI está caducado', 'Su DNI ha expirado',
+    'Está vencido', 'Se venció', 'Ya caducó',
+])
+def test_p26_contradiccion_preserva_confirmado_y_no_se_resuelve_con_coste(expiration):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, expiration)
+    assert state['requiere_aclaracion']
+    assert state['motivo_aclaracion'] == 'dni_previo'
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    assert state['decision']['tramite_candidato'] == 'dni_menor_renovacion'
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['intencion'] == 'general' and state['requiere_aclaracion']
+    assert state['decision']['consulta_pendiente'] == 'coste'
+
+
+@pytest.mark.parametrize('confirmation,intent', [
+    ('Sí, ya tenía DNI', 'dni_menor_renovacion'),
+    ('Nunca tuvo DNI', 'dni_menor_primera_vez'),
+])
+def test_p26_confirmacion_recupera_consulta_pendiente(motor_local, confirmation, intent):
+    service, calls = motor_local
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    before = len(calls['retrieval']), len(calls['llm'])
+    for question in ('Su DNI está vencido', '¿Cuánto cuesta?'):
+        result = service.responder(question, sid, token)
+        assert result['intencion'] == 'general' and not result['fuentes']
+        assert 'ya tiene un DNI' in result['respuesta']
+        assert (len(calls['retrieval']), len(calls['llm'])) == before
+    result = service.responder(confirmation, sid, token)
+    assert result['session_id'] == sid and result['session_token'] == token
+    assert result['intencion'] == intent
+    assert {s['archivo'] for s in result['fuentes']} == {intent + '.txt'}
+    state = graph_state(service, sid)
+    assert not state['requiere_aclaracion']
+    assert state['tipo_consulta'] == 'coste'
+    assert 'cuánto cuesta' in calls['llm'][-1].lower()
+
+
+@pytest.mark.parametrize('question', [
+    'Quiero renovar el DNI vencido de mi hijo de 10 años',
+    'El DNI de mi hijo menor está caducado',
+    'El DNI de mi hijo menor ha expirado',
+    'Quiero renovar el DNI de mi hijo menor porque está vencido',
+])
+def test_p26_caducidad_inequivoca_inicial(motor_local, question):
+    service, calls = motor_local
+    result = service.responder(question)
+    state = graph_state(service, result['session_id'])
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert not state['requiere_aclaracion']
+    assert state['tramite_actual'] == 'dni_menor_renovacion'
+    assert {s['archivo'] for s in result['fuentes']} == {'dni_menor_renovacion.txt'}
+    assert len(calls['llm']) == 1
+
+
+@pytest.mark.parametrize('question', [
+    'Su DNI no está vencido', 'Su DNI no ha caducado',
+    '¿El DNI del padre está vencido?',
+])
+def test_p26_caducidad_negada_o_apoyo_no_cambia_operacion(question):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, question)
+    assert state['intencion'] == 'dni_menor_primera_vez'
+    assert state['operacion_dni'] == 'primera_vez'
+
+
+@pytest.mark.parametrize('correction', [
+    'Me equivoqué, ya tenía DNI',
+    'No es su primer DNI; ya tenía DNI',
+    'Ahora quiero renovar el DNI de mi hijo menor',
+])
+def test_p26_rectificacion_inequivoca_no_requiere_confirmacion(correction):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, correction)
+    assert state['intencion'] == 'dni_menor_renovacion'
+    assert not state['requiere_aclaracion']
+    assert state['tramite_actual'] == 'dni_menor_renovacion'
+
+
+@pytest.mark.parametrize('question', [
+    'Quiero renovar el DNI de mi hijo de 10 años y de mi hija de 20 años',
+    'Necesito el primer DNI de mi hijo menor y de mi hija menor',
+    '¿Cuánto cuesta el DNI de mi hijo o de mi hija?',
+])
+def test_ambiguedad_varios_titulares_no_recupera_corpus(motor_local, question):
+    service, calls = motor_local
+    result = service.responder(question)
+    state = graph_state(service, result['session_id'])
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert state['motivo_aclaracion'] == 'titular'
+    assert not state['tramite_actual']
+    assert not calls['retrieval'] and not calls['llm']
+    assert 'cuál de las personas' in result['respuesta']
+    follow = service.responder('Es para mi hijo de 10 años; quiero renovar el DNI',
+                               result['session_id'], result['session_token'])
+    assert follow['intencion'] == 'dni_menor_renovacion'
+
+
+def test_contradiccion_inversa_y_confirmacion():
+    state = turn({}, 'Quiero renovar el DNI de mi hijo menor')
+    state = turn(state, 'Nunca tuvo DNI')
+    assert state['motivo_aclaracion'] == 'dni_previo'
+    assert state['tramite_actual'] == 'dni_menor_renovacion'
+    state = turn(state, 'Confirmo, nunca tuvo DNI')
+    assert state['intencion'] == 'dni_menor_primera_vez'
+
+
+def test_pendiente_limitada_sobrevive_fuera_del_historial(motor_local):
+    service, calls = motor_local
+    first = service.responder('¿Cuánto cuesta renovar el DNI?')
+    sid, token = first['session_id'], first['session_token']
+    for _ in range(7):
+        result = service.responder('No lo sé', sid, token)
+        assert result['intencion'] == 'general' and not result['fuentes']
+    assert not calls['llm'] and not calls['retrieval']
+    assert len(graph_state(service, sid)['historial']) == 6
+    assert not any('Cuánto cuesta' in turn['pregunta'] for turn in graph_state(service, sid)['historial'])
+    result = service.responder('Mi hijo tiene 10 años', sid, token)
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert graph_state(service, sid)['tipo_consulta'] == 'coste'
+    assert 'Consulta pendiente: ¿Cuánto cuesta?' in calls['llm'][-1]
+    assert 'cuánto cuesta' in calls['retrieval'][-1].lower()
+    decision = graph_state(service, sid)['decision']
+    assert decision['consulta_pendiente'] == 'coste'
+    assert all('10' not in str(v) for v in decision.values())
+    service.responder('¿Dónde solicito la cita?', sid, token)
+    assert not graph_state(service, sid)['decision']['consulta_pendiente']
+
+
+@pytest.mark.parametrize('topic', ['¿Cuánto cuesta?', '¿Cuánto demora?', '¿Dónde solicito la cita?', '¿Qué requisitos necesito?'])
+def test_consulta_pendiente_tema_resuelto_sin_repetir_aclaracion(motor_local, topic):
+    service, calls = motor_local
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Su DNI está vencido', sid, token)
+    pending = service.responder(topic, sid, token)
+    assert pending['intencion'] == 'general' and not pending['fuentes']
+    result = service.responder('Sí, ya tenía DNI', sid, token)
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert 'Consulta pendiente:' in calls['llm'][-1]
+    again = service.responder(topic, sid, token)
+    assert again['intencion'] == 'dni_menor_renovacion'
+    assert not graph_state(service, sid)['requiere_aclaracion']
+
+
+@pytest.mark.parametrize('new_question,expected', [
+    ('Ahora necesito renovar mi pasaporte', 'fuera_alcance'),
+    ('Ahora quiero renovar el DNI de mi hijo menor', 'dni_menor_renovacion'),
+    ('Ahora quiero renovar mi DNI; soy adulto', 'general'),
+    ('Olvida lo anterior', 'general'),
+])
+def test_abandono_de_aclaracion_y_nuevo_contexto(new_question, expected):
+    state = turn({}, '¿Cuánto cuesta renovar el DNI?')
+    assert state['decision']['consulta_pendiente'] == 'coste'
+    state = turn(state, new_question)
+    assert state['intencion'] == expected
+    assert state['decision']['consulta_pendiente'] != 'coste'
+    if 'adulto' in new_question:
+        assert state['estado_documental'] == 'no_documentado'
+    if new_question == 'Olvida lo anterior':
+        assert not state['tramite_actual'] and not state['operacion_dni']
+
+
+@pytest.mark.parametrize('delete', [False, True])
+def test_decision_pendiente_se_elimina_con_ttl_o_borrado(motor_local, delete):
+    from app.services.session_service import SesionNoAutorizada
+    service, _ = motor_local
+    now = [0.0]
+    service.sessions.clock = lambda: now[0]
+    service.sessions.ttl = 10
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Su DNI está vencido', sid, token)
+    assert graph_state(service, sid)['requiere_aclaracion']
+    if delete:
+        service.sessions.delete(sid, token)
+    else:
+        now[0] = 11
+        service.sessions.cleanup()
+    assert not list(service.grafo.checkpointer.list({'configurable': {'thread_id': sid}}))
+    with pytest.raises(SesionNoAutorizada):
+        service.responder('Sí, ya tenía DNI', sid, token)
+    fresh = service.responder('¿Cuánto cuesta?')
+    assert fresh['intencion'] == 'general'
+    fresh_state = graph_state(service, fresh['session_id'])
+    assert not fresh_state['tramite_actual'] and not fresh_state['operacion_dni']
+
+
+@pytest.mark.parametrize('question', [
+    '¿Debo presentar el DNI vencido del padre como documento de apoyo?',
+    '¿Debo presentar el DNI vencido de mi hijo de 25 años como documento de apoyo?',
+])
+def test_estado_de_documento_de_apoyo_no_es_operacion_del_titular(question):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, question)
+    assert state['intencion'] == 'dni_menor_primera_vez'
+    assert state['operacion_dni'] == 'primera_vez'
+
+
+def test_dni_vencido_no_anula_rechazo_explicito_de_renovacion():
+    state = turn({}, 'Quiero renovar el DNI de mi hijo menor')
+    state = turn(state, 'No quiero renovar el DNI vencido')
+    assert state['requiere_aclaracion'] and not state['operacion_dni']
+
+
+def test_puertas_documentales_bloquean_incluso_intencion_residual(motor_local):
+    from app.graph import dni_graph
+    _, calls = motor_local
+    state = {
+        'pregunta': '¿Cuánto cuesta?', 'intencion': 'dni_menor_renovacion',
+        'requiere_aclaracion': True, 'motivo_aclaracion': 'edad',
+        'pregunta_busqueda': 'no debe recuperarse',
+        'contexto': 'no debe usarse', 'fuentes': [{'archivo': 'anterior.txt'}],
+    }
+    recovered = dni_graph.recuperar_documentos(state)
+    assert not recovered['fuentes'] and not recovered['contexto']
+    drafted = dni_graph.redactar_respuesta_minimizada(recovered)
+    assert 'menor de 18' in drafted['respuesta_borrador']
+    assert drafted['pregunta'] == state['pregunta']
+    assert not calls['retrieval'] and not calls['llm']
+
+
+@pytest.mark.parametrize('confirmation', ['Sí', 'No sé', '¿Dónde consulto el estado del trámite?'])
+def test_confirmacion_ambigua_no_resuelve_disyuntiva(confirmation):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, 'Su DNI está vencido')
+    state = turn(state, confirmation)
+    assert state['requiere_aclaracion']
+    assert state['intencion'] == 'general'
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    assert state['decision']['contradicciones'] == ['dni_previo']
+
+
+def test_edad_contradictoria_no_repite_datos_ya_conocidos(motor_local):
+    service, calls = motor_local
+    result = service.responder('Necesito renovar el DNI de mi hijo menor de 25 años')
+    state = graph_state(service, result['session_id'])
+    assert state['requiere_aclaracion'] and state['motivo_aclaracion'] == 'edad'
+    assert state['decision']['contradicciones'] == ['edad']
+    assert not state['decision']['faltantes']
+    assert 'menor de 18 años o adulto' in result['respuesta']
+    assert 'primer DNI' not in result['respuesta']
+    assert not calls['retrieval'] and not calls['llm']
+
+
+def test_aclaracion_recupera_seguimiento_pendiente_sin_reemplazar_operacion(motor_local):
+    service, calls = motor_local
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Su DNI está vencido', sid, token)
+    pending = service.responder('¿Dónde consulto el estado del trámite?', sid, token)
+    assert pending['intencion'] == 'general' and not pending['fuentes']
+    result = service.responder('Sí, ya tenía DNI', sid, token)
+    assert result['intencion'] == 'dni_consulta_estado'
+    assert {s['archivo'] for s in result['fuentes']} == {'dni_consulta_estado.txt'}
+    assert graph_state(service, sid)['tramite_actual'] == 'dni_menor_renovacion'
+    assert 'Consulta pendiente:' in calls['llm'][-1]
+    cost = service.responder('¿Y cuánto cuesta?', sid, token)
+    assert cost['intencion'] == 'dni_menor_renovacion'
+
+
+@pytest.mark.parametrize('question', ['El DNI de mi hijo menor caducó', 'Su DNI expiró'])
+def test_caducidad_verbal_con_sujeto_dni(question):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor')
+    state = turn(state, question)
+    assert state['motivo_aclaracion'] == 'dni_previo'
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    assert state['decision']['tramite_candidato'] == 'dni_menor_renovacion'
+
+
+def test_contradiccion_en_un_mismo_turno_pregunta_solo_operacion(motor_local):
+    service, calls = motor_local
+    result = service.responder('Mi hijo menor necesita su primer DNI, pero su DNI está vencido')
+    state = graph_state(service, result['session_id'])
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert state['motivo_aclaracion'] == 'operacion'
+    assert state['decision']['contradicciones'] == ['operacion']
+    assert not state['decision']['faltantes']
+    assert 'primer DNI' in result['respuesta'] and 'renovación' in result['respuesta']
+    assert not calls['retrieval'] and not calls['llm']
+
+
+def test_aclarar_edad_contradictoria_preserva_operacion_confirmada(motor_local):
+    service, calls = motor_local
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    before = len(calls['llm']), len(calls['retrieval'])
+    pending = service.responder('Mi hijo es menor de 25 años', sid, token)
+    assert pending['intencion'] == 'general' and not pending['fuentes']
+    assert (len(calls['llm']), len(calls['retrieval'])) == before
+    state = graph_state(service, sid)
+    assert state['motivo_aclaracion'] == 'edad'
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    assert state['operacion_dni'] == 'primera_vez'
+    result = service.responder('Es menor de edad', sid, token)
+    assert result['intencion'] == 'dni_menor_primera_vez'
+    assert not graph_state(service, sid)['requiere_aclaracion']
