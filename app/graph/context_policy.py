@@ -3,10 +3,17 @@ from copy import deepcopy
 
 from app.graph.state import ContextoCanonico, DatoContextual, EvidenciaTurno
 
-OPERACIONES = {'primera_vez', 'renovacion', 'duplicado'}
-DOCUMENTADOS = {'dni_menor_primera_vez', 'dni_menor_renovacion', 'dni_consulta_estado'}
+CAMBIO_AZUL = 'amarillo_a_azul'
+OPERACIONES = {'primera_vez', 'renovacion', 'duplicado', CAMBIO_AZUL}
+DOCUMENTOS_POR_INTENCION = {
+    'dni_menor_primera_vez': 'dni_menor_primera_vez.txt',
+    'dni_menor_renovacion': 'dni_menor_renovacion.txt',
+    'dni_consulta_estado': 'dni_consulta_estado.txt',
+    'dni_amarillo_a_azul_primera_vez': 'dni_amarillo_a_azul_primera_vez.txt',
+}
+DOCUMENTADOS = set(DOCUMENTOS_POR_INTENCION)
 TEMAS = {'otra', 'coste', 'plazo', 'cita', 'requisitos', 'seguimiento'}
-PRIORIDAD = ('titular', 'documento', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite')
+PRIORIDAD = ('titular', 'documento', 'tipo_dni', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite')
 VALORES = {'titular': {'descendiente', 'menor', 'adulto', 'propio'},
            'edad': {'menor', 'adulto'}, 'operacion': OPERACIONES}
 
@@ -65,7 +72,7 @@ def validar_contexto(c: dict) -> bool:
             return False
         if c['titular']['estado'] == 'conflicto' and 'titular' not in c['pendientes']:
             return False
-        if c['operacion']['estado'] == 'conflicto' and not ({'operacion', 'dni_previo'} & c['pendientes'].keys()):
+        if c['operacion']['estado'] == 'conflicto' and not ({'operacion', 'dni_previo', 'tipo_dni'} & c['pendientes'].keys()):
             return False
         return True
     except (KeyError, TypeError, ValueError):
@@ -77,7 +84,11 @@ def _conocido(c, field):
 
 
 def tramite_candidato(c: ContextoCanonico) -> str:
+    if 'tipo_dni' in c['pendientes']:
+        return 'dni_por_aclarar'
     op = c['propuesta_operacion'] or c['operacion']['valor']
+    if op == CAMBIO_AZUL:
+        return 'dni_amarillo_a_azul_primera_vez'
     if op == 'duplicado':
         return 'dni_duplicado'
     if op:
@@ -156,6 +167,21 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
         c[field]['estado'] = 'conflicto'
         c['pendientes'][reason] = 'contradiccion'
 
+    # Completar la aclaración azul/amarillo usa la misma operación canónica.
+    if ('tipo_dni' in c['pendientes'] and e.tiene_amarillo and CAMBIO_AZUL not in c['rechazadas']
+            and not e.rechazadas and not e.dudas):
+        from dataclasses import replace
+        e = replace(e, operacion=CAMBIO_AZUL, observacion=False)
+    if ('tipo_dni' in c['pendientes'] and e.operacion == 'primera_vez' and not e.nunca_tuvo_dni
+            and not (e.cambio and e.solicitud)):
+        # En una aclaración sobre azul, «primero» aún puede referirse al color.
+        from dataclasses import replace
+        e = replace(e, operacion='')
+    if (not e.operacion and ((e.referencia_azul and c['operacion']['valor'] != CAMBIO_AZUL)
+            or (e.tiene_amarillo and c['operacion']['valor'] in {'', 'primera_vez'}))):
+        doubt('operacion', 'tipo_dni')
+        c['propuesta_operacion'] = ''
+
     # Rechazar es un evento persistente, independiente de las demás dudas.
     c['rechazadas'] = sorted(set(c['rechazadas']) | (set(e.rechazadas) & OPERACIONES))
     if c['operacion']['valor'] in c['rechazadas']:
@@ -215,6 +241,7 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
             c['propuesta_operacion'] = e.operacion
             c['pendientes'].pop('operacion', None)
             c['pendientes'].pop('dni_previo', None)
+            c['pendientes'].pop('tipo_dni', None)
 
     if e.mencion_otro and not e.dni and not e.apoyo:
         c['pendientes']['tramite'] = 'faltante'

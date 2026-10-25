@@ -557,3 +557,11 @@ las menciones de documentos de apoyo no se tratan automáticamente como un
 trámite distinto. Si falta edad u operación se pide aclaración; los trámites de
 adultos identificados no reciben requisitos de menores ni amplían el corpus.
 Ver [modelo de estado, compatibilidad, pruebas y límites](docs/clasificacion-contexto-1b.md).
+
+### V1: DNI amarillo a azul y fluidez conversacional
+
+La ampliación desde `9b6f85a` se desarrolla en `feature/v1-dni-amarillo-azul`.
+La [guía V1 de ampliación](docs/v1-dni-amarillo-azul.md) describe las fuentes
+separadas, la tasa de €7, las mejoras acotadas de conversación, las pruebas y
+la actualización Windows/Conda. Requiere reconstruir el índice local después
+de verificar el corpus; para comparar con V1 debe utilizarse su índice correspondiente.
