@@ -233,3 +233,7 @@ Se añade la candidata `2.3-candidata-1` con objetivo neutral, hechos tipados y 
 ## Fase V2.2F — Integración determinista compartida (actual)
 
 Los normalizadores explícitos 2.2 y 2.3 producen un `DeltaCanonico` común. Una sola transición V2 (`transicionar_delta`) consume ese delta; `transicionar_v2` es un wrapper de compatibilidad y el selector `ruta_documental` no cambia. Se representa el objetivo neutral sin categorías familiares artificiales y se preservan vigencia, revisiones y rechazos. La [guía de integración](v2.2f-integracion-determinista.md) documenta límites de versión, trazas, migración y evaluación real de la política sobre fixtures: 29/29 decisiones, 17/17 positivas y cero incorrectas en cada versión/modalidad. No hay productor LLM candidato ni conexión Gradio/FastAPI.
+
+## Fase V2.2G — Productor experimental candidato
+
+Se incorpora un productor Responses directo para `2.3-candidata-1`, validación local y aislamiento de sesiones por versión. Consume el adaptador y la política compartidos de V2.2F; no se activa en el flujo V1. El [diseño, comparación y límites](v2.2g-productor-llm23.md) incluye esquema remoto, métricas por etapas y resultados simulados de ambas versiones. La evaluación real sigue pendiente: 734 pruebas aprobadas y 29/29 decisiones por batería sintética no acreditan comprensión del LLM.

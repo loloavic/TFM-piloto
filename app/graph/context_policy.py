@@ -428,6 +428,8 @@ def transicionar_delta(
     if scope and scope.valor == 'fuera_alcance':
         c = contexto_inicial(c['revision'] + 1, c['turno'])
         c['ambito'] = 'fuera_alcance'
+        if neutral:
+            c[target_field] = dato(revision=c['revision'])  # Conservar formato, no identidad.
     elif scope and scope.valor == 'dni':
         c['ambito'] = 'dni'
     for dim, items in negative.items():

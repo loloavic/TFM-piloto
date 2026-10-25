@@ -157,6 +157,9 @@ class InterpretationService:
         validation_codes = []
         snapshot = deepcopy(anterior)
         try:
+            if isinstance(snapshot, dict) and 'objetivo' in snapshot:
+                estado = 'version_estado_incompatible'
+                raise ValueError('version_estado_incompatible')
             summary = resumen_canonico(snapshot)
             base = snapshot or contexto_inicial()
             meta = {'turno': base['turno'] + 1, 'revision': base['revision']}

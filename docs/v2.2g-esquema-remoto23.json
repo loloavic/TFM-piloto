@@ -1,0 +1,718 @@
+{
+  "$defs": {
+    "ActosOperacion": {
+      "additionalProperties": false,
+      "properties": {
+        "solicitud": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Soporte"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "negacion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Soporte"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observacion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Soporte"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "aclaracion": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Soporte"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "title": "ActosOperacion",
+      "type": "object",
+      "required": [
+        "solicitud",
+        "negacion",
+        "observacion",
+        "aclaracion"
+      ]
+    },
+    "Hecho_Literal__descendiente____ascendiente____propio____otra___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "descendiente",
+                "ascendiente",
+                "propio",
+                "otra"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['descendiente', 'ascendiente', 'propio', 'otra']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Hecho_Literal__dni____fuera_alcance___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "dni",
+                "fuera_alcance"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['dni', 'fuera_alcance']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Hecho_Literal__menor____adulto___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "menor",
+                "adulto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['menor', 'adulto']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Hecho_Literal__requisitos____coste____plazo____cita____seguimiento____otra___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "requisitos",
+                "coste",
+                "plazo",
+                "cita",
+                "seguimiento",
+                "otra"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['requisitos', 'coste', 'plazo', 'cita', 'seguimiento', 'otra']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Hecho_Literal__si____no___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "si",
+                "no"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['si', 'no']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Hecho_Literal__titular____apoyo___": {
+      "additionalProperties": false,
+      "properties": {
+        "estado": {
+          "enum": [
+            "no_mencionado",
+            "no_aplicable",
+            "determinado",
+            "incierto",
+            "contradictorio"
+          ],
+          "title": "Estado",
+          "type": "string"
+        },
+        "valor": {
+          "anyOf": [
+            {
+              "enum": [
+                "titular",
+                "apoyo"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valor"
+        },
+        "acto": {
+          "anyOf": [
+            {
+              "enum": [
+                "solicitud_afirmativa",
+                "negacion",
+                "observacion",
+                "aclaracion"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Acto"
+        },
+        "origen": {
+          "anyOf": [
+            {
+              "enum": [
+                "explicito_turno",
+                "referencia_contextual"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Origen"
+        },
+        "sujeto": {
+          "anyOf": [
+            {
+              "enum": [
+                "objetivo",
+                "acompanante",
+                "no_resuelto"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sujeto"
+        }
+      },
+      "title": "Hecho[Literal['titular', 'apoyo']]",
+      "type": "object",
+      "required": [
+        "estado",
+        "valor",
+        "acto",
+        "origen",
+        "sujeto"
+      ]
+    },
+    "Objetivo": {
+      "additionalProperties": false,
+      "properties": {
+        "identificacion": {
+          "enum": [
+            "no_mencionado",
+            "explicito_unico",
+            "referencia_contextual",
+            "multiple",
+            "ambiguo"
+          ],
+          "title": "Identificacion",
+          "type": "string"
+        },
+        "referente": {
+          "enum": [
+            "ninguno",
+            "actual",
+            "otro"
+          ],
+          "title": "Referente",
+          "type": "string"
+        }
+      },
+      "title": "Objetivo",
+      "type": "object",
+      "required": [
+        "identificacion",
+        "referente"
+      ]
+    },
+    "Operaciones": {
+      "additionalProperties": false,
+      "properties": {
+        "primera_vez": {
+          "$ref": "#/$defs/ActosOperacion"
+        },
+        "renovacion": {
+          "$ref": "#/$defs/ActosOperacion"
+        },
+        "duplicado": {
+          "$ref": "#/$defs/ActosOperacion"
+        }
+      },
+      "title": "Operaciones",
+      "type": "object",
+      "required": [
+        "primera_vez",
+        "renovacion",
+        "duplicado"
+      ]
+    },
+    "Soporte": {
+      "additionalProperties": false,
+      "properties": {
+        "origen": {
+          "enum": [
+            "explicito_turno",
+            "referencia_contextual"
+          ],
+          "title": "Origen",
+          "type": "string"
+        },
+        "sujeto": {
+          "enum": [
+            "objetivo",
+            "acompanante",
+            "no_resuelto"
+          ],
+          "title": "Sujeto",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origen",
+        "sujeto"
+      ],
+      "title": "Soporte",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "title": "Version",
+      "type": "string",
+      "enum": [
+        "2.3-candidata-1"
+      ]
+    },
+    "objetivo": {
+      "$ref": "#/$defs/Objetivo"
+    },
+    "ambito": {
+      "$ref": "#/$defs/Hecho_Literal__dni____fuera_alcance___"
+    },
+    "relacion": {
+      "$ref": "#/$defs/Hecho_Literal__descendiente____ascendiente____propio____otra___"
+    },
+    "edad": {
+      "$ref": "#/$defs/Hecho_Literal__menor____adulto___"
+    },
+    "dni_previo": {
+      "$ref": "#/$defs/Hecho_Literal__si____no___"
+    },
+    "tema": {
+      "$ref": "#/$defs/Hecho_Literal__requisitos____coste____plazo____cita____seguimiento____otra___"
+    },
+    "funcion_documento": {
+      "$ref": "#/$defs/Hecho_Literal__titular____apoyo___"
+    },
+    "operaciones": {
+      "$ref": "#/$defs/Operaciones"
+    }
+  },
+  "required": [
+    "version",
+    "objetivo",
+    "ambito",
+    "relacion",
+    "edad",
+    "dni_previo",
+    "tema",
+    "funcion_documento",
+    "operaciones"
+  ],
+  "title": "InterpretacionCandidata",
+  "type": "object"
+}

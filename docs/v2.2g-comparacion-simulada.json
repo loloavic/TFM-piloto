@@ -1,0 +1,231 @@
+{
+  "base_commit": "17f1547",
+  "modalidad": "simulada_sin_openai",
+  "satisfactoria": true,
+  "informes": [
+    {
+      "version_evaluacion": "v2.2g-1",
+      "version_contrato": "2.2",
+      "modalidad": "simulada",
+      "modo": "conversacion",
+      "diagnostico": true,
+      "alcance_latencia": "servicio_completo_sin_rubrica",
+      "rubrica": "criticos_v2.2c_y_correspondencia_23_v1",
+      "modelo": "fixture_sin_llm",
+      "huella_prompt": "8026b89af9ebd6f4c0143f79d60620a3c5d9378782cd6d0f058fff55751dd375",
+      "huella_esquema": "5ddfcb17ef32815c7e509a3a35a2c8f1ef54538b80a65a17ee3ab014b2a1c5fc",
+      "turnos_programados": 29,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "aclaraciones_necesarias": 8,
+        "aclaraciones_atendidas": 8,
+        "aclaraciones_innecesarias": 0
+      },
+      "latencia_p50_ms": 1.795,
+      "latencia_p95_ms": 5.328,
+      "tokens_entrada": 81196,
+      "tokens_salida": 3709,
+      "satisfactoria": true
+    },
+    {
+      "version_evaluacion": "v2.2g-1",
+      "version_contrato": "2.2",
+      "modalidad": "simulada",
+      "modo": "aislados",
+      "diagnostico": true,
+      "alcance_latencia": "servicio_completo_sin_rubrica",
+      "rubrica": "criticos_v2.2c_y_correspondencia_23_v1",
+      "modelo": "fixture_sin_llm",
+      "huella_prompt": "8026b89af9ebd6f4c0143f79d60620a3c5d9378782cd6d0f058fff55751dd375",
+      "huella_esquema": "5ddfcb17ef32815c7e509a3a35a2c8f1ef54538b80a65a17ee3ab014b2a1c5fc",
+      "turnos_programados": 29,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "aclaraciones_necesarias": 8,
+        "aclaraciones_atendidas": 8,
+        "aclaraciones_innecesarias": 0
+      },
+      "latencia_p50_ms": 1.865,
+      "latencia_p95_ms": 2.315,
+      "tokens_entrada": 81196,
+      "tokens_salida": 3709,
+      "satisfactoria": true
+    },
+    {
+      "version_evaluacion": "v2.2g-1",
+      "version_contrato": "2.3-candidata-1",
+      "modalidad": "simulada",
+      "modo": "conversacion",
+      "diagnostico": true,
+      "alcance_latencia": "servicio_completo_sin_rubrica",
+      "rubrica": "criticos_v2.2c_y_correspondencia_23_v1",
+      "modelo": "fixture_sin_llm",
+      "huella_prompt": "372eede6085bf1775e130832f3626517bc01696ad45a3f8c4577a0e00df1abb9",
+      "huella_esquema": "f035f2d2547ccc70c48a9adae7da774cf7c928104ed9a14ded717f56b6966502",
+      "turnos_programados": 29,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "aclaraciones_necesarias": 8,
+        "aclaraciones_atendidas": 8,
+        "aclaraciones_innecesarias": 0
+      },
+      "latencia_p50_ms": 10.073,
+      "latencia_p95_ms": 15.875,
+      "tokens_entrada": 80588,
+      "tokens_salida": 8177,
+      "satisfactoria": true
+    },
+    {
+      "version_evaluacion": "v2.2g-1",
+      "version_contrato": "2.3-candidata-1",
+      "modalidad": "simulada",
+      "modo": "aislados",
+      "diagnostico": true,
+      "alcance_latencia": "servicio_completo_sin_rubrica",
+      "rubrica": "criticos_v2.2c_y_correspondencia_23_v1",
+      "modelo": "fixture_sin_llm",
+      "huella_prompt": "372eede6085bf1775e130832f3626517bc01696ad45a3f8c4577a0e00df1abb9",
+      "huella_esquema": "f035f2d2547ccc70c48a9adae7da774cf7c928104ed9a14ded717f56b6966502",
+      "turnos_programados": 29,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "aclaraciones_necesarias": 8,
+        "aclaraciones_atendidas": 8,
+        "aclaraciones_innecesarias": 0
+      },
+      "latencia_p50_ms": 7.911,
+      "latencia_p95_ms": 15.801,
+      "tokens_entrada": 80588,
+      "tokens_salida": 8177,
+      "satisfactoria": true
+    }
+  ]
+}
