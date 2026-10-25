@@ -1,0 +1,494 @@
+{
+  "version_evaluacion": "v2.2c-1",
+  "version_prompt": "v2.2b-1",
+  "version_rubrica": "v2.2c-1",
+  "modo_turnos": "conversacion",
+  "diagnostico": true,
+  "huella_referencias": "f8aa9f5d7d3782a1f2e8823a32ed122eb83d6574367e9251a46029c76c88ec0c",
+  "turnos_programados": 2,
+  "huella_prompt": "dbaba58fdefe89b9346f4020c976f67ba0826de0f882e84c36202f4b85228363",
+  "huella_esquema": "ecb6e413d3a46a235e10e925e0dff8f6e270e5172a1dc951787e7729e5c433fd",
+  "modelo": "fixture_sin_llm",
+  "modalidad": "simulada",
+  "conversaciones": 1,
+  "conversaciones_programadas": 1,
+  "turnos": 2,
+  "turnos_no_ejecutados": 0,
+  "interrumpida": false,
+  "resumen": {
+    "clasificacion_correcta": 0,
+    "contrato_valido": 1,
+    "ruta_correcta": 0,
+    "ruta_incorrectamente_autorizada": 0,
+    "aclaracion_necesaria": 0,
+    "aclaracion_necesaria_atendida": 0,
+    "aclaracion_necesaria_omitida": 0,
+    "aclaracion_innecesaria": 2,
+    "abstencion": 0,
+    "abstencion_correcta": 0,
+    "tokens_entrada": 2525,
+    "tokens_salida": 257,
+    "interpretacion_semantica_correcta": 1,
+    "transicion_canonica_correcta": 0,
+    "decision_documental_correcta": 0,
+    "contexto_entrada_conforme_referencia": 1,
+    "tasa_clasificacion_correcta": 0.0,
+    "latencia_p50_ms": 1.027,
+    "latencia_p95_ms": 1.604
+  },
+  "resultados": [
+    {
+      "escenario": "E01",
+      "categoria": "renovacion_coste",
+      "turno": 1,
+      "estado_proveedor": "ok",
+      "estado_contrato": "suficiente",
+      "contrato_valido": true,
+      "contrato_evaluable": true,
+      "clasificacion_correcta": false,
+      "ruta_esperada": "dni_menor_renovacion",
+      "ruta_obtenida": "",
+      "ruta_correcta": false,
+      "ruta_incorrectamente_autorizada": false,
+      "decision_esperada": "documentada",
+      "decision_obtenida": "aclaracion",
+      "aclaracion_necesaria": false,
+      "aclaracion_necesaria_atendida": false,
+      "aclaracion_necesaria_omitida": false,
+      "aclaracion_innecesaria": true,
+      "abstencion": false,
+      "abstencion_correcta": false,
+      "latencia_ms": 1.604,
+      "tokens_entrada": 1240,
+      "tokens_salida": 208,
+      "fuente_tokens": "estimacion_bytes",
+      "interpretacion_semantica_correcta": true,
+      "equivalencia_completa_fixture": false,
+      "transicion_canonica_correcta": false,
+      "contexto_entrada_conforme_referencia": true,
+      "referencia_disponible": true,
+      "interpretacion_semantica_evaluable": true,
+      "transicion_evaluable": false,
+      "edad_origen_equivalente": false,
+      "decision_documental_correcta": false,
+      "diagnostico": {
+        "etapa_discrepancia": "interpretacion_o_transicion",
+        "testigos_categoricos": [
+          "referencia_actual_sin_titular_previo"
+        ],
+        "evidencias": [
+          {
+            "dimension": "ambito",
+            "valor": "dni",
+            "acto": "observacion",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          },
+          {
+            "dimension": "titular",
+            "valor": "descendiente",
+            "acto": "solicitud_afirmativa",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          },
+          {
+            "dimension": "edad",
+            "valor": "menor",
+            "acto": "observacion",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          },
+          {
+            "dimension": "operacion",
+            "valor": "renovacion",
+            "acto": "solicitud_afirmativa",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          },
+          {
+            "dimension": "tema",
+            "valor": "requisitos",
+            "acto": "solicitud_afirmativa",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          },
+          {
+            "dimension": "referencia_titular",
+            "valor": "actual",
+            "acto": "observacion",
+            "origen": "explicito_turno",
+            "sujeto": "objetivo"
+          }
+        ],
+        "faltantes_declarados": [],
+        "contradicciones_declaradas": [],
+        "errores_validacion": [],
+        "pendientes_antes": {},
+        "pendientes_despues": {
+          "titular": "contradiccion",
+          "operacion": "faltante",
+          "edad": "faltante"
+        },
+        "canonico_antes": {
+          "ambito": "desconocido",
+          "tema": "otra",
+          "pendientes": {},
+          "rechazadas": [],
+          "consulta_pendiente": "",
+          "titular": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "edad": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "operacion": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "canonico_despues": {
+          "ambito": "dni",
+          "tema": "requisitos",
+          "pendientes": {
+            "titular": "contradiccion",
+            "edad": "faltante",
+            "operacion": "faltante"
+          },
+          "rechazadas": [],
+          "consulta_pendiente": "requisitos",
+          "titular": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "edad": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "operacion": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "dni_previo": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "funcion_documento": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "canonico_referencia": {
+          "ambito": "dni",
+          "tema": "requisitos",
+          "pendientes": {},
+          "rechazadas": [],
+          "consulta_pendiente": "",
+          "titular": {
+            "valor": "descendiente",
+            "estado": "confirmado",
+            "origen": "explicito"
+          },
+          "edad": {
+            "valor": "menor",
+            "estado": "confirmado",
+            "origen": "observacion"
+          },
+          "operacion": {
+            "valor": "renovacion",
+            "estado": "confirmado",
+            "origen": "explicito"
+          },
+          "dni_previo": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "funcion_documento": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "condiciones_documentales": [
+          {
+            "condicion": "contexto_valido",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "ambito_dni",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "sin_pendientes",
+            "aplica": true,
+            "cumplida": false
+          },
+          {
+            "condicion": "operacion_confirmada",
+            "aplica": true,
+            "cumplida": false
+          },
+          {
+            "condicion": "operacion_no_rechazada",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "edad_confirmada",
+            "aplica": false,
+            "cumplida": false
+          },
+          {
+            "condicion": "procedimiento_documentado",
+            "aplica": true,
+            "cumplida": false
+          }
+        ]
+      }
+    },
+    {
+      "escenario": "E01",
+      "categoria": "renovacion_coste",
+      "turno": 2,
+      "estado_proveedor": "respuesta_invalida",
+      "estado_contrato": "insuficiente_o_invalida",
+      "contrato_valido": false,
+      "contrato_evaluable": true,
+      "clasificacion_correcta": false,
+      "ruta_esperada": "dni_menor_renovacion",
+      "ruta_obtenida": "",
+      "ruta_correcta": false,
+      "ruta_incorrectamente_autorizada": false,
+      "decision_esperada": "documentada",
+      "decision_obtenida": "aclaracion",
+      "aclaracion_necesaria": false,
+      "aclaracion_necesaria_atendida": false,
+      "aclaracion_necesaria_omitida": false,
+      "aclaracion_innecesaria": true,
+      "abstencion": false,
+      "abstencion_correcta": false,
+      "latencia_ms": 1.027,
+      "tokens_entrada": 1285,
+      "tokens_salida": 49,
+      "fuente_tokens": "estimacion_bytes",
+      "interpretacion_semantica_correcta": false,
+      "equivalencia_completa_fixture": false,
+      "transicion_canonica_correcta": false,
+      "contexto_entrada_conforme_referencia": false,
+      "referencia_disponible": true,
+      "interpretacion_semantica_evaluable": false,
+      "transicion_evaluable": false,
+      "edad_origen_equivalente": false,
+      "decision_documental_correcta": false,
+      "diagnostico": {
+        "etapa_discrepancia": "contrato",
+        "testigos_categoricos": [],
+        "evidencias": [],
+        "faltantes_declarados": [],
+        "contradicciones_declaradas": [],
+        "errores_validacion": [
+          "dimension_valor_incompatible"
+        ],
+        "pendientes_antes": {
+          "titular": "contradiccion",
+          "operacion": "faltante",
+          "edad": "faltante"
+        },
+        "pendientes_despues": {
+          "titular": "contradiccion",
+          "operacion": "faltante",
+          "edad": "faltante",
+          "tramite": "contradiccion"
+        },
+        "canonico_antes": {
+          "ambito": "dni",
+          "tema": "requisitos",
+          "pendientes": {
+            "titular": "contradiccion",
+            "edad": "faltante",
+            "operacion": "faltante"
+          },
+          "rechazadas": [],
+          "consulta_pendiente": "requisitos",
+          "titular": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "edad": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "operacion": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "dni_previo": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "funcion_documento": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "canonico_despues": {
+          "ambito": "dni",
+          "tema": "requisitos",
+          "pendientes": {
+            "titular": "contradiccion",
+            "edad": "faltante",
+            "operacion": "faltante",
+            "tramite": "contradiccion"
+          },
+          "rechazadas": [],
+          "consulta_pendiente": "requisitos",
+          "titular": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "edad": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "operacion": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "dni_previo": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "funcion_documento": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "canonico_referencia": {
+          "ambito": "dni",
+          "tema": "coste",
+          "pendientes": {},
+          "rechazadas": [],
+          "consulta_pendiente": "",
+          "titular": {
+            "valor": "descendiente",
+            "estado": "confirmado",
+            "origen": "explicito"
+          },
+          "edad": {
+            "valor": "menor",
+            "estado": "confirmado",
+            "origen": "observacion"
+          },
+          "operacion": {
+            "valor": "renovacion",
+            "estado": "confirmado",
+            "origen": "explicito"
+          },
+          "dni_previo": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          },
+          "funcion_documento": {
+            "valor": "",
+            "estado": "desconocido",
+            "origen": "ausente"
+          }
+        },
+        "condiciones_documentales": [
+          {
+            "condicion": "contexto_valido",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "ambito_dni",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "sin_pendientes",
+            "aplica": true,
+            "cumplida": false
+          },
+          {
+            "condicion": "operacion_confirmada",
+            "aplica": true,
+            "cumplida": false
+          },
+          {
+            "condicion": "operacion_no_rechazada",
+            "aplica": true,
+            "cumplida": true
+          },
+          {
+            "condicion": "edad_confirmada",
+            "aplica": false,
+            "cumplida": false
+          },
+          {
+            "condicion": "procedimiento_documentado",
+            "aplica": true,
+            "cumplida": false
+          }
+        ]
+      }
+    }
+  ],
+  "metricas_etapas": {
+    "contrato": {
+      "correctos": 1,
+      "evaluables": 2,
+      "tasa": 0.5
+    },
+    "entrega_contrato_valido": {
+      "correctos": 1,
+      "evaluables": 2,
+      "tasa": 0.5
+    },
+    "equivalencia_completa_fixture": {
+      "correctos": 0,
+      "evaluables": 1,
+      "tasa": 0.0
+    },
+    "interpretacion_semantica": {
+      "correctos": 1,
+      "evaluables": 1,
+      "tasa": 1.0
+    },
+    "transicion_controlada": {
+      "correctos": 0,
+      "evaluables": 0,
+      "tasa": null
+    },
+    "decision_documental": {
+      "correctos": 0,
+      "evaluables": 2,
+      "tasa": 0.0
+    }
+  },
+  "satisfactoria": false,
+  "origen_ejemplo": "fixture_adversarial_sintetico"
+}

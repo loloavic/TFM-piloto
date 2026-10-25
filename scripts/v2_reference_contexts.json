@@ -1,0 +1,2172 @@
+{
+  "E01/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E01/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "coste",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E02/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E02/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "cita",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E03/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "",
+      "tema": "seguimiento",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_consulta_estado",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E04/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E04/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 1,
+      "ambito": "dni",
+      "titular": {
+        "valor": "adulto",
+        "turno": 2,
+        "revision": 1,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "adulto",
+        "turno": 2,
+        "revision": 1,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 2,
+        "revision": 1,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_adulto_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E05/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E05/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [
+        "renovacion"
+      ],
+      "pendientes": {
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E05/3": {
+    "antes": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [
+        "renovacion"
+      ],
+      "pendientes": {
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 3,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [
+        "renovacion"
+      ],
+      "pendientes": {
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E05/4": {
+    "antes": {
+      "turno": 3,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [
+        "renovacion"
+      ],
+      "pendientes": {
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 4,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 4,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 4,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 4,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E06/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E06/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "si",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E07/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E07/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "edad": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E07/3": {
+    "antes": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "edad": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 3,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "edad": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E07/4": {
+    "antes": {
+      "turno": 3,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "edad": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 4,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 4,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "requisitos",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E08/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E08/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "primera_vez",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "primera_vez",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "dni_previo": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E08/3": {
+    "antes": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "dni_previo": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_primera_vez",
+      "dni_previo": {
+        "valor": "no",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 3,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "requisitos",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "si",
+        "turno": 3,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E09/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E09/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "apoyo",
+        "turno": 2,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      }
+    }
+  },
+  "E10/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E10/2": {
+    "antes": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_menor_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 2,
+      "revision": 1,
+      "ambito": "dni",
+      "titular": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "titular": "contradiccion",
+        "edad": "faltante",
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "otra",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E10/3": {
+    "antes": {
+      "turno": 2,
+      "revision": 1,
+      "ambito": "dni",
+      "titular": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "titular": "contradiccion",
+        "edad": "faltante",
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "otra",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    },
+    "despues": {
+      "turno": 3,
+      "revision": 2,
+      "ambito": "dni",
+      "titular": {
+        "valor": "",
+        "turno": 0,
+        "revision": 2,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 2,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 2,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "titular": "contradiccion",
+        "edad": "faltante",
+        "operacion": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "otra",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 2,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 2,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E11/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "propio",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "adulto",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_adulto_renovacion",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E12/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "menor",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "observacion"
+      },
+      "operacion": {
+        "valor": "duplicado",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {},
+      "propuesta_operacion": "duplicado",
+      "tema": "requisitos",
+      "consulta_pendiente": "",
+      "retomar": "",
+      "ultima_ruta": "dni_duplicado",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  },
+  "E13/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 1,
+      "ambito": "fuera_alcance",
+      "titular": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "",
+        "turno": 0,
+        "revision": 1,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "tramite": "faltante"
+      },
+      "propuesta_operacion": "",
+      "tema": "otra",
+      "consulta_pendiente": "otra",
+      "retomar": "",
+      "ultima_ruta": ""
+    }
+  },
+  "E14/1": {
+    "antes": null,
+    "despues": {
+      "turno": 1,
+      "revision": 0,
+      "ambito": "dni",
+      "titular": {
+        "valor": "descendiente",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "edad": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "operacion": {
+        "valor": "renovacion",
+        "turno": 1,
+        "revision": 0,
+        "estado": "confirmado",
+        "origen": "explicito"
+      },
+      "rechazadas": [],
+      "pendientes": {
+        "edad": "contradiccion"
+      },
+      "propuesta_operacion": "renovacion",
+      "tema": "requisitos",
+      "consulta_pendiente": "requisitos",
+      "retomar": "",
+      "ultima_ruta": "",
+      "dni_previo": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      },
+      "funcion_documento": {
+        "valor": "",
+        "turno": 0,
+        "revision": 0,
+        "estado": "desconocido",
+        "origen": "ausente"
+      }
+    }
+  }
+}

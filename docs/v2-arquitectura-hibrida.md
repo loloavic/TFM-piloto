@@ -1,6 +1,6 @@
 # TFM-piloto V2 — Contrato e integración determinista
 
-La sección V2.2B al final describe el estado actual; V2.2A conserva su integración determinista. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
+La sección V2.2C al final describe la evaluación actual; las secciones anteriores conservan las decisiones de cada entrega. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
 
 ## Fase V2.1 (referencia histórica)
 
@@ -213,3 +213,8 @@ Riesgos residuales: el adaptador depende de que la interpretación identifique c
 Se incorpora `InterpretationService`, que minimiza el mensaje actual, resume el canónico por categorías, solicita JSON Schema estricto a OpenAI Responses y revalida la respuesta antes de llamar al adaptador. No se conecta al clasificador, grafo o interfaz activos. La autoridad documental continúa en `context_policy`.
 
 La [guía del intérprete y evaluación](v2-interprete-llm.md) describe el diseño, diagrama actualizado, matriz de 14 conversaciones/29 turnos, métricas semánticas, manejo seguro de errores, costes y límites. El CLI `scripts/evaluate_v2_interpretation.py` usa fixtures sin red por defecto; `--real` requiere solicitud explícita y configuración OpenAI. No se ha ejecutado una evaluación remota. Los resultados simulados no demuestran comprensión del LLM.
+
+
+## Fase V2.2C — Observabilidad y evaluación por etapas (actual)
+
+El evaluador ofrece diagnóstico categórico opcional y modalidades separadas de conversación completa o turnos aislados con contextos predefinidos. Se separan validez contractual, interpretación crítica, transición controlada y decisión documental; las ejecuciones vacías o incompletas no aprueban. La [guía V2.2C](v2.2c-observabilidad.md) detalla métricas, equivalencias acotadas, privacidad y límites de atribución, junto con un informe adversarial sintético. No se modifica el prompt ni la política canónica, y no se ejecuta OpenAI real.

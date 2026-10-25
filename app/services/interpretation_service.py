@@ -14,6 +14,7 @@ from app.core.privacy import minimizar_texto
 from app.graph.context_policy import contexto_inicial
 from app.graph.interpretation_adapter import _contexto_adaptable, adaptar_interpretacion
 from app.graph.interpretation_contract import InterpretacionTurno, validar_interpretacion
+from app.graph.interpretation_diagnostics import diagnosticar_validacion
 
 PROMPT_VERSION = 'v2.2b-1'
 INSTRUCCIONES = """Eres un intérprete lingüístico de consultas administrativas sobre DNI.
@@ -107,6 +108,7 @@ class ResultadoInterprete:
     interpretacion: InterpretacionTurno | None
     contexto_canonico: dict
     metricas: MetricasInterpretacion
+    diagnostico: dict | None = None
 
 
 class InterpretationService:
@@ -118,7 +120,8 @@ class InterpretationService:
     def __init__(self, *, client=None):
         self._client = client
 
-    def interpretar(self, mensaje: object, anterior: dict | None = None) -> ResultadoInterprete:
+    def interpretar(self, mensaje: object, anterior: dict | None = None, *,
+                    diagnostico: bool = False) -> ResultadoInterprete:
         start = perf_counter()
         meta = {'turno': 1, 'revision': 0}
         payload = None
@@ -128,6 +131,7 @@ class InterpretationService:
         estado = 'entrada_invalida'
         local_estado = 'insuficiente_o_invalida'
         data = None
+        validation_codes = []
         snapshot = deepcopy(anterior)
         try:
             summary = resumen_canonico(snapshot)
@@ -171,6 +175,8 @@ class InterpretationService:
                 else:
                     output = response.output_text
                     result = validar_interpretacion(meta, output)
+                    if diagnostico:
+                        validation_codes = diagnosticar_validacion(meta, output)
                     local_estado = result.estado
                     if result.interpretacion is not None and result.interpretacion.evidencias:
                         data = result.interpretacion
@@ -198,7 +204,11 @@ class InterpretationService:
             'proveedor' if valid_usage else 'estimacion_bytes',
         )
         canonical = adaptar_interpretacion(snapshot, meta, payload)
-        return ResultadoInterprete(estado, local_estado, data, canonical, metrics)
+        diagnostic = None
+        if diagnostico:
+            diagnostic = {'errores_validacion': validation_codes,
+                          'estado_servicio': estado}
+        return ResultadoInterprete(estado, local_estado, data, canonical, metrics, diagnostic)
 
     def close(self):
         if self._client is not None:

@@ -1,5 +1,7 @@
 # V2.2B — Intérprete LLM estructurado y evaluación controlada
 
+Esta sección documenta V2.2B. La evaluación actual incorpora [observabilidad y métricas por etapas V2.2C](v2.2c-observabilidad.md), sin cambiar el intérprete operativo ni su prompt.
+
 Base: `6c1faa1`, rama `feature/v2-hybrid-intent`. La implementación permanece fuera del recorrido operativo de FastAPI, Gradio y LangGraph. No sustituye clasificación V1, no ejecuta RAG y no cambia generación, verificador, corpus, FAISS, n8n, autenticación, minimización, sesiones o concurrencia. No añade dependencias ni configuración obligatoria al piloto activo.
 
 ## Diseño
