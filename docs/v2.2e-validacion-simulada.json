@@ -1,0 +1,104 @@
+{
+  "fase": "V2.2E",
+  "modalidad": "fixtures_sin_openai",
+  "candidata": {
+    "version": "2.3-candidata-1",
+    "escenarios": 14,
+    "turnos": 29,
+    "representaciones_validas": 29,
+    "estados_linguisticos": {
+      "coherente": 26,
+      "incierto": 3
+    },
+    "integrada": false,
+    "decision_documental_evaluada": false
+  },
+  "control_regresion_contrato_actual": {
+    "conversacion": {
+      "version_contrato": "2.2 activo, sin sustitución",
+      "turnos": 29,
+      "satisfactoria": true,
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_correctamente_autorizadas": 17,
+        "autorizaciones_totales": 17,
+        "autorizaciones_incorrectas": 0
+      },
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "equivalencia_completa_fixture": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      }
+    },
+    "aislados": {
+      "version_contrato": "2.2 activo, sin sustitución",
+      "turnos": 29,
+      "satisfactoria": true,
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_correctamente_autorizadas": 17,
+        "autorizaciones_totales": 17,
+        "autorizaciones_incorrectas": 0
+      },
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "equivalencia_completa_fixture": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      }
+    }
+  }
+}

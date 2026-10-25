@@ -6,7 +6,9 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from app.graph.interpretation_contract import InterpretacionTurno
-from app.graph.interpretation_diagnostics import condiciones_documentales, pendientes_seguros
+from app.graph.interpretation_diagnostics import (
+    CODIGOS_DUPLICADOS, condiciones_documentales, pendientes_seguros,
+)
 from app.services.interpretation_service import resumen_canonico
 
 
@@ -144,6 +146,7 @@ def diagnostico_turno(result, anterior, referencia, etapas, documental_correcta)
         'evidencia_vacia', 'campo_faltante', 'campo_extra', 'valor_no_permitido',
         'dimension_valor_incompatible', 'duplicado', 'tipo_o_validacion_no_clasificada',
         'json_invalido', 'clave_duplicada', 'presencia_incompatible'}
+    allowed_codes.update(CODIGOS_DUPLICADOS.values())
     validation = getattr(result, 'diagnostico', None) or {}
     codes = validation.get('errores_validacion', [])
     return dict(etapa_discrepancia=stage, testigos_categoricos=witnesses,

@@ -1,0 +1,72 @@
+{
+  "version": "2.3-candidata-1",
+  "objetivo": {
+    "identificacion": "explicito_unico",
+    "referente": "ninguno"
+  },
+  "ambito": {
+    "estado": "determinado",
+    "valor": "dni",
+    "acto": "observacion",
+    "origen": "explicito_turno",
+    "sujeto": "objetivo"
+  },
+  "relacion": {
+    "estado": "incierto",
+    "valor": null,
+    "acto": "observacion",
+    "origen": "explicito_turno",
+    "sujeto": "objetivo"
+  },
+  "edad": {
+    "estado": "determinado",
+    "valor": "menor",
+    "acto": "observacion",
+    "origen": "explicito_turno",
+    "sujeto": "objetivo"
+  },
+  "dni_previo": {
+    "estado": "no_mencionado",
+    "valor": null,
+    "acto": null,
+    "origen": null,
+    "sujeto": null
+  },
+  "tema": {
+    "estado": "no_mencionado",
+    "valor": null,
+    "acto": null,
+    "origen": null,
+    "sujeto": null
+  },
+  "funcion_documento": {
+    "estado": "no_mencionado",
+    "valor": null,
+    "acto": null,
+    "origen": null,
+    "sujeto": null
+  },
+  "operaciones": {
+    "primera_vez": {
+      "solicitud": null,
+      "negacion": null,
+      "observacion": null,
+      "aclaracion": null
+    },
+    "renovacion": {
+      "solicitud": {
+        "origen": "explicito_turno",
+        "sujeto": "objetivo"
+      },
+      "negacion": null,
+      "observacion": null,
+      "aclaracion": null
+    },
+    "duplicado": {
+      "solicitud": null,
+      "negacion": null,
+      "observacion": null,
+      "aclaracion": null
+    }
+  }
+}

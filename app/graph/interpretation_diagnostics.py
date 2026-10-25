@@ -1,12 +1,43 @@
 """Observaciones de evaluación por whitelist; no cambia validación ni autorización."""
 import json
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from app.graph.context_policy import PRIORIDAD, DOCUMENTADOS, tramite_candidato, validar_contexto
 from app.graph.interpretation_contract import (
-    EntradaInterpretacion, InterpretacionTurno, _sin_claves_repetidas,
+    Dimension, Motivo, EvidenciaInterpretada, EntradaInterpretacion,
+    InterpretacionTurno, _sin_claves_repetidas,
 )
+
+
+CODIGOS_DUPLICADOS = {
+    'evidencias': 'duplicado_evidencias',
+    'faltantes': 'duplicado_faltantes',
+    'contradicciones': 'duplicado_contradicciones',
+    'no_mencionadas': 'duplicado_no_mencionadas',
+    'no_aplicables': 'duplicado_no_aplicables',
+}
+
+
+def _duplicados_por_lista(payload):
+    """Inspección tipada para diagnóstico; no altera ni acepta el payload."""
+    codes = set()
+    for field, code in CODIGOS_DUPLICADOS.items():
+        try:
+            values = payload.get(field, [])
+            if type(values) is not list or len(values) > (32 if field == 'evidencias' else 9):
+                continue
+            if field == 'evidencias':
+                checked = [EvidenciaInterpretada.model_validate(value) for value in values]
+                keys = [tuple(value.model_dump().values()) for value in checked]
+            else:
+                item_type = Motivo if field in {'faltantes', 'contradicciones'} else Dimension
+                keys = TypeAdapter(list[item_type]).validate_python(values, strict=True)
+            if len(set(keys)) != len(keys):
+                codes.add(code)
+        except (ValidationError, TypeError, ValueError):
+            continue
+    return codes
 
 
 def diagnosticar_validacion(entrada, salida):
@@ -38,6 +69,10 @@ def diagnosticar_validacion(entrada, salida):
                 code = {'valor_incompatible': 'dimension_valor_incompatible',
                         'duplicados': 'duplicado', 'presencia_incompatible': 'presencia_incompatible'}.get(message)
             codes.add(code or 'tipo_o_validacion_no_clasificada')
+        duplicates = _duplicados_por_lista(salida)
+        if duplicates:
+            codes.add('duplicado')
+            codes.update(duplicates)
         return sorted(codes)
     except json.JSONDecodeError:
         return ['json_invalido']
