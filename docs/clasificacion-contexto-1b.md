@@ -119,3 +119,46 @@ Se añaden 19 casos deterministas: roles antes y después de la persona, represe
 Antes de modificar el clasificador, la primera selección de 12 casos nuevos produjo **11 fallos y 1 aprobado** sobre `2c4915e`, reproduciendo los tres defectos. Después de las correcciones y de ampliar los casos, se ejecutó la suite completa: **151 aprobados, 6 de integración excluidos y 12 advertencias de dependencias**, Python 3.11.17 en Linux, sin claves OpenAI reales. Se utilizó el mismo comando documentado arriba, con las dos variables de claves eliminadas del proceso. También pasan las regresiones existentes de seguridad, privacidad y concurrencia; sus implementaciones no se modifican.
 
 No se añaden variables de entorno, migraciones ni dependencias. Siguen vigentes los comandos Windows PowerShell/Conda y Linux de esta guía. Preparado para repetir validación local en Windows; **no se ha ejecutado Windows/Conda nativo ni integración con OpenAI real**. El verificador factual permanece pendiente de la Fase 1B.3 y las limitaciones lingüísticas previas siguen aplicando.
+
+## Segunda revisión: P2.4 y P2.5
+
+Base: `6b9f8d0`. La primera matriz nueva, ejecutada antes de modificar el código, produjo **10 fallos y 9 aprobados** en 19 casos, reproduciendo ambos hallazgos. En particular, la presentación del DNI de un hijo adulto seguía seleccionando el corpus de menor; sin contexto previo se perdía incluso la edad del hijo cuyo DNI se presentaba. «No es DNI por primera vez» cambiaba renovación por primera inscripción; otras negaciones reconocidas borraban una renovación no rechazada.
+
+### Causas y correcciones
+
+**P2.4 — función `solicitante`:** el patrón de `presentar/llevar/mostrar/adjuntar el DNI de…` excluía siempre a su dueño como si fuera acompañante. Ahora se distingue primero el rol: acompañamiento explícito; DNI como apoyo explícito; DNI presentado para su propia renovación. Este último conserva la persona y su categoría de edad para la clasificación. Si la finalidad falta o combina señales incompatibles de apoyo y renovación propia, se utiliza la aclaración determinista existente, sin llamar al generador ni elegir una categoría por inercia. No se añaden campos personales al estado ni se guardan edades exactas.
+
+En A se interpreta «el DNI de mi hijo de 25 años para su renovación» como el documento objeto de renovación: se identifica `dni_adulto_renovacion`, **no documentado**, y no se ofrecen requisitos ni fuentes del menor. En B se conserva `dni_menor_renovacion`, sin aclaración innecesaria. C mantiene el primer DNI del menor y D conserva al titular cuando el DNI del padre, madre o representante es apoyo. Una referencia incompleta como «¿Debo presentar el DNI de mi hijo de 25 años?» pide aclaración. Reconocer el rol no acredita identidad, capacidad de representación ni autorización para acompañar.
+
+**P2.5 — funciones `operacion` y `clasificar`:** la negación no reconocía el sustantivo DNI antes de «por primera vez» y solo devolvía un booleano para todas las operaciones. Ahora se detecta y enmascara la expresión negativa antes de buscar afirmaciones, y se devuelve un conjunto local de operaciones rechazadas. Solo se impide heredar la operación efectivamente rechazada. Se contemplan artículos, verbos de solicitud y negaciones compuestas con «tampoco». Sin operación previa, negar primera inscripción no permite inferir renovación. Una afirmación posterior o una alternativa positiva en el mismo turno se sigue reconociendo. El conjunto es interno a la clasificación: no se persiste ni cambia el contrato de la API.
+
+### Matriz acumulativa ejecutada
+
+| Grupo | Regresiones conservadas o añadidas | Resultado |
+| --- | --- | --- |
+| Adulto/menor, primera inscripción/renovación | Auditoría original, edades explícitas, contradicciones, adulto sin corpus | Aprobado |
+| Edad desconocida y aclaración | Completar edad o destinatario preservando renovación; pregunta inicial disponible en el prompt | Aprobado |
+| Titular/acompañante | Orden antes/después, representante, personas en el mismo enunciado, coste posterior | Aprobado |
+| DNI del titular/apoyo documental | P2.4 A–D, sin contexto previo, finalidad ambigua y aclaración posterior | Aprobado |
+| Negación de duplicado | Rechazo, rectificación y selección posterior | Aprobado |
+| Negación de primera inscripción | Seis variantes, sin operación previa, rechazo de operación activa, negaciones múltiples y afirmaciones posteriores | Aprobado |
+| Cambios explícitos | Titular conocido, operación y salida del ámbito DNI | Aprobado |
+| Repreguntas | Plazo, coste y cita conservando operación y fuentes | Aprobado |
+| Sesiones | Credenciales constantes en las secuencias, nueva sesión sin contexto, eliminación y reinicio existentes | Aprobado |
+| Seguridad Fase 1A | HTTP/API/Gradio, privacidad, retención, caducidad, métricas y concurrencia | Aprobado |
+
+Se añaden **28 casos** a los 151 anteriores, incluidos cinco recorridos parametrizados del grafo real con recuperación/LLM simulados. Resultado final: **179 aprobados, 6 de integración excluidos, 12 advertencias de dependencias**, en 4,82 s, Linux/Python 3.11.17. Comando ejecutado:
+
+```bash
+GRADIO_ANALYTICS_ENABLED=False XDG_CACHE_HOME=/tmp/tfm-cache PYTHONDONTWRITEBYTECODE=1 \
+  env -u OPENAI_API_KEY -u TFM_OPENAI_API_KEY \
+  .venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider
+```
+
+`git diff --check` correcto. Comparación con la base: implementaciones de seguridad, cookies, sesiones, privacidad, concurrencia, API/UI, verificador factual, prompts, estado, FAISS, corpus y dependencias intactos. Solo cambian `classification.py`, sus pruebas y esta guía. No se requieren nuevas variables de entorno ni cambios de despliegue.
+
+### Límites y validación local
+
+Las finalidades y negaciones se interpretan mediante patrones, no comprensión lingüística general. Persisten riesgos en referencias a varios titulares, cambios de destinatario sin marcas claras y paráfrasis fuera de la matriz. La categoría de edad no identifica por sí sola a una persona. La aclaración conservadora puede pedir información en frases que una persona comprendería. El corpus adulto sigue ausente y no se habilita ningún nuevo procedimiento. No se ha modificado ni validado de nuevo la calidad factual del generador/verificador; continúa pendiente la Fase 1B.3.
+
+Preparado para revisión y repetición de validación local Windows/Conda/Python 3.11 con los comandos de esta guía. No se ha ejecutado Windows nativo, OpenAI real ni integración FAISS/embeddings externa. Aprobar esta matriz no garantiza ausencia de defectos ni calidad factual del modelo.

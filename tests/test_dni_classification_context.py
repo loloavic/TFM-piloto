@@ -526,3 +526,151 @@ def test_p2_aclaracion_llega_al_generador_con_pregunta_original(motor_local):
     assert '¿Cuánto cuesta renovar el DNI?' in calls['llm'][0]
     assert 'Es para mi hijo de 10 años' in calls['llm'][0]
     assert 'dni_menor_renovacion' in calls['llm'][0]
+
+
+@pytest.mark.parametrize('question,expected,group', [
+    ('¿Debo presentar el DNI de mi hijo de 25 años para su renovación?', 'general', 'adulto'),
+    ('¿Debo presentar el DNI de mi hijo de 10 años para su renovación?', 'dni_menor_renovacion', 'menor'),
+    ('¿Puede acompañarlo mi hijo de 25 años?', 'dni_menor_renovacion', 'menor'),
+    ('¿Debo presentar el DNI de mi hijo de 25 años como documento de apoyo?', 'dni_menor_renovacion', 'menor'),
+    ('¿Debo presentar el DNI del padre como documento de apoyo?', 'dni_menor_renovacion', 'menor'),
+    ('¿Debo presentar el DNI de la madre como documento de apoyo?', 'dni_menor_renovacion', 'menor'),
+    ('¿Debo presentar el DNI del representante como documento de apoyo?', 'dni_menor_renovacion', 'menor'),
+])
+def test_p24_matriz_documento_titular_y_apoyo(question, expected, group):
+    state = turn({}, 'Necesito renovar el DNI de mi hijo de 10 años')
+    state = turn(state, question)
+    assert state['intencion'] == expected
+    assert state['contexto_solicitante']['grupo_edad'] == group
+    assert not state['requiere_aclaracion']
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['contexto_solicitante']['grupo_edad'] == group
+    assert state['operacion_dni'] == 'renovacion'
+    if group == 'adulto':
+        assert state['estado_documental'] == 'no_documentado'
+    else:
+        assert state['intencion'] == 'dni_menor_renovacion'
+
+
+def test_p24_presentar_dni_del_titular_sin_contexto():
+    state = turn({}, '¿Debo presentar el DNI de mi hijo de 10 años para su renovación?')
+    assert state['intencion'] == 'dni_menor_renovacion'
+    assert state['contexto_solicitante']['grupo_edad'] == 'menor'
+
+
+@pytest.mark.parametrize('denial', [
+    'No es DNI por primera vez',
+    'No es el DNI por primera vez',
+    'No es un DNI por primera vez',
+    'No es la primera inscripción',
+    'No es su primer DNI',
+    'No quiero tramitar el DNI por primera vez',
+])
+def test_p25_negacion_ajena_a_operacion_activa_conserva_renovacion(denial):
+    state = turn({}, 'Quiero renovar el DNI de mi hijo menor')
+    state = turn(state, denial)
+    assert state['operacion_dni'] == 'renovacion'
+    assert state['intencion'] == 'dni_menor_renovacion'
+    assert not state['requiere_aclaracion']
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['intencion'] == 'dni_menor_renovacion'
+    state = turn(state, 'En realidad es su primer DNI')
+    assert state['intencion'] == 'dni_menor_primera_vez'
+
+
+@pytest.mark.parametrize('correction,expected', [
+    ('No es DNI por primera vez; quiero renovar el DNI', 'dni_menor_renovacion'),
+    ('No quiero renovar; es DNI por primera vez', 'dni_menor_primera_vez'),
+    ('No es un duplicado; es DNI por primera vez', 'dni_menor_primera_vez'),
+    ('No es DNI por primera vez; tampoco quiero renovar', 'general'),
+])
+def test_p25_rectificaciones_y_negaciones_multiples(correction, expected):
+    state = turn({}, 'Quiero renovar el DNI de mi hijo menor')
+    state = turn(state, correction)
+    assert state['intencion'] == expected
+    if expected == 'general':
+        assert not state['operacion_dni'] and state['requiere_aclaracion']
+
+
+def test_p25_negacion_del_procedimiento_activo_pide_aclaracion():
+    state = turn({}, 'Quiero el primer DNI de mi hijo menor')
+    state = turn(state, 'No es DNI por primera vez')
+    assert not state['operacion_dni'] and state['requiere_aclaracion']
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['requiere_aclaracion']
+    state = turn(state, 'Es una renovación')
+    assert state['intencion'] == 'dni_menor_renovacion'
+
+
+@pytest.mark.parametrize('question', [
+    '¿Debo presentar el DNI de mi hijo de 25 años?',
+    '¿Debo presentar el DNI de mi hijo de 25 años como documento de apoyo para su renovación?',
+])
+def test_p24_documento_con_finalidad_ambigua_pide_aclaracion(question):
+    state = turn({}, 'Necesito renovar el DNI de mi hijo de 10 años')
+    previous_holder = state['contexto_solicitante'].copy()
+    state = turn(state, question)
+    assert state['requiere_aclaracion']
+    assert state['intencion'] == 'general'
+    assert state['contexto_solicitante'] == previous_holder
+    assert not state['operacion_dni']
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['requiere_aclaracion']
+    state = turn(state, 'Quiero renovar el DNI de mi hijo adulto')
+    assert state['tramite_actual'] == 'dni_adulto_renovacion'
+    assert state['estado_documental'] == 'no_documentado'
+
+
+@pytest.mark.parametrize('denial', ['No es DNI por primera vez', 'No es su primer DNI'])
+def test_p25_negacion_sin_operacion_previa_no_infiere_renovacion(denial):
+    state = turn({}, denial)
+    assert state['requiere_aclaracion']
+    assert not state['operacion_dni']
+
+
+@pytest.mark.parametrize('questions,intents', [
+    ([
+        'Necesito renovar el DNI de mi hijo de 10 años',
+        '¿Debo presentar el DNI de mi hijo de 25 años para su renovación?',
+        '¿Cuánto cuesta?',
+    ], ['dni_menor_renovacion', 'general', 'general']),
+    ([
+        'Necesito renovar el DNI de mi hijo de 10 años',
+        '¿Debo presentar el DNI de mi hijo de 10 años para su renovación?',
+        '¿Cuánto demora?', '¿Cuánto cuesta?', '¿Dónde solicito la cita?',
+    ], ['dni_menor_renovacion'] * 5),
+    ([
+        'Mi hijo menor necesita su primer DNI',
+        '¿Puede acompañarlo mi hijo de 25 años?', '¿Cuánto cuesta?',
+    ], ['dni_menor_primera_vez'] * 3),
+    ([
+        'Quiero renovar el DNI de mi hijo menor',
+        'No es DNI por primera vez', '¿Cuánto cuesta?',
+    ], ['dni_menor_renovacion'] * 3),
+    ([
+        'Quiero el primer DNI de mi hijo menor',
+        'No es DNI por primera vez', '¿Cuánto cuesta?',
+        'Es una renovación', '¿Dónde solicito la cita?',
+    ], ['dni_menor_primera_vez', 'general', 'general',
+        'dni_menor_renovacion', 'dni_menor_renovacion']),
+])
+def test_p24_p25_matriz_grafo_sesion_y_fuentes(motor_local, questions, intents):
+    service, calls = motor_local
+    sid = token = None
+    for question, intent in zip(questions, intents):
+        previous_calls = len(calls['llm'])
+        result = service.responder(question, sid, token)
+        if sid:
+            assert result['session_id'] == sid and result['session_token'] == token
+        sid, token = result['session_id'], result['session_token']
+        assert result['intencion'] == intent
+        if intent == 'general':
+            assert not result['fuentes']
+            assert len(calls['llm']) == previous_calls
+        else:
+            assert {s['archivo'] for s in result['fuentes']} == {intent + '.txt'}
+        # Una conversación independiente no hereda ninguna de estas operaciones.
+    other = service.responder('¿Cuánto cuesta?')
+    assert other['session_id'] != sid
+    assert other['intencion'] == 'general' and not other['fuentes']
+    assert not graph_state(service, other['session_id'])['operacion_dni']

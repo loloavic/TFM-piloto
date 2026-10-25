@@ -47,11 +47,33 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
         r'\bacompanad[oa]\s+por\s+(' + persona + r')',
         r'(' + persona + r')\s+(?:(?:puede|debe|podria)\s+)?acompan(?:arlo|arla|arme|arte|arles|arnos|ar)\b',
         r'(' + persona + r')\s+(?:como|(?:puede|debe|podria)\s+ser)\s+(?:acompanante|representante(?: legal)?|apoderad[oa])\b',
-        r'\b(?:presentar|llevar|mostrar|adjuntar)\s+(?:el\s+)?dni\s+de\s+(' + persona + r')',
     )
     for patron in roles:
         texto = re.sub(patron, lambda m: m.group(0)[:m.start(1) - m.start()] +
                        ' persona de apoyo ' + m.group(0)[m.end(1) - m.start():], texto)
+    # Presentar un DNI no implica que sea un documento de apoyo. Examinar
+    # la finalidad local antes de excluir a la persona o actualizar el titular.
+    documento_ambiguo = False
+
+    def documento(match: re.Match) -> str:
+        nonlocal documento_ambiguo
+        finalidad = re.split(r'[.;?!]', texto[match.end():], maxsplit=1)[0]
+        apoyo = bool(re.search(
+            r'\bcomo (?:documento de apoyo|padre|madre|representante|apoderad[oa])\b|'
+            r'\bpara acompanar\b', finalidad))
+        propio = bool(re.search(r'\bpara (?:su|la) renovacion\b|\bpara renovar(?:lo|la)?\b', finalidad))
+        if apoyo and not propio:
+            return match.group(0)[:match.start(1) - match.start()] + ' persona de apoyo '
+        if not propio or apoyo:
+            documento_ambiguo = True
+        return match.group(0)
+
+    texto = re.sub(r'\b(?:presentar|llevar|mostrar|adjuntar)\s+(?:el\s+)?dni\s+de\s+('
+                   + persona + r')', documento, texto)
+    if documento_ambiguo:
+        # No elegir entre el titular activo y el dueño del documento por inercia.
+        return {'grupo_edad': previo.get('grupo_edad', 'desconocido'),
+                'destinatario': previo.get('destinatario', 'desconocido')}, False, True
     # Una negación del grupo no lo convierte en contexto afirmativo.
     texto = re.sub(r'\bno (?:es|soy) (?:para )?(?:un |una )?(?:menor(?: de edad)?|adult[oa]|mayor de edad)\b', ' ', texto)
     child = re.search(r'\b(?:mi|su|el|la|un|una|otro|otra)\s+(hijo|hija|nino|nina|bebe|menor)\b', texto)
@@ -122,12 +144,17 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
     return {'grupo_edad': group, 'destinatario': target}, explicit, conflict
 
 
-def operacion(texto: str) -> tuple[str, bool, bool]:
+def operacion(texto: str) -> tuple[str, bool, set[str]]:
     # La máscara elimina solo la expresión negada, no su corrección posterior.
-    neg_renew = r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
-    neg_first = r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|corresponde)\s+){0,3}(?:la\s+)?(?:por\s+)?(?:primera vez|primera inscripcion|(?:su |el )?primer dni)\b'
-    neg_duplicate = r'\bno\s+(?:(?:quiero|necesito|es)\s+){0,3}(?:un |el )?duplicado(?:\s+(?:de |del )?dni)?\b'
-    denied = bool(re.search(neg_duplicate, texto) or re.search(neg_renew, texto) or re.search(neg_first, texto))
+    neg_renew = r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
+    neg_first = (r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|corresponde)\s+){0,3}'
+                 r'(?:(?:tramitar|solicitar|sacar|obtener)\s+)?'
+                 r'(?:(?:el|un|su|mi|la)\s+)?(?:dni\s+)?(?:por\s+)?'
+                 r'(?:primera vez|primera inscripcion|primer dni)\b')
+    neg_duplicate = r'\b(?:no|tampoco)\s+(?:(?:quiero|necesito|es)\s+){0,3}(?:un |el )?duplicado(?:\s+(?:de |del )?dni)?\b'
+    denied = {nombre for nombre, patron in (
+        ('duplicado', neg_duplicate), ('renovacion', neg_renew), ('primera_vez', neg_first)
+    ) if re.search(patron, texto)}
     texto = re.sub(neg_duplicate, ' ', texto)
     positive = re.sub(neg_first, ' ', re.sub(neg_renew, ' ', texto))
     first = bool(re.search(r'primera vez|primera inscripcion|primer dni|\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive))
@@ -136,7 +163,7 @@ def operacion(texto: str) -> tuple[str, bool, bool]:
     if duplicate:
         return ('', True, denied) if first or renewal else ('duplicado', False, denied)
     if re.search(r'\bduplicado\b', positive):
-        return '', False, True  # No heredarlo como una renovación sin aclarar objeto.
+        return '', False, denied | {'sin_objeto'}  # Aclarar objeto antes de heredar.
     return ('primera_vez' if first and not renewal else 'renovacion' if renewal and not first else ''), first and renewal, denied
 
 
@@ -175,7 +202,7 @@ def clasificar(state: dict) -> dict:
     scope = dni or bool(previous)
     if not scope:
         operation = ''
-    if not operation and not conflict_op and not denied:
+    if not operation and not conflict_op and previous_op not in denied and 'sin_objeto' not in denied:
         # No trasladar una operación a un titular nuevo por mera inercia.
         changed_holder = (explicit_holder and context.get('destinatario', 'desconocido') != 'desconocido'
                           and holder['destinatario'] != context.get('destinatario'))
