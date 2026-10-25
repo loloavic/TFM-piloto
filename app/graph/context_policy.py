@@ -3,6 +3,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from app.graph.canonical_delta import DeltaCanonico
     from app.graph.interpretation_contract import InterpretacionTurno
 
 from app.graph.state import ContextoCanonico, DatoContextual, EvidenciaTurno
@@ -59,7 +60,8 @@ def validar_contexto(c: dict) -> bool:
         # Solo los contextos V2 incorporan estas dimensiones. V1 no cambia.
         for field, allowed in {'dni_previo': {'si', 'no'},
                                'funcion_documento': {'titular', 'apoyo'},
-                               'relacion': {'descendiente', 'ascendiente', 'propio', 'otra'}}.items():
+                               'relacion': {'descendiente', 'ascendiente', 'propio', 'otra'},
+                               'objetivo': {'identificado'}}.items():
             if field not in c:
                 continue
             d = c[field]
@@ -74,15 +76,20 @@ def validar_contexto(c: dict) -> bool:
                     or (d['estado'] == 'desconocido' and d['valor'])):
                 return False
             reason = ('documento' if field == 'funcion_documento' else
-                      'titular' if field == 'relacion' else field)
+                      'titular' if field in {'relacion', 'objetivo'} else field)
             if d['estado'] == 'conflicto' and reason not in c['pendientes']:
-                return False
+                if not (field == 'relacion' and c.get('objetivo', {}).get('estado') == 'confirmado'):
+                    return False
         if ('dni_previo' in c and c['dni_previo']['estado'] == 'confirmado'
                 and c['operacion']['estado'] == 'confirmado'
                 and ((c['operacion']['valor'] == 'primera_vez' and c['dni_previo']['valor'] == 'si')
                      or (c['operacion']['valor'] in {'renovacion', 'duplicado'}
                          and c['dni_previo']['valor'] == 'no'))
                 and 'dni_previo' not in c['pendientes']):
+            return False
+        if ('objetivo' in c and c['objetivo']['estado'] != 'confirmado'
+                and c['ambito'] == 'dni' and c['tema'] != 'seguimiento'
+                and 'titular' not in c['pendientes']):
             return False
         if c['operacion']['valor'] in c['rechazadas']:
             return False
@@ -277,28 +284,45 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
     return c
 
 
-def transicionar_v2(
-    anterior: ContextoCanonico, interpretacion: 'InterpretacionTurno',
+def transicionar_v2(anterior: ContextoCanonico, interpretacion: 'InterpretacionTurno') -> ContextoCanonico:
+    """Entrada de compatibilidad 2.2; normalizador distinto, una sola política."""
+    from app.graph.canonical_delta import normalizar_v22
+    return transicionar_delta(anterior, normalizar_v22(interpretacion))
+
+
+def transicionar_delta(
+    anterior: ContextoCanonico, interpretacion: 'DeltaCanonico',
 ) -> ContextoCanonico:
     """Política V2 optativa; no es llamada por clasificación/grafo V1.
 
     Revalidación defensiva también para llamadas directas. Las referencias se
     comprueban, pero nunca se reescriben como evidencia del turno actual.
     """
-    from app.graph.interpretation_contract import InterpretacionTurno
+    from app.graph.canonical_delta import DeltaCanonico, SeleccionObjetivo, ReferenciaObjetivo
 
     if not validar_contexto(anterior):
         raise ValueError('Contexto canónico inválido')
-    interpretacion = InterpretacionTurno.model_validate(interpretacion.model_dump())
+    interpretacion = DeltaCanonico.model_validate(interpretacion.model_dump())
+    if 'objetivo' in anterior and not interpretacion.objetivo.neutral:
+        raise ValueError('estado_version_incompatible')
     c = deepcopy(anterior)
     c['turno'] += 1
     c['retomar'] = ''
+    neutral = interpretacion.objetivo.neutral or 'objetivo' in c
+    target_field = 'objetivo' if neutral else 'titular'
+    if neutral and 'objetivo' not in c:
+        # Migración explícita de estado legado validado: conserva procedencia,
+        # turno y revisión. No vuelve a confirmar hechos históricos.
+        old = c['titular']
+        c['objetivo'] = (dict(old, valor='identificado')
+            if old['estado'] == 'confirmado' and 'titular' not in c['pendientes']
+            else dato(revision=c['revision']))
     before_topic = c['consulta_pendiente']
     had_pending = bool(c['pendientes'])
     reasons = {'ambito': 'tramite', 'tema': 'tramite', 'referencia': 'titular',
                'referencia_titular': 'titular', 'funcion_documento': 'documento',
-               'relacion': 'titular'}
-    fields = ('titular', 'edad', 'operacion', 'dni_previo', 'funcion_documento', 'relacion')
+               'relacion': 'titular', 'objetivo': 'titular'}
+    fields = (target_field, 'edad', 'operacion', 'dni_previo', 'funcion_documento', 'relacion')
     for field in ('dni_previo', 'funcion_documento'):
         c.setdefault(field, dato(revision=c['revision']))
     if any(e.dimension == 'relacion' for e in interpretacion.evidencias):
@@ -308,8 +332,11 @@ def transicionar_v2(
                   and e.acto != 'negacion' for e in interpretacion.evidencias)
     blocks = {reasons.get(x, x): 'faltante' for x in interpretacion.faltantes}
     blocks.update({reasons.get(x, x): 'contradiccion' for x in interpretacion.contradicciones})
-    if not interpretacion.evidencias:
+    goal = interpretacion.objetivo
+    if not interpretacion.evidencias and goal.identificacion == 'no_mencionado':
         blocks['tramite'] = 'contradiccion'
+    if goal.identificacion in {'multiple', 'ambiguo'}:
+        blocks['titular'] = 'contradiccion'
     positive = {}
     negative = {}
     references = []
@@ -335,14 +362,25 @@ def transicionar_v2(
             blocks[reasons.get(dim, dim)] = 'contradiccion'
     selected = {dim: max(items, key=lambda e: e.acto in {'aclaracion', 'solicitud_afirmativa'})
                 for dim, items in positive.items() if reasons.get(dim, dim) not in blocks}
-    holder = selected.get('titular')
+    holder = selected.get(target_field)
+    if neutral and goal.identificacion == 'explicito_unico' and 'titular' not in blocks:
+        holder = SeleccionObjetivo()
+        selected[target_field] = holder
+    if neutral and goal.identificacion == 'referencia_contextual':
+        if c[target_field]['estado'] != 'confirmado' or 'titular' in c['pendientes']:
+            blocks['titular'] = 'contradiccion'
     ref = selected.get('referencia_titular')
+    if neutral and goal.referente != 'ninguno':
+        ref = ReferenciaObjetivo(valor=goal.referente)
+    if neutral and goal.identificacion == 'explicito_unico':
+        # Seleccionar resuelve la duda de objetivo, no edad u operación.
+        c['pendientes'].pop('titular', None)
     same_referent = bool(ref and ref.valor == 'actual' and
-                         anterior['titular']['estado'] == 'confirmado' and
+                         anterior.get(target_field, anterior['titular'])['estado'] == 'confirmado' and
                          'titular' not in anterior['pendientes'] and 'titular' not in blocks)
     changed = (ref is not None and ref.valor == 'otro') or (
-        holder is not None and c['titular']['estado'] == 'confirmado'
-        and holder.valor != c['titular']['valor'] and not same_referent)
+        holder is not None and c[target_field]['estado'] == 'confirmado'
+        and holder.valor != c[target_field]['valor'] and not same_referent)
     if changed or 'titular' in blocks:
         # Incluso la misma categoría puede representar a otra persona.
         revision, turno = c['revision'] + 1, c['turno']
@@ -350,6 +388,8 @@ def transicionar_v2(
         c['ambito'] = anterior['ambito']
         for field in ('dni_previo', 'funcion_documento'):
             c[field] = dato(revision=revision)
+        if neutral:
+            c[target_field] = dato(revision=revision)
         if not holder or 'titular' in blocks:
             blocks['titular'] = 'contradiccion'
             c['rechazadas'] = list(anterior['rechazadas'])
@@ -357,13 +397,13 @@ def transicionar_v2(
         selected.get('ambito') and selected['ambito'].valor == 'dni'
         and selected.get('tema') and selected['tema'].valor == 'seguimiento'
         and selected['tema'].acto in {'solicitud_afirmativa', 'aclaracion'})
-    if (ref and ref.valor == 'actual' and c['titular']['estado'] != 'confirmado'
+    if (ref and ref.valor == 'actual' and c[target_field]['estado'] != 'confirmado'
             and not holder and not generic_status_request):
         blocks['titular'] = 'contradiccion'
     for e in references:
         dim = e.dimension
         compatible = (not changed and 'titular' not in blocks
-                      and c['titular']['estado'] == 'confirmado')
+                      and c[target_field]['estado'] == 'confirmado')
         if dim in fields:
             compatible = (compatible and c.get(dim, dato())['estado'] == 'confirmado'
                           and c[dim]['valor'] == e.valor)
@@ -377,7 +417,7 @@ def transicionar_v2(
             compatible = False
         if not compatible or e.acto == 'negacion':
             blocks[reasons.get(dim, dim)] = 'contradiccion'
-    full_request = (all(dim in selected for dim in ('titular', 'edad', 'operacion', 'ambito'))
+    full_request = (all(dim in selected for dim in (target_field, 'edad', 'operacion', 'ambito'))
                     and selected['ambito'].valor == 'dni'
                     and selected['operacion'].acto == 'solicitud_afirmativa')
     # Un fallo genérico no se cierra por una palabra temática o una referencia.
@@ -406,17 +446,24 @@ def transicionar_v2(
         reason = reasons.get(dim, dim)
         if not e or reason in blocks or 'titular' in blocks:
             continue
-        if dim == 'relacion' and not holder and c['titular']['estado'] != 'confirmado':
+        if dim == 'relacion' and not holder and c[target_field]['estado'] != 'confirmado':
             blocks['titular'] = 'contradiccion'
             continue
         old = c.get(dim, dato(revision=c['revision']))
         explicit = e.acto in {'solicitud_afirmativa', 'aclaracion'}
+        if dim == 'objetivo':
+            explicit = True  # Prueba de identificación, nunca aceptación de operación.
         if (dim == 'relacion' and old['estado'] == 'confirmado' and old['valor'] != e.valor
                 and not same_referent and not changed):
             blocks['titular'] = 'contradiccion'
             continue
         if (dim == 'operacion' and e.valor in c['rechazadas']
                 and e.acto != 'solicitud_afirmativa'):
+            blocks['operacion'] = 'contradiccion'
+            continue
+        if (dim == 'operacion' and e.acto == 'aclaracion'
+                and not (old['estado'] == 'confirmado' and old['valor'] == e.valor)
+                and c['propuesta_operacion'] != e.valor):
             blocks['operacion'] = 'contradiccion'
             continue
         if dim == 'operacion' and not explicit:
@@ -427,7 +474,7 @@ def transicionar_v2(
             if not (dim == 'edad' and old['estado'] == 'confirmado' and old['valor'] == e.valor):
                 continue
         if (old['estado'] == 'confirmado' and old['valor'] != e.valor and not explicit
-                and not (dim == 'titular' and same_referent)):
+                and not (dim == target_field and same_referent)):
             blocks[reason] = 'contradiccion'
             continue
         c[dim] = dato(e.valor, c['turno'], c['revision'],
@@ -443,9 +490,14 @@ def transicionar_v2(
     if (c['tema'] == 'seguimiento' and c['operacion']['estado'] != 'confirmado'
             and (not topic or topic.acto not in {'solicitud_afirmativa', 'aclaracion'})):
         blocks['tramite'] = 'faltante'
-    if ((c['titular']['valor'] == 'adulto' and c['edad']['valor'] == 'menor') or
-            (c['titular']['valor'] == 'menor' and c['edad']['valor'] == 'adulto')):
+    if not neutral and ((c[target_field]['valor'] == 'adulto' and c['edad']['valor'] == 'menor') or
+            (c[target_field]['valor'] == 'menor' and c['edad']['valor'] == 'adulto')):
         blocks['edad'] = 'contradiccion'
+    if neutral and interpretacion.incertidumbre_relacion:
+        c['relacion'] = dato(turno=c['turno'], revision=c['revision'],
+                             estado='conflicto', origen='observacion')
+        if c[target_field]['estado'] != 'confirmado':
+            blocks['titular'] = 'contradiccion'
     op = c['operacion']['valor']
     prior = c.get('dni_previo', dato())
     if (prior['estado'] == 'confirmado' and
@@ -459,10 +511,10 @@ def transicionar_v2(
     if c['ambito'] != 'dni':
         blocks.setdefault('tramite', 'faltante')
     if c['tema'] != 'seguimiento' and c['ambito'] == 'dni':
-        required = ('titular', 'operacion') if op == 'duplicado' else ('titular', 'edad', 'operacion')
+        required = (target_field, 'operacion') if op == 'duplicado' else (target_field, 'edad', 'operacion')
         for dim in required:
             if c[dim]['estado'] != 'confirmado':
-                c['pendientes'].setdefault(dim, 'faltante')
+                c['pendientes'].setdefault('titular' if dim == 'objetivo' else dim, 'faltante')
     c['pendientes'].update(blocks)
     if c['pendientes']:
         c['consulta_pendiente'] = (topic.valor if topic else before_topic or anterior['tema'])

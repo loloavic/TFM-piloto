@@ -1,6 +1,6 @@
 # TFM-piloto V2 — Contrato e integración determinista
 
-La sección V2.2E al final describe la propuesta preparatoria actual; el contrato operativo sigue siendo 2.2 y las secciones anteriores conservan las decisiones de cada entrega. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
+La sección V2.2F al final describe la integración determinista experimental; el productor operativo sigue emitiendo 2.2 y las secciones anteriores conservan las decisiones de cada entrega. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
 
 ## Fase V2.1 (referencia histórica)
 
@@ -228,3 +228,8 @@ Se corrigen C1–C4 y C6 en contrato/esquema y transición V2, sin modificar V1 
 ## Fase V2.2E — Contrato candidato aislado (actual)
 
 Se añade la candidata `2.3-candidata-1` con objetivo neutral, hechos tipados y actos de operación en campos fijos, sin listas de requisitos administrativos. No sustituye el contrato 2.2 ni modifica productor, adaptador o decisiones. Solo se amplía el diagnóstico opcional de duplicaciones con cinco códigos específicos. La [propuesta y migración explícita](v2.2e-contrato-candidato.md) documenta comparación, ejemplo, cobertura de 29 turnos, límites y retirada futura del productor anterior para mantener una sola política canónica.
+
+
+## Fase V2.2F — Integración determinista compartida (actual)
+
+Los normalizadores explícitos 2.2 y 2.3 producen un `DeltaCanonico` común. Una sola transición V2 (`transicionar_delta`) consume ese delta; `transicionar_v2` es un wrapper de compatibilidad y el selector `ruta_documental` no cambia. Se representa el objetivo neutral sin categorías familiares artificiales y se preservan vigencia, revisiones y rechazos. La [guía de integración](v2.2f-integracion-determinista.md) documenta límites de versión, trazas, migración y evaluación real de la política sobre fixtures: 29/29 decisiones, 17/17 positivas y cero incorrectas en cada versión/modalidad. No hay productor LLM candidato ni conexión Gradio/FastAPI.

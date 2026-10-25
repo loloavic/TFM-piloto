@@ -10,12 +10,12 @@ from app.graph.interpretation_contract import validar_interpretacion
 def _contexto_adaptable(c):
     if c is None:
         return True
-    allowed = set(contexto_inicial()) | {'dni_previo', 'funcion_documento', 'relacion'}
+    allowed = set(contexto_inicial()) | {'dni_previo', 'funcion_documento', 'relacion', 'objetivo'}
     if type(c) is not dict or set(c) - allowed or not validar_contexto(c):
         return False
     if any(type(c[k]) is not int for k in ('turno', 'revision')):
         return False
-    for field in ('titular', 'edad', 'operacion', 'dni_previo', 'funcion_documento', 'relacion'):
+    for field in ('titular', 'edad', 'operacion', 'dni_previo', 'funcion_documento', 'relacion', 'objetivo'):
         if field not in c:
             continue
         d = c[field]

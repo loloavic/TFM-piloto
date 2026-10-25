@@ -1,0 +1,637 @@
+{
+  "modalidad": "fixtures_sin_llm",
+  "ejemplos": [
+    {
+      "escenario": "E01",
+      "turno": 2,
+      "codigo": "ok",
+      "ruta": "dni_menor_renovacion",
+      "ruta_esperada": "dni_menor_renovacion",
+      "decision": "documentada",
+      "decision_esperada": "documentada",
+      "correcta": true,
+      "traza": {
+        "turno": 2,
+        "revision": 0,
+        "campos": {
+          "objetivo": {
+            "antes": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "titular": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "edad": {
+            "antes": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          },
+          "operacion": {
+            "antes": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "dni_previo": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "funcion_documento": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "relacion": {
+            "antes": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          }
+        },
+        "pendientes_antes": {},
+        "pendientes_despues": {},
+        "cambio_revision": false,
+        "delta": {
+          "objetivo": {
+            "identificacion": "referencia_contextual",
+            "referente": "actual",
+            "neutral": true
+          },
+          "evidencias": [
+            {
+              "dimension": "tema",
+              "valor": "coste",
+              "acto": "solicitud_afirmativa",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            }
+          ],
+          "faltantes": [],
+          "contradicciones": [],
+          "incertidumbre_relacion": false
+        }
+      }
+    },
+    {
+      "escenario": "E04",
+      "turno": 2,
+      "codigo": "ok",
+      "ruta": "",
+      "ruta_esperada": "",
+      "decision": "abstencion",
+      "decision_esperada": "abstencion",
+      "correcta": true,
+      "traza": {
+        "turno": 2,
+        "revision": 1,
+        "campos": {
+          "objetivo": {
+            "antes": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "identificado",
+              "turno": 2,
+              "revision": 1,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "titular": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 1,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "edad": {
+            "antes": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "adulto",
+              "turno": 2,
+              "revision": 1,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          },
+          "operacion": {
+            "antes": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "renovacion",
+              "turno": 2,
+              "revision": 1,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "dni_previo": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 1,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "funcion_documento": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 1,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "relacion": {
+            "antes": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "ascendiente",
+              "turno": 2,
+              "revision": 1,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          }
+        },
+        "pendientes_antes": {},
+        "pendientes_despues": {},
+        "cambio_revision": true,
+        "delta": {
+          "objetivo": {
+            "identificacion": "explicito_unico",
+            "referente": "otro",
+            "neutral": true
+          },
+          "evidencias": [
+            {
+              "dimension": "ambito",
+              "valor": "dni",
+              "acto": "observacion",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            },
+            {
+              "dimension": "tema",
+              "valor": "requisitos",
+              "acto": "solicitud_afirmativa",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            },
+            {
+              "dimension": "edad",
+              "valor": "adulto",
+              "acto": "observacion",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            },
+            {
+              "dimension": "relacion",
+              "valor": "ascendiente",
+              "acto": "observacion",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            },
+            {
+              "dimension": "operacion",
+              "valor": "renovacion",
+              "acto": "solicitud_afirmativa",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            }
+          ],
+          "faltantes": [],
+          "contradicciones": [],
+          "incertidumbre_relacion": false
+        }
+      }
+    },
+    {
+      "escenario": "E05",
+      "turno": 2,
+      "codigo": "ok",
+      "ruta": "",
+      "ruta_esperada": "",
+      "decision": "aclaracion",
+      "decision_esperada": "aclaracion",
+      "correcta": true,
+      "traza": {
+        "turno": 2,
+        "revision": 0,
+        "campos": {
+          "objetivo": {
+            "antes": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "titular": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "edad": {
+            "antes": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          },
+          "operacion": {
+            "antes": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "dni_previo": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "funcion_documento": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "relacion": {
+            "antes": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          }
+        },
+        "pendientes_antes": {},
+        "pendientes_despues": {
+          "operacion": "faltante"
+        },
+        "cambio_revision": false,
+        "delta": {
+          "objetivo": {
+            "identificacion": "no_mencionado",
+            "referente": "ninguno",
+            "neutral": true
+          },
+          "evidencias": [
+            {
+              "dimension": "operacion",
+              "valor": "renovacion",
+              "acto": "negacion",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            }
+          ],
+          "faltantes": [],
+          "contradicciones": [],
+          "incertidumbre_relacion": false
+        }
+      }
+    },
+    {
+      "escenario": "E07",
+      "turno": 2,
+      "codigo": "ok",
+      "ruta": "",
+      "ruta_esperada": "",
+      "decision": "aclaracion",
+      "decision_esperada": "aclaracion",
+      "correcta": true,
+      "traza": {
+        "turno": 2,
+        "revision": 0,
+        "campos": {
+          "objetivo": {
+            "antes": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "identificado",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "titular": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "edad": {
+            "antes": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "menor",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          },
+          "operacion": {
+            "antes": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            },
+            "despues": {
+              "valor": "renovacion",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "explicito"
+            }
+          },
+          "dni_previo": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "funcion_documento": {
+            "antes": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            },
+            "despues": {
+              "valor": "",
+              "turno": 0,
+              "revision": 0,
+              "estado": "desconocido",
+              "origen": "ausente"
+            }
+          },
+          "relacion": {
+            "antes": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            },
+            "despues": {
+              "valor": "descendiente",
+              "turno": 1,
+              "revision": 0,
+              "estado": "confirmado",
+              "origen": "observacion"
+            }
+          }
+        },
+        "pendientes_antes": {},
+        "pendientes_despues": {
+          "edad": "contradiccion"
+        },
+        "cambio_revision": false,
+        "delta": {
+          "objetivo": {
+            "identificacion": "no_mencionado",
+            "referente": "ninguno",
+            "neutral": true
+          },
+          "evidencias": [
+            {
+              "dimension": "edad",
+              "valor": "adulto",
+              "acto": "observacion",
+              "origen": "explicito_turno",
+              "sujeto": "objetivo"
+            }
+          ],
+          "faltantes": [],
+          "contradicciones": [],
+          "incertidumbre_relacion": false
+        }
+      }
+    }
+  ]
+}

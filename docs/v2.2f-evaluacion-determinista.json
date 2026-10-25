@@ -1,0 +1,56 @@
+{
+  "base_commit": "b6bcd2a",
+  "sin_openai": true,
+  "politica": "context_policy.transicionar_delta",
+  "seleccion": "context_policy.ruta_documental",
+  "evaluaciones_separadas": {
+    "2.2": {
+      "conversacion": {
+        "version": "2.2",
+        "modalidad": "fixtures_sin_llm",
+        "modo": "conversacion",
+        "turnos": 29,
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "correctas": 29,
+        "satisfactoria": true
+      },
+      "aislados": {
+        "version": "2.2",
+        "modalidad": "fixtures_sin_llm",
+        "modo": "aislados",
+        "turnos": 29,
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "correctas": 29,
+        "satisfactoria": true
+      }
+    },
+    "2.3-candidata-1": {
+      "conversacion": {
+        "version": "2.3-candidata-1",
+        "modalidad": "fixtures_sin_llm",
+        "modo": "conversacion",
+        "turnos": 29,
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "correctas": 29,
+        "satisfactoria": true
+      },
+      "aislados": {
+        "version": "2.3-candidata-1",
+        "modalidad": "fixtures_sin_llm",
+        "modo": "aislados",
+        "turnos": 29,
+        "positivas_esperadas": 17,
+        "positivas_autorizadas": 17,
+        "autorizaciones_incorrectas": 0,
+        "correctas": 29,
+        "satisfactoria": true
+      }
+    }
+  }
+}

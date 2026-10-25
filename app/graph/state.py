@@ -41,6 +41,7 @@ class ContextoCanonico(TypedDict):
     # Extensiones optativas V2; ausentes en el recorrido V1.
     dni_previo: NotRequired[DatoContextual]
     funcion_documento: NotRequired[DatoContextual]
+    objetivo: NotRequired[DatoContextual]  # Solo prueba neutral, no parentesco/edad.
     relacion: NotRequired[DatoContextual]  # Informativa, no selecciona persona ni edad.
 
 
