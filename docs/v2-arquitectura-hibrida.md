@@ -1,6 +1,6 @@
 # TFM-piloto V2 — Contrato e integración determinista
 
-La sección V2.2A al final describe el estado actual. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
+La sección V2.2B al final describe el estado actual; V2.2A conserva su integración determinista. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
 
 ## Fase V2.1 (referencia histórica)
 
@@ -206,3 +206,10 @@ export GRADIO_ANALYTICS_ENABLED=False PYTHONDONTWRITEBYTECODE=1
 ```
 
 Riesgos residuales: el adaptador depende de que la interpretación identifique correctamente actos y cambios de titular; no certifica comprensión lingüística. La resolución de referencias es deliberadamente conservadora: temas referenciados y sujetos ajenos requieren aclaración. Los bloqueos genéricos pueden pedir repetir categorías. No se certifican aún un intérprete LLM real, integración Gradio/LangGraph V2, Windows nativo ni calidad factual del RAG. Ninguna elegibilidad documental equivale a recuperar fuentes o generar una respuesta. `main` y el PR #2 permanecen sin modificar.
+
+
+## Fase V2.2B — Intérprete estructurado optativo (actual)
+
+Se incorpora `InterpretationService`, que minimiza el mensaje actual, resume el canónico por categorías, solicita JSON Schema estricto a OpenAI Responses y revalida la respuesta antes de llamar al adaptador. No se conecta al clasificador, grafo o interfaz activos. La autoridad documental continúa en `context_policy`.
+
+La [guía del intérprete y evaluación](v2-interprete-llm.md) describe el diseño, diagrama actualizado, matriz de 14 conversaciones/29 turnos, métricas semánticas, manejo seguro de errores, costes y límites. El CLI `scripts/evaluate_v2_interpretation.py` usa fixtures sin red por defecto; `--real` requiere solicitud explícita y configuración OpenAI. No se ha ejecutado una evaluación remota. Los resultados simulados no demuestran comprensión del LLM.
