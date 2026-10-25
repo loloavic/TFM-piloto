@@ -125,7 +125,7 @@ def evaluar(service, *, modalidad, escenarios=ESCENARIOS, simulado=None,
         'tokens_entrada', 'tokens_salida', 'interpretacion_semantica_correcta',
         'transicion_canonica_correcta', 'decision_documental_correcta',
         'contexto_entrada_conforme_referencia')}
-    report = dict(version_evaluacion='v2.2c-1', version_prompt=PROMPT_VERSION,
+    report = dict(version_evaluacion='v2.2d-1', version_prompt=PROMPT_VERSION,
                 version_rubrica='v2.2c-1', modo_turnos=modo_turnos, diagnostico=diagnostico,
                 huella_referencias=sha256(json.dumps(references,sort_keys=True).encode()).hexdigest(),
                 turnos_programados=planned,
@@ -155,6 +155,13 @@ def evaluar(service, *, modalidad, escenarios=ESCENARIOS, simulado=None,
         'transicion_controlada': stage_metric('transicion_canonica_correcta', 'transicion_evaluable'),
         'decision_documental': stage_metric('decision_documental_correcta'),
     }
+    positives = [r for r in rows if r['ruta_esperada']]
+    report['cobertura_documental'] = {
+        'positivas_esperadas': len(positives),
+        'positivas_correctamente_autorizadas': sum(bool(r['ruta_obtenida']) and r['ruta_correcta'] for r in positives),
+        'autorizaciones_totales': sum(bool(r['ruta_obtenida']) for r in rows),
+        'autorizaciones_incorrectas': sums['ruta_incorrectamente_autorizada'],
+    }
     report['satisfactoria'] = evaluacion_satisfactoria(report)
     return report
 
@@ -166,7 +173,9 @@ def evaluacion_satisfactoria(report):
         and report.get('turnos_no_ejecutados') == 0 and not report.get('interrumpida', True)
         and all(all(row.get(key) is True for key in (
             'contrato_valido', 'interpretacion_semantica_correcta',
-            'transicion_canonica_correcta', 'decision_documental_correcta')) for row in rows))
+            'transicion_canonica_correcta', 'decision_documental_correcta'))
+            and row.get('ruta_obtenida') == row.get('ruta_esperada')
+            and row.get('decision_obtenida') == row.get('decision_esperada') for row in rows))
 
 
 def main(argv=None):

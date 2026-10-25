@@ -214,10 +214,10 @@ def test_observacion_seguimiento_no_inicia_solicitud():
         e('tema', 'seguimiento', 'solicitud_afirmativa'))) == 'dni_consulta_estado'
 
 
-def test_referencia_actual_sin_titular_no_autoriza():
+def test_referencia_actual_seguimiento_generico_no_exige_titular():
     c = turn(None, e('ambito', 'dni'), e('referencia_titular', 'actual'),
              e('tema', 'seguimiento', 'solicitud_afirmativa'))
-    assert not ruta_documental(c)
+    assert ruta_documental(c) == 'dni_consulta_estado'
 
 
 def test_fallo_de_transicion_no_devuelve_ruta_historica(monkeypatch):
@@ -264,5 +264,7 @@ def test_rechazo_y_afirmacion_mismo_turno_bloquean():
 def test_entrada_directa_politica_vacia_tambien_bloquea():
     from app.graph.context_policy import transicionar_v2
     from app.graph.interpretation_contract import InterpretacionTurno
-    c = transicionar_v2(base(), InterpretacionTurno.model_validate(packet()))
-    assert validar_contexto(c) and not ruta_documental(c)
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError):
+        transicionar_v2(base(), InterpretacionTurno.model_construct(**packet()))
+    assert not ruta_documental(turn(base()))

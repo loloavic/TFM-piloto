@@ -29,10 +29,13 @@ def declaraciones_seguras(model):
         try:
             checked = InterpretacionTurno.model_validate(model.model_dump())
             return dict(faltantes_declarados=list(checked.faltantes),
-                        contradicciones_declaradas=list(checked.contradicciones))
+                        contradicciones_declaradas=list(checked.contradicciones),
+                        no_mencionadas=list(checked.no_mencionadas),
+                        no_aplicables=list(checked.no_aplicables))
         except (ValidationError, AttributeError, TypeError, ValueError):
             pass
-    return dict(faltantes_declarados=[], contradicciones_declaradas=[])
+    return dict(faltantes_declarados=[], contradicciones_declaradas=[],
+                no_mencionadas=[], no_aplicables=[])
 
 
 def clave_semantica(e, anterior):
@@ -140,7 +143,7 @@ def diagnostico_turno(result, anterior, referencia, etapas, documental_correcta)
     allowed_codes = {'metadatos_invalidos', 'limite_excedido', 'tipo_invalido',
         'evidencia_vacia', 'campo_faltante', 'campo_extra', 'valor_no_permitido',
         'dimension_valor_incompatible', 'duplicado', 'tipo_o_validacion_no_clasificada',
-        'json_invalido', 'clave_duplicada'}
+        'json_invalido', 'clave_duplicada', 'presencia_incompatible'}
     validation = getattr(result, 'diagnostico', None) or {}
     codes = validation.get('errores_validacion', [])
     return dict(etapa_discrepancia=stage, testigos_categoricos=witnesses,

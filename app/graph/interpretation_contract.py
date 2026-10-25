@@ -6,7 +6,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 Dimension = Literal['ambito', 'titular', 'edad', 'operacion', 'tema',
-                    'dni_previo', 'funcion_documento', 'referencia_titular']
+                    'dni_previo', 'funcion_documento', 'referencia_titular', 'relacion']
 Acto = Literal['solicitud_afirmativa', 'negacion', 'observacion', 'aclaracion']
 Motivo = Literal['ambito', 'titular', 'edad', 'operacion', 'tema', 'dni_previo',
                  'documento', 'referencia', 'contradiccion']
@@ -23,11 +23,12 @@ VALORES = {
     'dni_previo': {'si', 'no', 'desconocido'},
     'funcion_documento': {'titular', 'apoyo', 'ambigua', 'desconocido'},
     'referencia_titular': {'actual', 'otro', 'varios', 'ambigua'},
+    'relacion': {'descendiente', 'ascendiente', 'propio', 'otra', 'desconocido'},
 }
 Valor = Literal['dni', 'fuera_alcance', 'desconocido', 'descendiente', 'menor',
                 'adulto', 'propio', 'primera_vez', 'renovacion', 'duplicado',
                 'requisitos', 'coste', 'plazo', 'cita', 'seguimiento', 'otra',
-                'si', 'no', 'titular', 'apoyo', 'ambigua', 'actual', 'otro', 'varios']
+                'si', 'no', 'titular', 'apoyo', 'ambigua', 'actual', 'otro', 'varios', 'ascendiente']
 
 
 class Estricto(BaseModel):
@@ -51,18 +52,27 @@ class EvidenciaInterpretada(Estricto):
 
 
 class InterpretacionTurno(Estricto):
-    version: Literal['2.1']
-    evidencias: list[EvidenciaInterpretada] = Field(max_length=32)
+    version: Literal['2.1', '2.2']
+    evidencias: list[EvidenciaInterpretada] = Field(min_length=1, max_length=32)
     faltantes: list[Motivo] = Field(max_length=9)
     contradicciones: list[Motivo] = Field(max_length=9)
+
+    no_mencionadas: list[Dimension] = Field(default_factory=list, max_length=9)
+    no_aplicables: list[Dimension] = Field(default_factory=list, max_length=9)
 
     @model_validator(mode='after')
     def sin_duplicados(self) -> Self:
         keys = [tuple(e.model_dump().values()) for e in self.evidencias]
         if (len(set(keys)) != len(keys)
                 or len(set(self.faltantes)) != len(self.faltantes)
-                or len(set(self.contradicciones)) != len(self.contradicciones)):
+                or len(set(self.contradicciones)) != len(self.contradicciones)
+                or len(set(self.no_mencionadas)) != len(self.no_mencionadas)
+                or len(set(self.no_aplicables)) != len(self.no_aplicables)):
             raise ValueError('duplicados')
+        absent = set(self.no_mencionadas) | set(self.no_aplicables)
+        if (set(self.no_mencionadas) & set(self.no_aplicables)
+                or absent & {e.dimension for e in self.evidencias}):
+            raise ValueError('presencia_incompatible')
         return self
 
 
@@ -118,7 +128,8 @@ def validar_interpretacion(entrada: object, salida: object) -> ResultadoInterpre
     negadas: dict[str, set[str]] = {}
     for e in data.evidencias:
         motivo: Motivo = ('documento' if e.dimension == 'funcion_documento' else
-                          'referencia' if e.dimension == 'referencia_titular' else e.dimension)
+                          'referencia' if e.dimension == 'referencia_titular' else
+                          'titular' if e.dimension == 'relacion' else e.dimension)
         if e.sujeto != 'objetivo' or e.origen == 'referencia_contextual':
             dudas.add('titular' if e.sujeto != 'objetivo' else motivo)
             continue

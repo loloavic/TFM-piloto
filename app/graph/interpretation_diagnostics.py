@@ -30,12 +30,13 @@ def diagnosticar_validacion(entrada, salida):
         codes = set()
         for item in error.errors(include_input=False, include_url=False):
             code = {'missing': 'campo_faltante', 'extra_forbidden': 'campo_extra',
-                    'literal_error': 'valor_no_permitido', 'too_long': 'limite_excedido'}.get(item['type'])
+                    'literal_error': 'valor_no_permitido', 'too_long': 'limite_excedido',
+                    'too_short': 'evidencia_vacia'}.get(item['type'])
             if code is None and item['type'] == 'value_error':
                 # Mensajes de validadores locales conocidos; jamás serializar ctx.
                 message = str(item.get('ctx', {}).get('error', ''))
                 code = {'valor_incompatible': 'dimension_valor_incompatible',
-                        'duplicados': 'duplicado'}.get(message)
+                        'duplicados': 'duplicado', 'presencia_incompatible': 'presencia_incompatible'}.get(message)
             codes.add(code or 'tipo_o_validacion_no_clasificada')
         return sorted(codes)
     except json.JSONDecodeError:

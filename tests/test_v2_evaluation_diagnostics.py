@@ -67,7 +67,7 @@ def test_informe_no_contiene_mensajes_o_salidas_crudas():
             InterpretacionTurno.model_validate(packet(e))
 
 
-def test_referencia_actual_localiza_bloqueo_sin_cambiar_politica():
+def test_referencia_actual_resuelta_se_observa_sin_bloqueo():
     class Actual(ev.ProveedorSimulado):
         def create(self,**kwargs):
             self.salida = deepcopy(self.salida)
@@ -76,12 +76,11 @@ def test_referencia_actual_localiza_bloqueo_sin_cambiar_politica():
     report = run(Actual(), diagnostico=True, escenarios=ESCENARIOS[:1])
     row = report['resultados'][0]
     assert row['contrato_valido'] and row['interpretacion_semantica_correcta']
-    assert not row['transicion_canonica_correcta'] and not row['decision_documental_correcta']
+    assert row['transicion_canonica_correcta'] and row['decision_documental_correcta']
     d = row['diagnostico']
-    assert 'referencia_actual_sin_titular_previo' in d['testigos_categoricos']
-    assert 'titular' in d['pendientes_despues'] and not d['pendientes_antes']
-    assert any(c['condicion']=='sin_pendientes' and not c['cumplida']
-               for c in d['condiciones_documentales'])
+    assert 'referencia_actual_sin_titular_previo' not in d['testigos_categoricos']
+    assert not d['pendientes_despues'] and not d['pendientes_antes']
+    assert all(c['cumplida'] for c in d['condiciones_documentales'] if c['aplica'])
 
 
 def test_campos_y_negaciones_conservan_procedencia_en_diagnostico():

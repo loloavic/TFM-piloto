@@ -1,0 +1,163 @@
+{
+  "base_commit": "a3bcb73",
+  "modalidad": "simulada",
+  "expectativas_y_referencias_modificadas": false,
+  "evaluaciones_separadas": {
+    "conversacion": {
+      "version_evaluacion": "v2.2d-1",
+      "version_prompt": "v2.2d-1",
+      "version_rubrica": "v2.2c-1",
+      "modo_turnos": "conversacion",
+      "diagnostico": true,
+      "huella_referencias": "f8aa9f5d7d3782a1f2e8823a32ed122eb83d6574367e9251a46029c76c88ec0c",
+      "turnos_programados": 29,
+      "huella_prompt": "8026b89af9ebd6f4c0143f79d60620a3c5d9378782cd6d0f058fff55751dd375",
+      "huella_esquema": "5ddfcb17ef32815c7e509a3a35a2c8f1ef54538b80a65a17ee3ab014b2a1c5fc",
+      "modelo": "fixture_sin_llm",
+      "modalidad": "simulada",
+      "conversaciones": 14,
+      "conversaciones_programadas": 14,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "resumen": {
+        "clasificacion_correcta": 29,
+        "contrato_valido": 29,
+        "ruta_correcta": 29,
+        "ruta_incorrectamente_autorizada": 0,
+        "aclaracion_necesaria": 8,
+        "aclaracion_necesaria_atendida": 8,
+        "aclaracion_necesaria_omitida": 0,
+        "aclaracion_innecesaria": 0,
+        "abstencion": 4,
+        "abstencion_correcta": 4,
+        "tokens_entrada": 81196,
+        "tokens_salida": 3402,
+        "interpretacion_semantica_correcta": 29,
+        "transicion_canonica_correcta": 29,
+        "decision_documental_correcta": 29,
+        "contexto_entrada_conforme_referencia": 29,
+        "tasa_clasificacion_correcta": 1.0,
+        "latencia_p50_ms": 1.413,
+        "latencia_p95_ms": 2.052
+      },
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "equivalencia_completa_fixture": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_correctamente_autorizadas": 17,
+        "autorizaciones_totales": 17,
+        "autorizaciones_incorrectas": 0
+      },
+      "satisfactoria": true
+    },
+    "aislados": {
+      "version_evaluacion": "v2.2d-1",
+      "version_prompt": "v2.2d-1",
+      "version_rubrica": "v2.2c-1",
+      "modo_turnos": "aislados",
+      "diagnostico": true,
+      "huella_referencias": "f8aa9f5d7d3782a1f2e8823a32ed122eb83d6574367e9251a46029c76c88ec0c",
+      "turnos_programados": 29,
+      "huella_prompt": "8026b89af9ebd6f4c0143f79d60620a3c5d9378782cd6d0f058fff55751dd375",
+      "huella_esquema": "5ddfcb17ef32815c7e509a3a35a2c8f1ef54538b80a65a17ee3ab014b2a1c5fc",
+      "modelo": "fixture_sin_llm",
+      "modalidad": "simulada",
+      "conversaciones": 14,
+      "conversaciones_programadas": 14,
+      "turnos": 29,
+      "turnos_no_ejecutados": 0,
+      "interrumpida": false,
+      "resumen": {
+        "clasificacion_correcta": 29,
+        "contrato_valido": 29,
+        "ruta_correcta": 29,
+        "ruta_incorrectamente_autorizada": 0,
+        "aclaracion_necesaria": 8,
+        "aclaracion_necesaria_atendida": 8,
+        "aclaracion_necesaria_omitida": 0,
+        "aclaracion_innecesaria": 0,
+        "abstencion": 4,
+        "abstencion_correcta": 4,
+        "tokens_entrada": 81196,
+        "tokens_salida": 3402,
+        "interpretacion_semantica_correcta": 29,
+        "transicion_canonica_correcta": 29,
+        "decision_documental_correcta": 29,
+        "contexto_entrada_conforme_referencia": 29,
+        "tasa_clasificacion_correcta": 1.0,
+        "latencia_p50_ms": 1.355,
+        "latencia_p95_ms": 1.509
+      },
+      "metricas_etapas": {
+        "contrato": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "entrega_contrato_valido": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "equivalencia_completa_fixture": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "interpretacion_semantica": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "transicion_controlada": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        },
+        "decision_documental": {
+          "correctos": 29,
+          "evaluables": 29,
+          "tasa": 1.0
+        }
+      },
+      "cobertura_documental": {
+        "positivas_esperadas": 17,
+        "positivas_correctamente_autorizadas": 17,
+        "autorizaciones_totales": 17,
+        "autorizaciones_incorrectas": 0
+      },
+      "satisfactoria": true
+    }
+  }
+}

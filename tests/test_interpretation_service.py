@@ -9,6 +9,7 @@ import pytest
 
 from app.core.config import settings
 from app.graph.context_policy import ruta_documental
+from app.graph.interpretation_contract import InterpretacionTurno
 from app.graph.interpretation_adapter import adaptar_interpretacion
 from app.services.interpretation_service import (
     InterpretationService, esquema_estricto, resumen_canonico,
@@ -65,10 +66,16 @@ def test_servicio_conecta_con_adaptador_y_no_autoriza_por_json():
 
 def test_esquema_cerrado_y_requerido():
     schema = esquema_estricto()
-    assert schema['properties']['version']['enum'] == ['2.1']
-    for model in [schema, *schema['$defs'].values()]:
-        assert model['additionalProperties'] is False
-        assert set(model['required']) == set(model['properties'])
+    assert schema['properties']['version']['enum'] == ['2.1', '2.2']
+    def check(node):
+        if isinstance(node,dict):
+            if node.get('type')=='object':
+                assert node['additionalProperties'] is False
+                assert set(node['required'])==set(node['properties'])
+            for value in node.values():check(value)
+        elif isinstance(node,list):
+            for value in node:check(value)
+    check(schema)
     assert not {'ruta', 'confianza', 'identidad'} & schema['properties'].keys()
 
 
@@ -217,7 +224,7 @@ def test_sdk_real_con_transporte_http_simulado_sin_red():
             'model': settings.openai_model, 'status': 'completed',
             'output': [{'type': 'message', 'id': 'msg_synthetic', 'role': 'assistant',
                         'status': 'completed', 'content': [{'type': 'output_text',
-                        'text': json.dumps(packet(*request())), 'annotations': []}]}],
+                        'text': json.dumps(InterpretacionTurno.model_validate(packet(*request())).model_dump()), 'annotations': []}]}],
             'usage': {'input_tokens': 100, 'output_tokens': 80, 'total_tokens': 180},
         })
     client = OpenAI(api_key='test-only', max_retries=0,

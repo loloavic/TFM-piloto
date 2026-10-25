@@ -1,6 +1,6 @@
 # TFM-piloto V2 — Contrato e integración determinista
 
-La sección V2.2C al final describe la evaluación actual; las secciones anteriores conservan las decisiones de cada entrega. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
+La sección V2.2D al final describe las correcciones actuales; las secciones anteriores conservan las decisiones de cada entrega. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
 
 ## Fase V2.1 (referencia histórica)
 
@@ -218,3 +218,8 @@ La [guía del intérprete y evaluación](v2-interprete-llm.md) describe el dise�
 ## Fase V2.2C — Observabilidad y evaluación por etapas (actual)
 
 El evaluador ofrece diagnóstico categórico opcional y modalidades separadas de conversación completa o turnos aislados con contextos predefinidos. Se separan validez contractual, interpretación crítica, transición controlada y decisión documental; las ejecuciones vacías o incompletas no aprueban. La [guía V2.2C](v2.2c-observabilidad.md) detalla métricas, equivalencias acotadas, privacidad y límites de atribución, junto con un informe adversarial sintético. No se modifica el prompt ni la política canónica, y no se ejecuta OpenAI real.
+
+
+## Fase V2.2D — Correcciones estructurales (actual)
+
+Se corrigen C1–C4 y C6 en contrato/esquema y transición V2, sin modificar V1 ni integrar interfaz. Se distingue ausencia/no aplicabilidad de ambigüedad, se añade relación informativa separada, se resuelven pendientes por evidencia pertinente y una operación rechazada exige nueva solicitud afirmativa. La rúbrica V2.2C y las 29 expectativas permanecen intactas. La [guía V2.2D](v2.2d-correcciones-estructurales.md) documenta reproducciones, invariantes, límites y resultados separados: 17/17 autorizaciones positivas esperadas y cero incorrectas en ambas modalidades simuladas, sin OpenAI real.
