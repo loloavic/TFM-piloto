@@ -37,7 +37,9 @@ La disponibilidad de horarios puede variar. El asistente no debe confirmar que e
 
 
 ALCANCE DE LA INFORMACIÓN
-Este documento contiene los requisitos facilitados para el cambio de DNI amarillo a DNI azul (azul por primera vez). No se han añadido otros requisitos, condiciones ni plazos de entrega.
+Este documento contiene los requisitos, la tasa consular, las características de las fotografías, el enlace para reservar cita y el plazo estimado de entrega correspondientes al trámite de cambio de DNI amarillo a DNI azul (azul por primera vez).
+
+La información proporcionada tiene carácter orientativo y debe contrastarse con las disposiciones vigentes de la oficina consular.
 
 Advertencias:
 - No acudir sin cita.
