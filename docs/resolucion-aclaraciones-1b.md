@@ -81,3 +81,7 @@ Preparado para repetir validación local en Windows/Conda con Python 3.11. **No 
 Persisten riesgos de interpretación de referentes y paráfrasis no cubiertas. No se guardan identidades ni un censo de titulares: las señales categóricas pueden requerir preguntas conservadoras en casos más complejos. Una consulta puede necesitar varias aclaraciones, una por turno, si faltan varios datos. La cola de preguntas sigue siendo un único tema pendiente; al cambiar de tema no se conserva una lista de múltiples solicitudes. El verificador factual continúa pendiente de Fase 1B.3.
 
 El PR #2 debe permanecer sin fusionar y someterse a revisión. Actualizar su rama no implica aprobar su integración.
+
+## Estabilización posterior del contexto
+
+La intervención autorizada tras el diagnóstico de `1cd9556` sustituye la política anterior por un contexto canónico y un único escritor de transiciones. El diseño, la compatibilidad, las reproducciones y el resultado de **295 pruebas aprobadas** están en [Estabilización del contexto conversacional](contexto-canonico-1b.md). Las 246 pruebas de esta revisión se conservan como referencia histórica y no se han modificado.

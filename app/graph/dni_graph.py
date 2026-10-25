@@ -5,6 +5,7 @@ from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
 from app.graph.classification import clasificar, pregunta_contextual
+from app.graph.context_policy import ruta_documental
 from app.rag.retriever import recuperar_contexto
 from app.services.llm_service import LLMService
 
@@ -265,6 +266,11 @@ def recuperar_documentos(
             "contexto": "",
             "fuentes": [],
         }
+
+    if ruta_documental(state.get("contexto_canonico")) != intencion:
+        return {**state, "fragmentos": [], "contexto": "", "fuentes": [],
+                "intencion": "general", "requiere_aclaracion": True,
+                "motivo_aclaracion": "tramite", "estado_documental": "pendiente_aclaracion"}
 
     pregunta_busqueda = state[
         "pregunta_busqueda"
@@ -711,8 +717,13 @@ def redactar_respuesta_minimizada(state: DNIState) -> DNIState:
     # La pregunta almacenada no se duplica ni se sustituye en el historial.
     # Solo la entrada al redactor recupera el tema pendiente ya aclarado.
     entrada = {**state, "pregunta": pregunta_contextual(state)}
+    if not state.get("requiere_aclaracion") and state.get("intencion") not in {"general", "fuera_alcance"} and ruta_documental(state.get("contexto_canonico")) != state.get("intencion"):
+        entrada.update(intencion="general", requiere_aclaracion=True,
+                       motivo_aclaracion="tramite", estado_documental="pendiente_aclaracion")
     if state.get("requiere_aclaracion"):
         entrada["intencion"] = "general"
+    if entrada.get("intencion") in {"general", "fuera_alcance"}:
+        entrada.update(contexto="", fuentes=[], fragmentos=[])
     resultado = redactar_respuesta(entrada)
     resultado["pregunta"] = state["pregunta"]
     resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"], permitir_oficiales=True)
