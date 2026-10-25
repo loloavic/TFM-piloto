@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 
 class ContextoSolicitante(TypedDict, total=False):
@@ -38,6 +38,9 @@ class ContextoCanonico(TypedDict):
     consulta_pendiente: str
     retomar: str
     ultima_ruta: str  # Solo presentación histórica, nunca fuente de hechos.
+    # Extensiones optativas V2; ausentes en el recorrido V1.
+    dni_previo: NotRequired[DatoContextual]
+    funcion_documento: NotRequired[DatoContextual]
 
 
 @dataclass(frozen=True)

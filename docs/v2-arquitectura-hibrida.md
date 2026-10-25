@@ -1,4 +1,8 @@
-# TFM-piloto V2 — Fase V2.1
+# TFM-piloto V2 — Contrato e integración determinista
+
+La sección V2.2A al final describe el estado actual. Las secciones V2.1 conservan el alcance y las decisiones de esa entrega, implementada en `a22cdd3`.
+
+## Fase V2.1 (referencia histórica)
 
 ## Alcance y base
 
@@ -114,3 +118,91 @@ export GRADIO_ANALYTICS_ENABLED=False PYTHONDONTWRITEBYTECODE=1
 ```
 
 Referencia antes del contrato: 295 aprobadas, 6 de integración excluidas. Contrato: 60 aprobadas. Las pruebas de integración siguen fuera de esta fase y no se certifica OpenAI real, exactitud semántica del futuro intérprete ni calidad documental. Persisten posibles omisiones o categorías incorrectas del modelo; ninguna validación de esquema demuestra que una interpretación sea fiel al mensaje. La evaluación lingüística, el adaptador, las referencias entre turnos y la pertinencia de aclaraciones quedan pendientes de fases posteriores.
+
+
+## Fase V2.2A — Adaptador determinista (actual)
+
+Base `a22cdd3`, rama `feature/v2-hybrid-intent`. La adaptación ya está implementada, pero sigue desconectada de clasificación, LangGraph y Gradio. No hay proveedor o llamadas LLM nuevas. El contrato V2.1 y sus 60 pruebas permanecen intactos.
+
+```mermaid
+flowchart TD
+    S[Salida estructurada sintética o futuro intérprete] --> A[adaptar_interpretacion]
+    M[Metadatos internos turno y revisión] --> A
+    C[Único contexto canónico vigente] --> A
+    A --> V[Revalidación estricta y vigencia]
+    V --> F[Contexto bloqueado ante fallo]
+    V --> T[context_policy.transicionar_v2]
+    T --> N[Contexto canónico actualizado]
+    F --> N
+    N --> G[context_policy.ruta_documental]
+    G --> B[Aclaración o abstención]
+    G --> D[Elegibilidad para corpus existente]
+    D -. Conexión futura, no implementada .-> R[RAG]
+    V1[Clasificación y grafo V1 activos] --> P[transicionar V1 sin cambios]
+```
+
+### Frontera y autoridad
+
+`adaptar_interpretacion(anterior, entrada, salida)` retorna solamente un contexto canónico, nunca documentos, una ruta, texto o un historial de evidencias. `entrada` contiene el siguiente turno y la revisión actual, obtenidos por el llamador del contexto vigente. Un turno o revisión discordante bloquea el estado devuelto. El llamador futuro debe sustituir su contexto por ese resultado incluso ante fallo; no puede recuperar documentos usando el contexto anterior como alternativa.
+
+Se revalida el contrato desde dict/JSON y no se acepta un objeto `ResultadoInterpretacion` ni un modelo preconstruido como atajo. El estado local de suficiencia V2.1 no se convierte en autorización: una pregunta incompleta por sí sola puede completarse con contexto válido, pero no con hechos antiguos incompatibles o dudas persistentes. Los faltantes y contradicciones expresamente declarados por el proveedor sí se conservan como bloqueos.
+
+`context_policy.transicionar_v2` es la única nueva entrada de transición, pura y optativa. `transicionar` V1 no cambia. `ruta_documental` continúa siendo la puerta de autoridad y conserva su catálogo de tres rutas. No se usa `ultima_ruta` como entrada de adaptación ni se retorna como fallback.
+
+### Extensión mínima del canónico
+
+Se añaden solo dos campos optativos a `ContextoCanonico`: `dni_previo` (si/no) y `funcion_documento` (titular/apoyo). Ambos usan `DatoContextual`, con valor, estado, turno, revisión y origen. No están presentes en estados V1. `validar_contexto` valida estas extensiones cuando existen, incluidos coherencia y bloqueos por conflicto; los contextos V1 conservan sus reglas anteriores.
+
+Persistir la tenencia es necesario: «nunca tuvo DNI» no debe olvidarse cuando un turno posterior solicita renovación. La función documental tampoco puede mezclarse con la operación o el titular. No se persiste `InterpretacionTurno`, ni un registro de evidencias, ni otro historial. El resultado contiene solo el canónico existente y estas dos dimensiones categóricas.
+
+### Traducción, herencia y bloqueos
+
+| Evidencia | Tratamiento determinista |
+| --- | --- |
+| Solicitud afirmativa / aclaración de operación | Puede confirmar operación y levantar su rechazo explícitamente; no resuelve dudas de otra dimensión |
+| Observación de operación | No inicia una operación ni rehabilita una rechazada; una operación distinta bloquea |
+| Observación de edad o tenencia | Puede aportar un hecho nuevo compatible; no resuelve una contradicción pendiente ni sustituye por sí sola un hecho confirmado incompatible |
+| Negación de operación | Conserva rechazo en la revisión y vacía operación/propuesta si corresponde; no infiere alternativa |
+| Negación de otra dimensión | Bloquea esa dimensión; no deduce su complemento |
+| Referencia contextual | Solo comprueba igualdad con un dato confirmado de la revisión vigente y titular compatible; no actualiza su turno, origen ni revisión |
+| Referencia a otro titular o categoría de titular distinta | Invalida edad, operación, tenencia y función anteriores; requiere selección explícita del nuevo titular |
+| Varios titulares, sujeto ajeno o no resuelto | Bloquea titular y elimina hechos dependientes; no atribuye al objetivo datos de acompañantes |
+| Pregunta temática | Puede heredar procedimiento confirmado; no cierra pendientes materiales |
+
+Las categorías `descendiente`, `adulto`, etc. no son identidades. Cambiar a otra persona con la misma categoría exige evidencia `referencia_titular=otro`; el esquema no puede detectar por sí solo que el modelo omitió ese cambio. Ante ambigüedad se mantiene el rechazo previo hasta que exista una selección o solicitud explícita pertinente.
+
+Los códigos no representados se traducen de forma conservadora: `referencia` a `titular`, `ambito`/`tema` a `tramite`, `funcion_documento` a `documento`. No se descartan. Los errores de contrato, vigencia o adaptación dejan `tramite=contradiccion`; una repregunta temática no lo limpia. Para salir de ese bloqueo genérico se requiere una nueva solicitud/aclaración explícita de titular, edad y operación con ámbito aportado, sin dudas. Se prefiere pedir datos categóricos de nuevo a reutilizar una ruta histórica.
+
+Los conflictos locales de valores o de afirmación y negación no se resuelven por orden. Un conflicto de edad requiere evidencia explícita de edad, uno de función documental requiere esa función y uno de tenencia mantiene el bloqueo hasta una resolución compatible. Los conflictos persistidos permanecen en `pendientes`, incluso cuando un dato confirmado anterior se conserva como referencia histórica. La revisión invalida referencias al cambiar de titular.
+
+Seguimiento puede aprovechar un contexto confirmado y sigue sujeto a todos los pendientes materiales. Sin procedimiento previo, iniciar seguimiento requiere una solicitud o aclaración explícita del tema y ámbito DNI; observar una mención a seguimiento no basta.
+
+### Compatibilidad y uso
+
+Ejemplo local sin proveedor ni integración operativa:
+
+```python
+from app.graph.context_policy import contexto_inicial, ruta_documental
+from app.graph.interpretation_adapter import adaptar_interpretacion
+
+anterior = contexto_inicial()
+# salida es un dict/JSON conforme a InterpretacionTurno, no texto de usuario.
+nuevo = adaptar_interpretacion(anterior, {"turno": 1, "revision": 0}, salida)
+ruta = ruta_documental(nuevo)  # Nunca inferir ruta de salida o ultima_ruta.
+```
+
+No se añaden imports del adaptador en clasificación, grafo, API o UI. No cambian prompts, generación, verificador, corpus, FAISS, n8n, privacidad, TTL, sesiones, concurrencia o dependencias. Los estados V2 no deben pasarse a `transicionar` V1: no se implementa intercambio de motores dentro de una sesión. Una futura activación debe elegir su motor de forma consistente por sesión y conservar las puertas documentales existentes. El esquema V2 es compatible con checkpoints de diccionarios, pero no se conecta ni se certifica aún su restauración operativa en LangGraph.
+
+### Criterios y evidencia de aceptación
+
+Suite conjunta en Linux/Python 3.11: **409 aprobadas, 6 de integración excluidas**; 54 pruebas nuevas del adaptador y las 355 anteriores conservadas. Hay advertencias de deprecación en dependencias, sin fallos. No se usó OpenAI real.
+
+Las regresiones cubren renovación→coste, primera inscripción→cita, rechazo→titular→observación→solicitud explícita, función de apoyo, cambio a titular adulto sin corpus, varios titulares y referencia ambigua, contradicción de edad y resolución explícita, tenencia incompatible multivuelta, seguimiento, metadatos obsoletos, payloads inválidos, fallos de transición y no mutación del contexto anterior. También verifican rechazo persistente tras ambigüedad, ausencia de historial paralelo y conservación de procedencia al heredar.
+
+```bash
+export GRADIO_ANALYTICS_ENABLED=False PYTHONDONTWRITEBYTECODE=1
+.venv/bin/python -B -m pytest tests/test_interpretation_adapter.py -q -p no:cacheprovider
+.venv/bin/python -B -m pytest -q -p no:cacheprovider
+```
+
+Riesgos residuales: el adaptador depende de que la interpretación identifique correctamente actos y cambios de titular; no certifica comprensión lingüística. La resolución de referencias es deliberadamente conservadora: temas referenciados y sujetos ajenos requieren aclaración. Los bloqueos genéricos pueden pedir repetir categorías. No se certifican aún un intérprete LLM real, integración Gradio/LangGraph V2, Windows nativo ni calidad factual del RAG. Ninguna elegibilidad documental equivale a recuperar fuentes o generar una respuesta. `main` y el PR #2 permanecen sin modificar.
