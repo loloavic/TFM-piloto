@@ -975,3 +975,221 @@ def test_aclarar_edad_contradictoria_preserva_operacion_confirmada(motor_local):
     result = service.responder('Es menor de edad', sid, token)
     assert result['intencion'] == 'dni_menor_primera_vez'
     assert not graph_state(service, sid)['requiere_aclaracion']
+
+
+@pytest.mark.parametrize('operation_only', ['Quiero renovar el DNI', 'Ahora quiero renovar el DNI'])
+def test_aclaracion_titular_no_cierra_con_operacion_sola(motor_local, operation_only):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo de 10 años')
+    sid, token = first['session_id'], first['session_token']
+    ambiguous = service.responder('Quiero renovar el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    assert ambiguous['intencion'] == 'general' and not ambiguous['fuentes']
+    before = len(calls['retrieval']), len(calls['llm'])
+    result = service.responder(operation_only, sid, token)
+    state = graph_state(service, sid)
+    assert state['requiere_aclaracion'] and state['motivo_aclaracion'] == 'titular'
+    assert state['operacion_dni'] == 'renovacion'
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+    assert 'cuál de las personas' in result['respuesta']
+
+
+@pytest.mark.parametrize('answer,intent,active,group', [
+    ('Es para mi hija adulta', 'general', 'dni_adulto_renovacion', 'adulto'),
+    ('Es para mi hijo menor', 'dni_menor_renovacion', 'dni_menor_renovacion', 'menor'),
+])
+def test_titular_elegido_conserva_operacion_y_consulta(motor_local, answer, intent, active, group):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo de 10 años')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Quiero renovar el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    service.responder('Quiero renovar el DNI', sid, token)
+    pending = service.responder('¿Cuánto cuesta?', sid, token)
+    assert pending['intencion'] == 'general' and not pending['fuentes']
+    before = len(calls['retrieval']), len(calls['llm'])
+    result = service.responder(answer, sid, token)
+    state = graph_state(service, sid)
+    assert not state['requiere_aclaracion']
+    assert result['intencion'] == intent and state['tramite_actual'] == active
+    assert state['operacion_dni'] == 'renovacion' and state['tipo_consulta'] == 'coste'
+    assert state['contexto_solicitante']['grupo_edad'] == group
+    assert result['session_id'] == sid and result['session_token'] == token
+    if group == 'adulto':
+        assert state['estado_documental'] == 'no_documentado'
+        assert not result['fuentes'] and 'no documenta' in result['respuesta']
+        assert (len(calls['retrieval']), len(calls['llm'])) == before
+    else:
+        assert {s['archivo'] for s in result['fuentes']} == {'dni_menor_renovacion.txt'}
+        assert 'Consulta pendiente: ¿Cuánto cuesta?' in calls['llm'][-1]
+
+
+@pytest.mark.parametrize('holder', ['Es para mi hijo menor', 'Es para mi hija adulta'])
+def test_operacion_pendiente_no_se_cierra_solo_con_titular(motor_local, holder):
+    service, calls = motor_local
+    first = service.responder('¿Cuánto cuesta el DNI de mi hijo menor?')
+    sid, token = first['session_id'], first['session_token']
+    assert graph_state(service, sid)['motivo_aclaracion'] == 'operacion'
+    result = service.responder(holder, sid, token)
+    state = graph_state(service, sid)
+    assert state['requiere_aclaracion'] and state['motivo_aclaracion'] == 'operacion'
+    assert not state['operacion_dni']
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert not calls['retrieval'] and not calls['llm']
+    resolved = service.responder('Quiero renovar el DNI', sid, token)
+    expected = 'dni_adulto_renovacion' if 'adulta' in holder else 'dni_menor_renovacion'
+    assert graph_state(service, sid)['tramite_actual'] == expected
+    assert not graph_state(service, sid)['requiere_aclaracion']
+    assert graph_state(service, sid)['tipo_consulta'] == 'coste'
+    assert bool(resolved['fuentes']) == ('adulta' not in holder)
+
+
+@pytest.mark.parametrize('answers', [
+    ['Quiero renovar el DNI', 'Es para mi hija adulta'],
+    ['Es para mi hija adulta', 'Quiero renovar el DNI'],
+])
+def test_dudas_simultaneas_se_resuelven_en_cualquier_orden(motor_local, answers):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo de 10 años')
+    sid, token = first['session_id'], first['session_token']
+    result = service.responder('Quiero renovar por primera vez el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    state = graph_state(service, sid)
+    assert {'titular', 'operacion'} <= set(state['decision']['contradicciones'])
+    before = len(calls['retrieval']), len(calls['llm'])
+    partial = service.responder(answers[0], sid, token)
+    assert partial['intencion'] == 'general' and not partial['fuentes']
+    assert graph_state(service, sid)['requiere_aclaracion']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+    resolved = service.responder(answers[1], sid, token)
+    state = graph_state(service, sid)
+    assert not state['requiere_aclaracion']
+    assert state['tramite_actual'] == 'dni_adulto_renovacion'
+    assert state['contexto_solicitante']['grupo_edad'] == 'adulto'
+    assert not resolved['fuentes'] and 'no documenta' in resolved['respuesta']
+
+
+@pytest.mark.parametrize('answer', ['Quiero renovar el DNI', 'Ahora quiero renovar el DNI'])
+def test_funcion_documental_no_se_resuelve_con_operacion(motor_local, answer):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('¿Debo presentar el DNI de mi hijo de 25 años?', sid, token)
+    before = len(calls['retrieval']), len(calls['llm'])
+    result = service.responder(answer, sid, token)
+    assert graph_state(service, sid)['motivo_aclaracion'] == 'documento'
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+    resolved = service.responder('Es un documento de apoyo', sid, token)
+    assert resolved['intencion'] == 'dni_menor_renovacion'
+    assert not graph_state(service, sid)['requiere_aclaracion']
+
+
+@pytest.mark.parametrize('confirmation,intent', [
+    ('Ya tenía DNI', 'dni_menor_renovacion'),
+    ('Nunca tuvo DNI', 'dni_menor_primera_vez'),
+])
+def test_contradiccion_procedimiento_requiere_evidencia_pertinente(motor_local, confirmation, intent):
+    service, calls = motor_local
+    first = service.responder('Necesito el primer DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Su DNI está vencido', sid, token)
+    before = len(calls['retrieval']), len(calls['llm'])
+    partial = service.responder('Es para mi hijo menor', sid, token)
+    assert graph_state(service, sid)['motivo_aclaracion'] == 'dni_previo'
+    assert partial['intencion'] == 'general' and not partial['fuentes']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+    resolved = service.responder(confirmation, sid, token)
+    assert resolved['intencion'] == intent
+    assert {s['archivo'] for s in resolved['fuentes']} == {intent + '.txt'}
+    assert not graph_state(service, sid)['requiere_aclaracion']
+
+
+@pytest.mark.parametrize('new_request,intent', [
+    ('Ahora quiero el primer DNI de mi hijo menor', 'dni_menor_primera_vez'),
+    ('Ahora quiero renovar mi DNI; soy adulto', 'general'),
+    ('Ahora necesito renovar mi pasaporte', 'fuera_alcance'),
+    ('Ahora quiero consultar el estado del DNI', 'dni_consulta_estado'),
+])
+def test_cambio_inequivoco_supera_aclaracion_con_datos_suficientes(motor_local, new_request, intent):
+    service, _ = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Quiero renovar el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    result = service.responder(new_request, sid, token)
+    state = graph_state(service, sid)
+    assert result['intencion'] == intent
+    assert not state['requiere_aclaracion']
+    if intent in {'general', 'fuera_alcance'}:
+        assert not result['fuentes']
+    else:
+        assert {s['archivo'] for s in result['fuentes']} == {intent + '.txt'}
+    if intent == 'dni_consulta_estado':
+        assert state['contexto_solicitante'] == {'grupo_edad': 'desconocido', 'destinatario': 'desconocido'}
+        assert not state['operacion_dni']
+
+
+def test_confirmar_funcion_documental_conserva_tema_coste(motor_local):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('¿Debo presentar el DNI de mi hijo de 25 años?', sid, token)
+    service.responder('¿Cuánto cuesta?', sid, token)
+    result = service.responder('Como documento de apoyo', sid, token)
+    state = graph_state(service, sid)
+    assert not state['requiere_aclaracion'] and state['tipo_consulta'] == 'coste'
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert {s['archivo'] for s in result['fuentes']} == {'dni_menor_renovacion.txt'}
+    assert 'Consulta pendiente: ¿Cuánto cuesta?' in calls['llm'][-1]
+
+
+@pytest.mark.parametrize('age_only', ['Es adulto', 'Tiene 25 años'])
+def test_edad_sola_no_reselecciona_automaticamente_un_titular(motor_local, age_only):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Quiero renovar el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    before = len(calls['retrieval']), len(calls['llm'])
+    result = service.responder(age_only, sid, token)
+    state = graph_state(service, sid)
+    assert state['motivo_aclaracion'] == 'titular'
+    assert not state['contexto_solicitante']
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+
+
+def test_seleccion_titular_sin_edad_continua_solo_con_edad_pendiente(motor_local):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('Quiero renovar el DNI de mi hijo menor y de mi hija adulta', sid, token)
+    service.responder('¿Cuánto cuesta?', sid, token)
+    partial = service.responder('Es para mi hija', sid, token)
+    state = graph_state(service, sid)
+    assert state['motivo_aclaracion'] == 'edad'
+    assert 'titular' not in _pending_reasons(state)
+    assert state['operacion_dni'] == 'renovacion'
+    assert partial['intencion'] == 'general' and not partial['fuentes']
+    before = len(calls['retrieval']), len(calls['llm'])
+    result = service.responder('Es adulta', sid, token)
+    state = graph_state(service, sid)
+    assert not state['requiere_aclaracion'] and state['tramite_actual'] == 'dni_adulto_renovacion'
+    assert state['tipo_consulta'] == 'coste'
+    assert not result['fuentes'] and 'no documenta' in result['respuesta']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before
+
+
+def _pending_reasons(state):
+    return set(state['decision']['faltantes'] + state['decision']['contradicciones'])
+
+
+def test_funcion_de_documento_propio_no_identifica_a_su_dueno(motor_local):
+    service, calls = motor_local
+    first = service.responder('Necesito renovar el DNI de mi hijo menor')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('¿Debo presentar el DNI de mi hijo de 25 años?', sid, token)
+    before = len(calls['retrieval']), len(calls['llm'])
+    partial = service.responder('Es el DNI del titular', sid, token)
+    state = graph_state(service, sid)
+    assert state['motivo_aclaracion'] == 'titular'
+    assert not state['contexto_solicitante']
+    assert partial['intencion'] == 'general' and not partial['fuentes']
+    assert (len(calls['retrieval']), len(calls['llm'])) == before

@@ -287,13 +287,43 @@ def _operacion_confirmada(tramite: str) -> str:
                  if tramite.endswith('_' + op)), '')
 
 
-def clasificar(state: dict) -> dict:
-    """Proponer, contrastar y confirmar; una hipótesis no sustituye el activo.
+def _motivos_pendientes(state: dict) -> set[str]:
+    if not state.get('requiere_aclaracion'):
+        return set()
+    decision = state.get('decision', {})
+    return set(decision.get('faltantes', []) + decision.get('contradicciones', [])) or {state['motivo_aclaracion']}
 
-    La decisión conserva códigos de evidencia y tema pendiente, nunca una
-    segunda copia de la pregunta ni nuevos datos personales. Los campos
-    requiere_aclaracion/motivo_aclaracion son la única puerta de confirmación.
+
+def _funcion_documento(texto: str) -> str:
+    """Confirmación explícita del papel del documento, no de su operación."""
+    positivo = re.sub(r'\bno\s+(?:es\s+)?(?:un\s+)?documento de apoyo\b', ' ', texto)
+    apoyo = bool(re.search(r'\bdocumento de apoyo\b|\bcomo (?:padre|madre|representante|apoderad[oa])\b|\bpara acompanar\b', positivo))
+    titular = bool(re.search(r'\bdni del titular\b|\b(?:mi|su) propio dni\b|\bel dni que (?:quiero|necesito) renovar\b|\bpara (?:su|la) renovacion\b', positivo))
+    return 'apoyo' if apoyo and not titular else 'titular' if titular and not apoyo else ''
+
+
+def _resuelve_motivos(texto: str, operation: str, conflict: bool,
+                     holder: dict, explicit_holder: bool, conflict_holder: bool,
+                     document_role: str) -> dict[str, bool]:
+    """Cada evidencia responde solo a la pregunta para la que es pertinente.
+
+    Resolver una dimensión no permite omitir las restantes. Una categoría de
+    edad aislada no selecciona a una persona entre varios posibles titulares.
     """
+    titular = explicit_holder and holder['destinatario'] != 'desconocido' and not conflict_holder
+    return {
+        'titular': titular,
+        'operacion': bool(operation) and not conflict,
+        'dni_previo': bool(operation) and not conflict,
+        'documento': bool(document_role) and not conflict_holder,
+        'edad': explicit_holder and holder['grupo_edad'] != 'desconocido' and not conflict_holder,
+        'tramite': bool(re.search(r'\bdni\b', texto)) and not (conflict or conflict_holder),
+        'contradiccion': bool(operation) and not (conflict or conflict_holder),
+    }
+
+
+def clasificar(state: dict) -> dict:
+    """Proponer y resolver cada duda; confirmar solo cuando no queda ninguna."""
     text = normalizar(state['pregunta'])
     if re.fullmatch(r'(?:olvida|olvidemos|cancela|dejemos) (?:lo anterior|la consulta|la aclaracion)[.!]?', text):
         state = {**state, 'tramite_actual': '', 'operacion_dni': '',
@@ -302,8 +332,40 @@ def clasificar(state: dict) -> dict:
     previous = state.get('tramite_actual', '')
     pending = state.get('decision', {})
     waiting = state.get('requiere_aclaracion', False)
-    # Dar contexto a las aclaraciones sin presentar la hipótesis como confirmada.
-    working = {**state, 'tramite_actual': previous or pending.get('tramite_candidato', '')}
+    outstanding = _motivos_pendientes(state)
+    # Haber introducido varios titulares invalida la herencia de identidad,
+    # aunque el último trámite confirmado continúe como referencia histórica.
+    context = {} if 'titular' in outstanding else state.get('contexto_solicitante', {})
+    working = {**state, 'contexto_solicitante': context,
+               'tramite_actual': previous or pending.get('tramite_candidato', '')}
+    operation, conflict, denied = operacion(text, bool(working['tramite_actual']))
+    holder, explicit_holder, conflict_holder = solicitante(text, context)
+    document_role = _funcion_documento(text)
+    resolutions = _resuelve_motivos(text, operation, conflict, holder,
+                                   explicit_holder, conflict_holder, document_role)
+    # Una solicitud completa con titular inequívoco sustituye la duda sobre
+    # un documento de apoyo anterior; repetir solo la operación no lo hace.
+    if (operation and resolutions['titular'] and not conflict
+            and re.search(r'\b(?:quiero|necesito|solicito)\b', text)):
+        resolutions['documento'] = True
+    topic = tipo_consulta(text)
+    changed = bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad)\b', text))
+    generic_tracking = changed and topic == 'seguimiento' and not (conflict or conflict_holder)
+    explicit_change = changed and bool(operation or explicit_holder) and not (conflict or conflict_holder)
+    # Una nueva operación no identifica al titular ni la función documental.
+    if 'titular' in outstanding and not resolutions['titular']:
+        explicit_change = False
+    if 'documento' in outstanding and not (document_role or resolutions['titular']):
+        explicit_change = False
+    explicit_change = explicit_change or generic_tracking
+    if generic_tracking:
+        # Nuevo objetivo genérico: no trasladar el titular que estaba en disputa.
+        working.update(tramite_actual='', operacion_dni='', contexto_solicitante={})
+    elif ('documento' in outstanding and 'operacion' not in outstanding
+          and _operacion_confirmada(previous) not in denied):
+        # La función del DNI está en duda; no inventar además una duda sobre
+        # la operación previamente conocida. La puerta documental sigue cerrada.
+        working['operacion_dni'] = state.get('operacion_dni') or _operacion_confirmada(previous)
     result = _clasificar_candidato(working)
     if result['intencion'] == 'fuera_alcance':
         return {**result, 'decision': {
@@ -311,17 +373,12 @@ def clasificar(state: dict) -> dict:
             'faltantes': [], 'contradicciones': [], 'consulta_pendiente': '',
         }}
 
-    operation, conflict, denied = operacion(text, bool(working['tramite_actual']))
-    holder, explicit_holder, conflict_holder = solicitante(text, state.get('contexto_solicitante', {}))
-    changed = bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad)\b', text))
-    topic = tipo_consulta(text)
-    explicit_change = changed and bool(operation or explicit_holder or topic == 'seguimiento') and not (conflict or conflict_holder)
-    evidence = []
-    if operation:
-        evidence.append('operacion:' + operation)
+    evidence = (['operacion:' + operation] if operation else [])
     evidence.extend('negacion:' + op for op in sorted(denied))
     if explicit_holder:
         evidence.append('titular_explicito')
+    if document_role:
+        evidence.append('documento:' + document_role)
     if previous:
         evidence.append('contexto_confirmado')
     possession = dni_vencido(text, bool(previous)) or bool(re.search(
@@ -330,77 +387,75 @@ def clasificar(state: dict) -> dict:
     if possession:
         evidence.append('tenencia_dni')
     candidate = result['tramite_actual']
-    reason = result['motivo_aclaracion']
+    fresh = set()
+    # Separar contradicciones simultáneas antes de elegir una sola pregunta.
     if conflict:
-        reason = 'operacion'
+        fresh.add('operacion')
     if conflict_holder:
         if len(re.findall(r'\b(?:mi|su)\s+(?:hijo|hija|menor)\b', text)) > 1:
-            reason = 'titular'
+            fresh.add('titular')
         elif re.search(r'\b(?:presentar|llevar|mostrar|adjuntar)\b', text):
-            reason = 'documento'
+            fresh.add('documento')
         else:
-            reason = 'edad'
-    prior_reason = state.get('motivo_aclaracion', '')
-    answer = bool(operation or (explicit_holder and not conflict_holder))
-    # Preguntar por coste/estado no confirma ninguno de los datos en disputa.
-    if waiting and not explicit_change:
-        resolves = answer and not (conflict or conflict_holder)
-        if prior_reason in {'dni_previo', 'operacion'}:
-            resolves = bool(operation) and not (conflict or conflict_holder)
-        if prior_reason == 'edad':
-            resolves = explicit_holder and holder['grupo_edad'] != 'desconocido' and not conflict_holder
-        if prior_reason == 'tramite':
-            resolves = bool(re.search(r'\bdni\b', text)) and not (conflict or conflict_holder)
-        if not resolves:
-            reason = prior_reason
-            candidate = pending.get('tramite_candidato', candidate)
-
+            fresh.add('edad')
+    if not (conflict or conflict_holder) and result['motivo_aclaracion']:
+        fresh.add(result['motivo_aclaracion'])
     old_operation = _operacion_confirmada(previous)
-    # Un hecho incompatible pide confirmación; una solicitud/rectificación
-    # inequívoca o respuesta a la aclaración puede cambiar el procedimiento.
     if (possession and operation and old_operation and operation != old_operation
             and not waiting and not explicit_change and old_operation not in denied
             and not re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text)):
-        reason = 'dni_previo'
+        fresh.add('dni_previo')
+    unresolved = set() if explicit_change else {m for m in outstanding if not resolutions.get(m, False)}
+    unresolved |= fresh
+    if 'documento' in outstanding and document_role == 'titular' and not resolutions['titular']:
+        # Identificar la función no identifica por sí solo al dueño de ese DNI.
+        unresolved.add('titular')
+    priority = ('titular', 'documento', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite')
+    reason = next((m for m in priority if m in unresolved), '')
+    if waiting and unresolved and not operation and not explicit_holder:
+        candidate = pending.get('tramite_candidato', candidate)
 
     pending_topic = pending.get('consulta_pendiente', '') if waiting and not explicit_change else ''
+    asks_topic = topic in CONSULTAS and bool(re.search(r'[¿?]|\b(?:cuanto|donde|cuando|como|cual|que requisitos|dime|quiero saber)\b', text))
+    if document_role and not re.search(r'[¿?]|\b(?:dime|quiero saber)\b', text):
+        asks_topic = False  # «Como documento de apoyo» responde al rol, no pide requisitos.
     if reason:
-        pending_topic = topic if topic in CONSULTAS else pending_topic
-        # El tópico anterior sigue pendiente al detectarse una contradicción.
+        pending_topic = topic if asks_topic else pending_topic
         pending_topic = pending_topic or (state.get('tipo_consulta', '') if state.get('tipo_consulta') in CONSULTAS else 'otra')
-        if previous:
-            result['tramite_actual'] = previous
-            # No reemplazar al titular confirmado por un candidato contradictorio.
-            if reason in {'dni_previo', 'titular', 'documento', 'contradiccion'}:
-                result['contexto_solicitante'] = state.get('contexto_solicitante', {})
-            if reason == 'edad' and conflict_holder:
-                result['contexto_solicitante'] = state.get('contexto_solicitante', {})
-                # La duda es de edad: no perder además una operación confirmada
-                # que el ciudadano no ha rechazado.
-                if old_operation not in denied and not conflict:
-                    result['operacion_dni'] = state.get('operacion_dni', old_operation)
-        else:
-            result['tramite_actual'] = ''
+        result['tramite_actual'] = previous
+        if 'titular' in unresolved:
+            result['contexto_solicitante'] = {}
+        elif reason in {'dni_previo', 'documento', 'contradiccion'} and not (explicit_holder and not conflict_holder):
+            result['contexto_solicitante'] = state.get('contexto_solicitante', {})
+        if operation and not conflict and not (conflict_holder and 'documento' in fresh):
+            # Conservar lo que sí se ha confirmado, aun sin poder recuperar nada.
+            result['operacion_dni'] = operation
+        if reason == 'edad' and conflict_holder and previous:
+            result['contexto_solicitante'] = state.get('contexto_solicitante', {})
+            if old_operation not in denied and not conflict:
+                result['operacion_dni'] = state.get('operacion_dni', old_operation)
         if reason == 'dni_previo':
             result['operacion_dni'] = state.get('operacion_dni', old_operation)
         result.update(intencion='general', requiere_aclaracion=True,
                       motivo_aclaracion=reason, tramite_documentado=False,
                       estado_documental='pendiente_aclaracion')
-    elif waiting and pending_topic and topic == 'otra':
+    elif waiting and pending_topic and not asks_topic:
         result['tipo_consulta'] = pending_topic
         if pending_topic == 'seguimiento':
             result.update(intencion='dni_consulta_estado', estado_documental='disponible')
     else:
         pending_topic = ''
 
-    contradictions = [reason] if reason and (conflict or conflict_holder or reason not in {'edad', 'operacion', 'tramite'}) else []
-    if reason and not contradictions and waiting and reason == prior_reason:
-        contradictions = pending.get('contradicciones', [])
+    contradictions = (set(pending.get('contradicciones', [])) & unresolved) if not explicit_change else set()
+    contradictions |= unresolved & {'titular', 'documento', 'dni_previo', 'contradiccion'}
+    if conflict:
+        contradictions.add('operacion')
+    if conflict_holder:
+        contradictions |= fresh
     result['decision'] = {
-        'tramite_candidato': candidate,
-        'evidencias': evidence,
-        'faltantes': [reason] if reason in {'edad', 'operacion', 'tramite'} and not contradictions else [],
-        'contradicciones': contradictions,
+        'tramite_candidato': candidate, 'evidencias': evidence,
+        'faltantes': [m for m in priority if m in unresolved - contradictions],
+        'contradicciones': [m for m in priority if m in contradictions],
         'consulta_pendiente': pending_topic,
     }
     return result

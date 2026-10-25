@@ -117,3 +117,7 @@ La solución ofrece una política verificable sobre señales deterministas, no c
 El último trámite confirmado retenido durante una duda es una referencia histórica bloqueada, no un permiso para recuperar sus requisitos. El tipo de consulta sigue siendo único; si el ciudadano cambia a otro tema mientras espera, se conserva ese tema más reciente, no una cola de varias consultas. Las limitaciones de calidad documental y del verificador factual permanecen pendientes de Fase 1B.3. No se atribuye capacidad legal a acompañantes/representantes ni se valida normativamente el corpus.
 
 **Preparado para revisión técnica y posterior validación local en Windows.** El éxito determinista no garantiza ausencia de defectos, precisión lingüística general ni corrección factual de un modelo real. El PR #2 debe revisarse y permanecer sin fusionar.
+
+## Revisión posterior: cierre específico por motivo
+
+La revisión de `3aa8b55` detectó un cierre prematuro del motivo titular mediante una respuesta de operación. El diseño incremental, la matriz de resolución y la ejecución posterior de **246 pruebas aprobadas** se describen en [Cierre de aclaraciones por motivo pendiente](resolucion-aclaraciones-1b.md). Los resultados de 225 pruebas arriba corresponden a la revisión anterior.
