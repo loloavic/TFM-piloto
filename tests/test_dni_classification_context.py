@@ -391,3 +391,138 @@ def test_solicitud_duplicado_sin_objeto_no_hereda_renovacion():
     state = turn({}, 'Quiero renovar el DNI de mi hijo menor.')
     state = turn(state, 'Ahora quiero un duplicado.')
     assert state['requiere_aclaracion'] and state['intencion'] == 'general'
+
+
+@pytest.mark.parametrize('question', [
+    '¿Puede acompañarlo mi hijo de 25 años?',
+    '¿Mi hijo de 25 años puede acompañarlo?',
+    '¿Puede ir mi hijo de 25 años como acompañante?',
+    '¿Puede actuar mi hijo de 25 años como representante?',
+    '¿Debo presentar el DNI de mi hijo de 25 años como documento de apoyo?',
+])
+def test_p2_personas_de_apoyo_no_sustituyen_titular(question):
+    state = turn({}, 'Necesito el primer DNI de mi hijo de 10 años.')
+    holder = state['contexto_solicitante'].copy()
+    state = turn(state, question)
+    assert state['contexto_solicitante'] == holder
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    state = turn(state, '¿Y cuánto cuesta?')
+    assert state['intencion'] == 'dni_menor_primera_vez'
+    assert state['tipo_consulta'] == 'coste'
+
+
+def test_p2_completar_titular_conserva_operacion():
+    state = turn({}, '¿Cuánto cuesta renovar el DNI?')
+    assert state['motivo_aclaracion'] == 'edad'
+    assert state['operacion_dni'] == 'renovacion'
+    state = turn(state, 'Es para mi hijo de 10 años')
+    assert state['intencion'] == 'dni_menor_renovacion'
+    assert not state['requiere_aclaracion']
+    state = turn(state, '¿Y cuánto cuesta?')
+    assert state['intencion'] == 'dni_menor_renovacion'
+
+
+@pytest.mark.parametrize('denial', [
+    'No quiero un duplicado',
+    'No es un duplicado',
+    'No necesito el duplicado del DNI',
+])
+def test_p2_duplicado_rechazado_no_se_hereda(denial):
+    state = turn({}, 'Necesito un duplicado del DNI de mi hijo menor.')
+    state = turn(state, denial)
+    assert not state['operacion_dni']
+    assert state['motivo_aclaracion'] == 'operacion'
+    state = turn(state, '¿Cuánto cuesta?')
+    assert state['requiere_aclaracion'] and not state['operacion_dni']
+    state = turn(state, 'Es su primer DNI')
+    assert state['intencion'] == 'dni_menor_primera_vez'
+
+
+@pytest.mark.parametrize('questions,expected', [
+    ([
+        'Necesito el primer DNI de mi hijo de 10 años.',
+        '¿Puede acompañarlo mi hijo de 25 años?',
+        '¿Y cuánto cuesta?',
+    ], ['dni_menor_primera_vez'] * 3),
+    ([
+        '¿Cuánto cuesta renovar el DNI?',
+        'Es para mi hijo de 10 años',
+        '¿Y cuánto cuesta?',
+    ], ['general', 'dni_menor_renovacion', 'dni_menor_renovacion']),
+    ([
+        'Necesito un duplicado del DNI de mi hijo menor.',
+        'No quiero un duplicado',
+        '¿Cuánto cuesta?',
+        'Quiero renovar el DNI',
+        '¿Y cuánto demora?',
+    ], ['general', 'general', 'general', 'dni_menor_renovacion', 'dni_menor_renovacion']),
+])
+def test_p2_sesion_real_fuentes_y_aclaraciones(motor_local, questions, expected):
+    service, calls = motor_local
+    sid = token = None
+    for question, intent in zip(questions, expected):
+        before_llm = len(calls['llm'])
+        result = service.responder(question, sid, token)
+        if sid is not None:
+            assert result['session_id'] == sid
+            assert result['session_token'] == token
+        sid, token = result['session_id'], result['session_token']
+        assert result['intencion'] == intent
+        if intent == 'general':
+            assert not result['fuentes']
+            assert len(calls['llm']) == before_llm
+        else:
+            assert {s['archivo'] for s in result['fuentes']} == {intent + '.txt'}
+            assert calls['llm'][-1]
+    assert graph_state(service, sid)['contexto_solicitante']['grupo_edad'] == 'menor'
+    assert len(graph_state(service, sid)['historial']) == len(questions)
+
+
+@pytest.mark.parametrize('question', [
+    '¿Puede ir acompañado por mi hijo de 25 años?',
+    '¿Mi hijo de 25 años puede ser representante legal?',
+])
+def test_p2_rol_de_apoyo_explicito_no_asigna_capacidad_legal(question):
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor.')
+    state = turn(state, question)
+    assert state['tramite_actual'] == 'dni_menor_primera_vez'
+    assert state['contexto_solicitante']['grupo_edad'] == 'menor'
+    # La clasificación solo conserva el titular: no almacena autorizaciones.
+    assert set(state['contexto_solicitante']) == {'grupo_edad', 'destinatario'}
+
+
+def test_p2_misma_pregunta_con_titular_y_acompanante():
+    state = turn({}, 'Necesito el primer DNI de mi hijo de 10 años; '
+                 '¿puede acompañarlo mi hijo de 25 años?')
+    assert state['intencion'] == 'dni_menor_primera_vez'
+    assert state['contexto_solicitante']['grupo_edad'] == 'menor'
+
+
+def test_p2_titular_identificado_si_cambia_no_hereda_operacion():
+    state = turn({}, 'Necesito el primer DNI de mi hijo menor.')
+    state = turn(state, 'Ahora es para mí, soy adulto.')
+    assert not state['operacion_dni']
+    assert state['requiere_aclaracion']
+
+
+@pytest.mark.parametrize('correction,intent', [
+    ('No quiero un duplicado; quiero renovar el DNI', 'dni_menor_renovacion'),
+    ('No quiero un duplicado; es su primer DNI', 'dni_menor_primera_vez'),
+])
+def test_p2_duplicado_rectificado_en_el_mismo_turno(correction, intent):
+    state = turn({}, 'Necesito un duplicado del DNI de mi hijo menor.')
+    state = turn(state, correction)
+    assert state['intencion'] == intent
+    assert not state['requiere_aclaracion']
+
+
+def test_p2_aclaracion_llega_al_generador_con_pregunta_original(motor_local):
+    service, calls = motor_local
+    first = service.responder('¿Cuánto cuesta renovar el DNI?')
+    result = service.responder('Es para mi hijo de 10 años',
+                               first['session_id'], first['session_token'])
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert len(calls['llm']) == 1
+    assert '¿Cuánto cuesta renovar el DNI?' in calls['llm'][0]
+    assert 'Es para mi hijo de 10 años' in calls['llm'][0]
+    assert 'dni_menor_renovacion' in calls['llm'][0]

@@ -101,3 +101,21 @@ Persisten las limitaciones ya auditadas del verificador factual, la relevancia s
 Comando ejecutado: `GRADIO_ANALYTICS_ENABLED=False XDG_CACHE_HOME=/tmp/tfm-cache PYTHONDONTWRITEBYTECODE=1 env -u OPENAI_API_KEY -u TFM_OPENAI_API_KEY .venv/bin/python -B -m pytest -q --tb=short -p no:cacheprovider`. `git diff --check` correcto. Comparación AST: verificador, construcción del grafo, historial y envoltorio de minimización intactos; literal del prompt de generación idéntico. Comparación Git: seguridad, UI/API, servicios, FAISS, corpus, credenciales y dependencias intactos.
 
 La implementación está preparada para revisión técnica y posterior validación local. No equivale a una validación con modelos reales, comprobación normativa del corpus, precisión lingüística general ni ejecución nativa en Windows.
+
+## Correcciones de revisión P2 del PR #2
+
+Revisión sobre `2c4915e`, sin cambios en los controles de Fase 1A, el verificador factual, los prompts, FAISS, el corpus ni las dependencias.
+
+| Hallazgo confirmado | Causa | Corrección y comportamiento posterior |
+| --- | --- | --- |
+| Acompañante adulto sustituye al titular menor | Se seleccionaba la primera mención de hijo sin comprobar su rol | Antes de identificar al titular se excluyen las menciones vinculadas explícitamente a acompañamiento, representación o presentación de DNI de apoyo. Se conserva el titular y la pregunta posterior sobre coste sigue referida al primer DNI del menor. |
+| Aclarar un destinatario desconocido pierde la renovación | El contexto con destinatario `desconocido` se trataba como titular ya identificado | Completar el destinatario conserva la operación; cambiar explícitamente un titular conocido sigue requiriendo identificar la nueva operación. La aclaración llega al generador con la pregunta anterior en el historial existente. |
+| Negar duplicado conserva la operación | La expresión negada se eliminaba antes de registrar la negación | Se registra la negación antes de enmascararla y se impide heredar la operación rechazada. Sin alternativa se pregunta por la operación; una rectificación afirmativa selecciona la nueva operación. |
+
+La exclusión de una persona de apoyo afecta solo a la interpretación del titular. No modifica el texto de la pregunta entregada al flujo existente, no almacena nombres ni edades exactas adicionales y **no atribuye representación legal ni autoriza acompañamiento**. Esas respuestas siguen dependiendo del corpus aprobado y del generador/verificador existentes. El reconocimiento de roles es mediante reglas explícitas, no un análisis lingüístico general; las paráfrasis no cubiertas y varios titulares siguen siendo riesgos residuales.
+
+Se añaden 19 casos deterministas: roles antes y después de la persona, representantes y documentos de apoyo, titular y acompañante en un mismo enunciado, aclaración frente a sustitución, negación y rectificación de duplicado y continuaciones en sesiones reales del grafo con proveedor y recuperación simulados. Se comprueban identidad y credencial constantes de sesión, fuentes correctas, ausencia de generación en aclaraciones y presencia de la pregunta inicial en el prompt contextualizado. La respuesta simulada no demuestra corrección factual de un modelo real.
+
+Antes de modificar el clasificador, la primera selección de 12 casos nuevos produjo **11 fallos y 1 aprobado** sobre `2c4915e`, reproduciendo los tres defectos. Después de las correcciones y de ampliar los casos, se ejecutó la suite completa: **151 aprobados, 6 de integración excluidos y 12 advertencias de dependencias**, Python 3.11.17 en Linux, sin claves OpenAI reales. Se utilizó el mismo comando documentado arriba, con las dos variables de claves eliminadas del proceso. También pasan las regresiones existentes de seguridad, privacidad y concurrencia; sus implementaciones no se modifican.
+
+No se añaden variables de entorno, migraciones ni dependencias. Siguen vigentes los comandos Windows PowerShell/Conda y Linux de esta guía. Preparado para repetir validación local en Windows; **no se ha ejecutado Windows/Conda nativo ni integración con OpenAI real**. El verificador factual permanece pendiente de la Fase 1B.3 y las limitaciones lingüísticas previas siguen aplicando.

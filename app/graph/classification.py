@@ -35,6 +35,23 @@ def solicitante(texto: str, previo: dict) -> tuple[dict, bool, bool]:
     Una edad del progenitor/documento de apoyo no se asigna al menor. Se busca
     el titular explícito; no se infiere minoría de edad a partir de 'hijo'.
     """
+    # Excluir personas con un rol de apoyo explícito antes de buscar al titular.
+    # Solo se enmascara la mención vinculada al rol, no todo el enunciado:
+    # puede contener también al menor cuyo DNI se solicita. Esto no autoriza
+    # al acompañante a representar legalmente al titular.
+    persona = (r'\b(?:mi|su|el|la|un|una)\s+'
+               r'(?:hijo|hija|nino|nina|bebe|menor|padre|madre|adulto|adulta)\b'
+               r'(?:\s+(?:de\s+\d{1,3}\s+anos|menor(?: de edad)?|adult[oa]))?')
+    roles = (
+        r'\bacompan(?:arlo|arla|arme|arte|arles|arnos|ar)\s+(' + persona + r')',
+        r'\bacompanad[oa]\s+por\s+(' + persona + r')',
+        r'(' + persona + r')\s+(?:(?:puede|debe|podria)\s+)?acompan(?:arlo|arla|arme|arte|arles|arnos|ar)\b',
+        r'(' + persona + r')\s+(?:como|(?:puede|debe|podria)\s+ser)\s+(?:acompanante|representante(?: legal)?|apoderad[oa])\b',
+        r'\b(?:presentar|llevar|mostrar|adjuntar)\s+(?:el\s+)?dni\s+de\s+(' + persona + r')',
+    )
+    for patron in roles:
+        texto = re.sub(patron, lambda m: m.group(0)[:m.start(1) - m.start()] +
+                       ' persona de apoyo ' + m.group(0)[m.end(1) - m.start():], texto)
     # Una negación del grupo no lo convierte en contexto afirmativo.
     texto = re.sub(r'\bno (?:es|soy) (?:para )?(?:un |una )?(?:menor(?: de edad)?|adult[oa]|mayor de edad)\b', ' ', texto)
     child = re.search(r'\b(?:mi|su|el|la|un|una|otro|otra)\s+(hijo|hija|nino|nina|bebe|menor)\b', texto)
@@ -110,8 +127,8 @@ def operacion(texto: str) -> tuple[str, bool, bool]:
     neg_renew = r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
     neg_first = r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|corresponde)\s+){0,3}(?:la\s+)?(?:por\s+)?(?:primera vez|primera inscripcion|(?:su |el )?primer dni)\b'
     neg_duplicate = r'\bno\s+(?:(?:quiero|necesito|es)\s+){0,3}(?:un |el )?duplicado(?:\s+(?:de |del )?dni)?\b'
+    denied = bool(re.search(neg_duplicate, texto) or re.search(neg_renew, texto) or re.search(neg_first, texto))
     texto = re.sub(neg_duplicate, ' ', texto)
-    denied = bool(re.search(neg_renew, texto) or re.search(neg_first, texto))
     positive = re.sub(neg_first, ' ', re.sub(neg_renew, ' ', texto))
     first = bool(re.search(r'primera vez|primera inscripcion|primer dni|\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive))
     renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni|dni vencido|dni caducado|ya (?:tuvo|tuve|tiene|tengo) (?:un |su )?dni)\b', positive))
@@ -160,7 +177,8 @@ def clasificar(state: dict) -> dict:
         operation = ''
     if not operation and not conflict_op and not denied:
         # No trasladar una operación a un titular nuevo por mera inercia.
-        changed_holder = explicit_holder and bool(context) and holder['destinatario'] != context.get('destinatario')
+        changed_holder = (explicit_holder and context.get('destinatario', 'desconocido') != 'desconocido'
+                          and holder['destinatario'] != context.get('destinatario'))
         operation = '' if changed_holder else previous_op
     if mixed or conflict_op or conflict_age:
         operation = ''
