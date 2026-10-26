@@ -574,3 +574,8 @@ rectificación separada de renovación y condiciones de estado civil. Consulte
 y los [resultados deterministas](docs/resultado-pruebas-dni-mayor.md).
 Las combinaciones no confirmadas requieren revisión documental; las simulaciones
 no sustituyen la validación local con el recuperador real.
+
+Las combinaciones de renovación y rectificación aplican un
+[control determinista de alcance documental y de salida](docs/control-afirmaciones-combinadas-pr4.md):
+las tasas y condiciones individuales no se convierten en obligaciones conjuntas.
+Este control no constituye una verificación factual universal del resto de respuestas.

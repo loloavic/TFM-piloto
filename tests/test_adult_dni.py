@@ -100,7 +100,9 @@ def test_combinacion_solo_derivacion_documentada(q, motor):
     service, _, prompts = motor
     r = service.responder(q)
     assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt'}
-    assert prompts and 'No sumes tasas' in prompts[-1]
+    assert not prompts  # El alcance combinado se controla ahora sin síntesis LLM.
+    assert 'partida de nacimiento original apostillada' in r['respuesta']
+    assert 'no es una lista combinada definitiva' in r['respuesta']
 
 
 @pytest.mark.parametrize('q', [

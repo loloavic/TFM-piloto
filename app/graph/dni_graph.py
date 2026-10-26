@@ -5,6 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
+from app.graph.combination_guard import respuesta_controlada
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
 from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto
@@ -402,6 +403,10 @@ def redactar_respuesta(
     El historial se utiliza solamente para interpretar la
     conversación, nunca como fuente oficial.
     """
+    controlled = respuesta_controlada(state)
+    if controlled is not None:
+        return {**state, "respuesta_borrador": controlled}
+
     intencion = state["intencion"]
     pregunta = state["pregunta"]
     pregunta_lower = pregunta.lower()
@@ -515,13 +520,6 @@ def redactar_respuesta(
             **state,
             "respuesta_borrador": respuesta,
         }
-
-    if (intencion in ADULT_FILES and len(plan_adulto(state['contexto_canonico'])) > 1
-            and state['contexto_canonico']['tema'] == 'coste'):
-        return {**state, 'respuesta_borrador': (
-            'Las fichas de rectificación y renovación indican €7 cada una. '
-            'No documentan un importe total ni si las tasas se acumulan para este supuesto; '
-            'confirme el importe aplicable con el Consulado. No puedo afirmar un total de €14.')}
 
     if intencion in ADULT_FILES and 'OBSERVACIÓN PENDIENTE' in state.get('contexto', ''):
         return {**state, 'respuesta_borrador': (
@@ -698,10 +696,16 @@ def verificar_respuesta(
     al historial temporal de la sesión.
     """
     respuesta = state["respuesta_borrador"]
+    controlled = respuesta_controlada(state)
+    replaced = controlled is not None and respuesta != controlled
+    if replaced:
+        respuesta = controlled
     respuesta_lower = respuesta.lower()
     intencion = state["intencion"]
 
     advertencias = []
+    if replaced:
+        advertencias.append("Borrador sustituido por el control determinista de alcance documental combinado.")
 
     if "@" in respuesta:
         advertencias.append(
@@ -763,6 +767,7 @@ def verificar_respuesta(
     return {
         **state,
         "verificacion": verificacion,
+        "respuesta_borrador": respuesta,
         "respuesta_final": respuesta,
         "historial": historial_actualizado,
     }
