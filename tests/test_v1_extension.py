@@ -291,3 +291,51 @@ def test_incidencia_sin_tramite_confirma_solo_la_dificultad(motor):
     assert state(service, result['session_id'])['requiere_aclaracion']
     assert result['verificacion'] == 'ok'
     assert not retrieve.called and not prompts
+
+
+@pytest.mark.parametrize('confirmation', [
+    'Quiero cambiar mi DNI amarillo a azul, ya tengo DNI',
+    'Mi hijo tiene 17 años y necesita cambiar DNI amarillo a azul, ya tiene DNI',
+])
+def test_integracion_peticion_azul_afirmativa_con_tenencia_rehabilita(confirmation, motor):
+    service, _, _ = motor
+    first = service.responder('Mi hijo tiene 17 años y necesita cambiar DNI amarillo a azul')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('No quiero cambiar el DNI amarillo a azul', sid, token)
+    result = service.responder(confirmation, sid, token)
+    assert result['intencion'] == BLUE
+    assert CAMBIO_AZUL not in state(service, sid)['contexto_canonico']['rechazadas']
+    assert {f['archivo'] for f in result['fuentes']} == {BLUE + '.txt'}
+
+
+@pytest.mark.parametrize('followup', ['¿Cuánto cuesta?', '¿Y las fotografías?',
+    '¿Qué requisitos necesito?', '¿Dónde solicito la cita?', '¿Cuánto demora?'])
+def test_integracion_documento_titular_azul_no_hereda_edad(followup, motor):
+    service, retrieve, prompts = motor
+    first = service.responder('Mi hijo tiene 17 años y necesita cambiar DNI amarillo a azul')
+    sid, token = first['session_id'], first['session_token']
+    before = retrieve.call_count, len(prompts)
+    for q in ['¿Debo presentar el DNI de mi hijo de 25 años?',
+              'Es el DNI del titular, mi hijo', followup]:
+        result = service.responder(q, sid, token)
+        assert result['intencion'] == 'general' and not result['fuentes']
+        assert state(service, sid)['requiere_aclaracion']
+        assert (retrieve.call_count, len(prompts)) == before
+    result = service.responder('Es para mi hijo de 17 años', sid, token)
+    assert result['intencion'] == BLUE
+    assert {f['archivo'] for f in result['fuentes']} == {BLUE + '.txt'}
+
+
+def test_integracion_tipo_dni_no_borra_rechazo_renovacion(motor):
+    service, retrieve, prompts = motor
+    first = service.responder('Necesito renovar el DNI de mi hijo de 10 años')
+    sid, token = first['session_id'], first['session_token']
+    service.responder('No quiero renovar', sid, token)
+    service.responder('¿Cuánto cuesta el DNI azul por primera vez?', sid, token)
+    before = retrieve.call_count, len(prompts)
+    result = service.responder('Es para mi hijo de 10 años, ya tiene DNI', sid, token)
+    assert result['intencion'] == 'general' and not result['fuentes']
+    assert 'renovacion' in state(service, sid)['contexto_canonico']['rechazadas']
+    assert (retrieve.call_count, len(prompts)) == before
+    result = service.responder('Quiero renovar el DNI de mi hijo de 10 años', sid, token)
+    assert result['intencion'] == 'dni_menor_renovacion'

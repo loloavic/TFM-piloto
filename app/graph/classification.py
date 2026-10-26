@@ -291,7 +291,12 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
                or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
     # Extraer por separado la operación afirmada, sin inferencias de tenencia.
     # Reutilizar el detector mantiene su tratamiento de negaciones y conflictos.
-    affirmative_operation = operacion(text, inferir_tenencia=False)[0]
+    affirmative_operation = operacion(operation_text, inferir_tenencia=False)[0]
+    if transition and not op_conflict and re.search(
+            r'\b(?:cambiar|pasar|sacar|obtener)\b', positive_color):
+        # La operación específica también puede solicitarse afirmativamente;
+        # mencionar tenencia junto a esa petición no la convierte en observación.
+        affirmative_operation = CAMBIO_AZUL
     return EvidenciaTurno(
         titular=holder['destinatario'] if explicit and not holder_conflict and holder['destinatario'] != 'desconocido' else '',
         edad=holder['grupo_edad'] if not holder_conflict and holder['grupo_edad'] != 'desconocido' else '',
