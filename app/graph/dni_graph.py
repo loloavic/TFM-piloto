@@ -5,7 +5,8 @@ from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
 from app.graph.classification import clasificar, pregunta_contextual
-from app.graph.context_policy import ruta_documental
+from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
+from app.graph.conversation_style import formular_aclaracion, respuesta_contextual
 from app.rag.retriever import recuperar_contexto
 from app.services.llm_service import LLMService
 
@@ -174,6 +175,9 @@ def enriquecer_busqueda(
             "consulta de estado del trámite de DNI "
             "en RENIEC"
         ),
+        "dni_amarillo_a_azul_primera_vez": (
+            "cambio de DNI amarillo a DNI azul por primera vez, supuesto documentado de cumplir 17 años"
+        ),
     }
 
     partes_busqueda = [pregunta]
@@ -281,32 +285,9 @@ def recuperar_documentos(
         k=10,
     )
 
-    if intencion == "dni_consulta_estado":
-        filtrados = [
-            fragmento
-            for fragmento in fragmentos
-            if "consulta_estado"
-            in fragmento["metadata"]["archivo"]
-        ]
-
-    elif intencion == "dni_menor_primera_vez":
-        filtrados = [
-            fragmento
-            for fragmento in fragmentos
-            if "primera_vez"
-            in fragmento["metadata"]["archivo"]
-        ]
-
-    elif intencion == "dni_menor_renovacion":
-        filtrados = [
-            fragmento
-            for fragmento in fragmentos
-            if "renovacion"
-            in fragmento["metadata"]["archivo"]
-        ]
-
-    else:
-        filtrados = []
+    archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
+    filtrados = [fragmento for fragmento in fragmentos
+                 if archivo_autorizado and fragmento.get("metadata", {}).get("archivo") == archivo_autorizado]
 
     fragmentos_finales = filtrados[:6]
 
@@ -430,8 +411,9 @@ def redactar_respuesta(
             "dni_previo": "¿Su hijo ya tiene un DNI peruano vencido o está solicitando su primer DNI?" if state.get("contexto_solicitante", {}).get("destinatario") == "descendiente" else "¿El titular ya tenía DNI peruano o está solicitando su primer DNI?",
             "titular": "¿De cuál de las personas mencionadas es el DNI que desea tramitar?",
             "documento": "¿El DNI mencionado es el que desea tramitar o es un documento de apoyo?",
+            "tipo_dni": "¿Ya dispone de DNI amarillo y desea cambiarlo por el azul, o se refiere a otro trámite de DNI?",
         }
-        return {**state, "respuesta_borrador": "Para poder orientarle, " + aclaraciones[state["motivo_aclaracion"]]}
+        return {**state, "respuesta_borrador": formular_aclaracion(state, aclaraciones[state["motivo_aclaracion"]])}
 
     if intencion == "general":
         respuesta = (
@@ -494,6 +476,10 @@ def redactar_respuesta(
             **state,
             "respuesta_borrador": respuesta,
         }
+
+    respuesta_breve = respuesta_contextual(state)
+    if respuesta_breve is not None:
+        return {**state, "respuesta_borrador": respuesta_breve}
 
     historial_texto = construir_texto_historial(
         historial
@@ -596,13 +582,24 @@ subsanación, entrega o recojo del DNI:
   antes de acudir a recogerlo.
 
 Si el CONTEXTO DOCUMENTAL contiene trámites parecidos:
+- La INTENCIÓN CLASIFICADA y el trámite autorizado ya están decididos. No los
+  cambies a partir del historial. El cambio amarillo a azul (azul por primera
+  vez) no significa primera inscripción: describe únicamente el supuesto de
+  cumplir 17 años con DNI amarillo incluido en su documento específico.
 - Si el menor nunca tuvo DNI, corresponde al DNI de menor por primera vez.
-- Si el menor ya tuvo DNI, corresponde a renovación de DNI de menor.
+- Si la intención es renovación de menor, utiliza únicamente su documentación;
+  la mera posesión previa de DNI no permite reclasificar amarillo a azul como renovación.
 
 Cuando el ciudadano se despida o agradezca:
 - Responde de forma breve y cordial.
 - No repitas requisitos, enlaces, costos ni información ya proporcionada,
   salvo que el ciudadano la solicite nuevamente.
+
+Responde únicamente al tema de la pregunta actual: para una consulta de costo,
+indica el importe y su alcance sin enumerar requisitos; para plazo o fotografías,
+limita la respuesta a ese tema. No repitas información extensa del historial
+salvo petición expresa. Reconoce brevemente una dificultad comunicada sin
+inventar su causa, fechas, plazas disponibles ni acciones de reserva.
 
 Responde en español claro, con tono formal y orientativo.
 No uses información externa al CONTEXTO DOCUMENTAL.

@@ -8,7 +8,7 @@ import unicodedata
 
 from app.graph.state import EvidenciaTurno
 from app.graph.context_policy import (
-    DOCUMENTADOS, PRIORIDAD, ruta_documental, tramite_candidato, transicionar, validar_contexto,
+    CAMBIO_AZUL, DOCUMENTADOS, PRIORIDAD, ruta_documental, tramite_candidato, transicionar, validar_contexto,
 )
 
 OTROS = r'pasaporte|visa|visado|apostilla|matrimonio|defuncion|carta poder|poder consular|licencia de conducir|carnet de extranjeria'
@@ -137,7 +137,7 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
         # Solo edades unidas gramaticalmente al titular, no al acompañante.
         ages = re.findall(
             r'^\s*,?\s*(?:que\s+)?(?:(?:es\s+)?(?:menor(?: de edad)?|adult[oa]|mayor de edad)\s+)?'
-            r'(?:de|tiene)\s+(\d{1,3})\s+anos\b', segment,
+            r'(?:de|tiene|cumple)\s+(\d{1,3})\s+anos\b', segment,
         )
     elif own:
         ages = re.findall(r'\btengo\s+(\d{1,3})\s+anos\b', texto)
@@ -213,11 +213,54 @@ CONSULTAS = {
 }
 
 
+def evidencia_color(text: str) -> tuple[str, bool, bool]:
+    """Separar el objeto azul de primera inscripción y procesar su negación."""
+    positives, denied = [], False
+    for clause in re.split(r'[.;?!]|\b(?:pero|sino)\b', text):
+        relation = bool(re.search(r'\bamarillo\s+(?:a|al|por|por el)\s+(?:dni\s+)?azul\b', clause)
+                        or ('amarillo' in clause and 'azul' in clause and
+                            re.search(r'\b(?:cambiar|pasar|sacar|obtener)\b|\bya (?:tengo|tiene)\b', clause)))
+        negative = bool(re.search(r'\bno\s+(?:(?:quiero|necesito|deseo|debo|es)\s+)', clause))
+        if relation and negative:
+            denied = True
+        else:
+            positives.append(clause)
+    positive = ' '.join(positives)
+    transition = bool(re.search(r'\bamarillo\s+(?:a|al|por|por el)\s+(?:dni\s+)?azul\b', positive)
+                      or ('amarillo' in positive and 'azul' in positive and
+                          re.search(r'\b(?:cambiar|pasar|sacar|obtener)\b|\bya (?:tengo|tiene)\b', positive)))
+    # No convertir una negación de posesión en prueba de que ya tiene amarillo.
+    if re.search(r'\b(?:no tengo|no tiene|nunca tuvo)\b.{0,25}\bamarillo\b', positive):
+        transition = False
+    return positive, transition, denied
+
+
 def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
     text = normalizar(pregunta)
     role_text, document_conflict = identificar_roles(text)
     holder, explicit, holder_conflict = solicitante(text)
-    operation, op_conflict, denied = operacion(text, contexto_dni=True)
+    positive_color, transition, denied_color = evidencia_color(text)
+    blue = bool(re.search(r'\bazul\b', positive_color))
+    operation_text = positive_color if denied_color else text
+    if re.search(r'\bdomicilio\b', text):
+        # Actualizar domicilio no acredita una solicitud de renovación de DNI.
+        operation_text = re.sub(r'\bactualizar\b', 'modificar', operation_text)
+    _, _, original_denied = operacion(operation_text, contexto_dni=True)
+    if blue:
+        # Azul por primera vez no implica que nunca haya tenido un DNI.
+        operation_text = re.sub(r'\b(?:primera vez|primera inscripcion|primer dni)\b', ' ', operation_text)
+    operation, op_conflict, denied = operacion(operation_text, contexto_dni=True)
+    denied |= original_denied
+    yellow_possession = (bool(re.search(r'\b(?:ya )?(?:tengo|tiene|dispongo de|cuenta con)\b.{0,25}\bamarillo\b', positive_color))
+                         and not bool(re.search(r'\bno (?:tengo|tiene)\b', positive_color)))
+    explicit_renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni)\b', operation_text)) and 'renovacion' not in denied
+    if yellow_possession and operation == 'renovacion' and not explicit_renewal:
+        operation = ''  # Tener amarillo no selecciona por sí solo renovación ni cambio a azul.
+    if denied_color:
+        denied.add(CAMBIO_AZUL)
+    if transition:
+        op_conflict = op_conflict or operation in {'primera_vez', 'duplicado'}
+        operation = '' if op_conflict else CAMBIO_AZUL
     topic = tipo_consulta(text)
     other_text = re.sub(r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|deseo|desea)\s+){0,3}(?:'+ACCION+r'\s+)?'+ART+r'(?:'+OTROS+r')\b', ' ', text)
     dni = bool(re.search(r'\bdni\b|documento nacional de identidad', text))
@@ -248,7 +291,12 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
                or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
     # Extraer por separado la operación afirmada, sin inferencias de tenencia.
     # Reutilizar el detector mantiene su tratamiento de negaciones y conflictos.
-    affirmative_operation = operacion(text, inferir_tenencia=False)[0]
+    affirmative_operation = operacion(operation_text, inferir_tenencia=False)[0]
+    if transition and not op_conflict and re.search(
+            r'\b(?:cambiar|pasar|sacar|obtener)\b', positive_color):
+        # La operación específica también puede solicitarse afirmativamente;
+        # mencionar tenencia junto a esa petición no la convierte en observación.
+        affirmative_operation = CAMBIO_AZUL
     return EvidenciaTurno(
         titular=holder['destinatario'] if explicit and not holder_conflict and holder['destinatario'] != 'desconocido' else '',
         edad=holder['grupo_edad'] if not holder_conflict and holder['grupo_edad'] != 'desconocido' else '',
@@ -265,6 +313,9 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         # Identificar al destinatario o la función documental no convierte
         # una observación de tenencia en una solicitud de operación.
         observacion=possession and affirmative_operation != operation,
+        referencia_azul=blue,
+        tiene_amarillo=yellow_possession,
+        nunca_tuvo_dni=bool(re.search(r'\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', text)),
         abandonar=bool(re.fullmatch(r'(?:olvida|olvidemos|cancela|dejemos) (?:lo anterior|la consulta|la aclaracion)[.!]?', text)),
     )
 

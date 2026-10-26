@@ -65,6 +65,9 @@ class EvidenciaTurno:
     solicitud: bool = False
     observacion: bool = False
     abandonar: bool = False
+    referencia_azul: bool = False
+    tiene_amarillo: bool = False
+    nunca_tuvo_dni: bool = False
 
 
 class DNIState(TypedDict, total=False):
