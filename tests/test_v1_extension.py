@@ -249,7 +249,8 @@ def test_cambio_a_titular_adulto_no_reutiliza_amarillo_azul(motor):
     result = service.responder('Ahora quiero renovar mi DNI, soy adulto', first['session_id'], first['session_token'])
     s = state(service, first['session_id'])
     assert s['tramite_actual'] == 'dni_adulto_renovacion'
-    assert result['intencion'] == 'general' and not result['fuentes']
+    assert result['intencion'] == 'dni_adulto_renovacion'
+    assert {f['archivo'] for f in result['fuentes']} == {'dni_mayor_renovacion.txt'}
     assert s['contexto_canonico']['titular']['valor'] == 'propio'
 
 

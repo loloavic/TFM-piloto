@@ -57,7 +57,7 @@ def test_cinco_aclaraciones_de_edad_no_equivalentes(answer, resolved, group):
         assert c['edad']['valor'] == group and c['edad']['turno'] == 3
         assert c['edad']['origen'] == 'explicito'
         assert s['operacion_dni'] == 'renovacion'
-        assert ruta_documental(c) == ('dni_menor_renovacion' if group == 'menor' else '')
+        assert ruta_documental(c) == ('dni_menor_renovacion' if group == 'menor' else 'dni_adulto_renovacion')
     else:
         assert c['edad'] == source and not ruta_documental(c)
 
@@ -72,7 +72,7 @@ def test_cambio_de_edad_factual_requiere_confirmacion_y_limite_no_es_edad():
     assert s['requiere_aclaracion']
     s = turn(s, 'Es para mi hijo adulto')
     assert s['tramite_actual'] == 'dni_adulto_renovacion'
-    assert s['estado_documental'] == 'no_documentado'
+    assert s['estado_documental'] == 'disponible'
 
 
 def base():
@@ -153,7 +153,7 @@ def test_seleccion_entre_varios_no_hereda_edad_del_titular_anterior():
     assert 'titular' not in c['pendientes'] and 'edad' in c['pendientes']
     c = transicionar(c, E(edad='adulto'))
     assert not c['pendientes'] and c['edad']['valor'] == 'adulto'
-    assert c['operacion']['valor'] == 'renovacion' and not ruta_documental(c)
+    assert c['operacion']['valor'] == 'renovacion' and ruta_documental(c) == 'dni_adulto_renovacion'
 
 
 @pytest.mark.parametrize('mutation', ['revision', 'turno', 'origen', 'rechazada', 'edad', 'motivo', 'valor'])
@@ -386,8 +386,8 @@ def test_documento_titular_confirmado_sin_edad_permite_aclarar_adulto():
     s = turn(s, 'Es para mi hijo adulto')
     assert not s['requiere_aclaracion']
     assert s['tramite_actual'] == 'dni_adulto_renovacion'
-    assert s['estado_documental'] == 'no_documentado'
-    assert not ruta_documental(s['contexto_canonico'])
+    assert s['estado_documental'] == 'disponible'
+    assert ruta_documental(s['contexto_canonico']) == 'dni_adulto_renovacion'
 
 
 @pytest.mark.parametrize('observation', [

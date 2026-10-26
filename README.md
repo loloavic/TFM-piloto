@@ -565,3 +565,12 @@ La [guía V1 de ampliación](docs/v1-dni-amarillo-azul.md) describe las fuentes
 separadas, la tasa de €7, las mejoras acotadas de conversación, las pruebas y
 la actualización Windows/Conda. Requiere reconstruir el índice local después
 de verificar el corpus; para comparar con V1 debe utilizarse su índice correspondiente.
+
+### Ampliación de DNI de mayor de edad (en revisión)
+
+La rama `feature/dni-mayor-ampliacion` incorpora tres fichas aportadas como PDF,
+rectificación separada de renovación y condiciones de estado civil. Consulte
+[alcance, observaciones pendientes y reconstrucción del índice de siete TXT](docs/ampliacion-dni-mayor.md)
+y los [resultados deterministas](docs/resultado-pruebas-dni-mayor.md).
+Las combinaciones no confirmadas requieren revisión documental; las simulaciones
+no sustituyen la validación local con el recuperador real.

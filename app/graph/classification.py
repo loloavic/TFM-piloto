@@ -7,6 +7,7 @@ import re
 import unicodedata
 
 from app.graph.state import EvidenciaTurno
+from app.graph.adult_context import extraer as extraer_adulto
 from app.graph.context_policy import (
     CAMBIO_AZUL, DOCUMENTADOS, PRIORIDAD, ruta_documental, tramite_candidato, transicionar, validar_contexto,
 )
@@ -28,7 +29,8 @@ def tipo_consulta(texto: str) -> str:
         ('plazo', r'cuanto (?:demora|tarda)|cuando (?:llega|llegara|estara listo)|tiempo (?:estimado|de entrega)|plazo|demora|tarda'),
         ('cita', r'\bcita\b|reservar|reserva|horarios?|turnos?|bookeo'),
         ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|\bmonto\b|importe'),
-        ('requisitos', r'requisitos?|foto|documentos?|\bllevar\b|\bpresentar\b|acompan|apoderad|representante'),
+        ('fotografias', r'foto'),
+        ('requisitos', r'requisitos?|documentos?|\bllevar\b|\bpresentar\b|acompan|apoderad|representante'),
     )
     return next((tema for tema, pattern in temas if re.search(pattern, texto)), 'otra')
 
@@ -207,6 +209,7 @@ def operacion(texto: str, contexto_dni: bool = False, *, inferir_tenencia: bool 
 # El reconocimiento léxico no consulta el contexto ni restaura hechos anteriores.
 
 CONSULTAS = {
+    'fotografias': '¿Qué fotografías necesito?',
     'coste': '¿Cuánto cuesta?', 'plazo': '¿Cuánto demora?',
     'cita': '¿Dónde solicito la cita?', 'requisitos': '¿Cuáles son los requisitos?',
     'seguimiento': '¿Cómo consulto el estado del trámite?',
@@ -261,12 +264,23 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
     if transition:
         op_conflict = op_conflict or operation in {'primera_vez', 'duplicado'}
         operation = '' if op_conflict else CAMBIO_AZUL
+    adult_facts = extraer_adulto(text)
+    if dni_vencido(role_text, True):
+        adult_facts = tuple(sorted({**dict(adult_facts), 'vigencia': 'vencido'}.items()))
+    neg_rect = bool(re.search(r'\bno (?:quiero|necesito|deseo) (?:rectificar|corregir)\b', text))
+    if neg_rect:
+        denied.add('rectificacion')
+    explicit_rect = bool(re.search(r'\b(?:rectificar|rectificacion|corregir|correccion)\b', text)) and not neg_rect
+    if explicit_rect and not neg_rect and (not operation or (
+            operation == 'renovacion' and not operacion(operation_text, inferir_tenencia=False)[0])):
+        operation = 'rectificacion'
     topic = tipo_consulta(text)
     other_text = re.sub(r'\bno\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|deseo|desea)\s+){0,3}(?:'+ACCION+r'\s+)?'+ART+r'(?:'+OTROS+r')\b', ' ', text)
     dni = bool(re.search(r'\bdni\b|documento nacional de identidad', text))
     other_action = bool(re.search(r'\b'+ACCION+r'\s+'+ART+r'(?:'+OTROS+r')\b', other_text))
     dni_action = bool(re.search(r'\b'+ACCION+r'\s+'+ART+r'dni\b|\bdni\b.*(?:primera vez|renovacion)', other_text))
-    support = bool(re.search(r'foto|tamano|\bllevar\b|presentar|documento de apoyo|requisito', text))
+    support = bool(re.search(r'foto|tamano|\bllevar\b|presentar|documento de apoyo|requisito|\bacta\b|\bpartida\b', text)) or bool(
+        {'matrimonio', 'defuncion'} & dict(adult_facts).keys())
     doubts = []
     if holder_conflict:
         if document_conflict:
@@ -292,12 +306,18 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
     # Extraer por separado la operación afirmada, sin inferencias de tenencia.
     # Reutilizar el detector mantiene su tratamiento de negaciones y conflictos.
     affirmative_operation = operacion(operation_text, inferir_tenencia=False)[0]
+    if explicit_rect and operation == 'rectificacion':
+        affirmative_operation = 'rectificacion'
     if transition and not op_conflict and re.search(
             r'\b(?:cambiar|pasar|sacar|obtener)\b', positive_color):
         # La operación específica también puede solicitarse afirmativamente;
         # mencionar tenencia junto a esa petición no la convierte en observación.
         affirmative_operation = CAMBIO_AZUL
     return EvidenciaTurno(
+        condiciones_adulto=adult_facts,
+        lugar_confirmado=next((place for word, place in [('peru','peru'),('italia','italia'),('otro pais','otro')]
+            if re.fullmatch(r'(?:fue |ocurrio )?en (?:el )?' + word + r'[.!]?', text)), ''),
+        respuesta_binaria='si' if re.fullmatch(r'si[.!]?', text) else 'no' if re.fullmatch(r'no[.!]?', text) else '',
         titular=holder['destinatario'] if explicit and not holder_conflict and holder['destinatario'] != 'desconocido' else '',
         edad=holder['grupo_edad'] if not holder_conflict and holder['grupo_edad'] != 'desconocido' else '',
         operacion=operation, rechazadas=tuple(sorted(denied - {'sin_objeto'})), dudas=tuple(doubts),
@@ -307,7 +327,7 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         mencion_otro=bool(re.search(r'\b(?:'+OTROS+r')\b', other_text)), apoyo=support,
         finalidad_dni=bool(re.search(r'\bpara\b.{0,55}\bdni\b', other_text)), mixto=other_action and dni_action,
         funcion_documento=role,
-        cambio=bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad)\b', text)),
+        cambio=bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad|sin renovar|solo rectificar)\b', text)),
         rectificacion=bool(re.search(r'\b(?:me equivoque|en realidad)\b', text)),
         otro_titular=bool(re.search(r'\b(?:otro|otra)\b', text)), solicitud=request,
         # Identificar al destinatario o la función documental no convierte

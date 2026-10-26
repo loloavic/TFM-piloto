@@ -2,18 +2,20 @@
 from copy import deepcopy
 
 from app.graph.state import ContextoCanonico, DatoContextual, EvidenciaTurno
+from app.graph.adult_context import ADULT_FILES, PREGUNTAS, actualizar, validar as validar_adulto
 
 CAMBIO_AZUL = 'amarillo_a_azul'
-OPERACIONES = {'primera_vez', 'renovacion', 'duplicado', CAMBIO_AZUL}
+OPERACIONES = {'primera_vez', 'renovacion', 'duplicado', 'rectificacion', CAMBIO_AZUL}
 DOCUMENTOS_POR_INTENCION = {
     'dni_menor_primera_vez': 'dni_menor_primera_vez.txt',
     'dni_menor_renovacion': 'dni_menor_renovacion.txt',
     'dni_consulta_estado': 'dni_consulta_estado.txt',
     'dni_amarillo_a_azul_primera_vez': 'dni_amarillo_a_azul_primera_vez.txt',
 }
+DOCUMENTOS_POR_INTENCION.update(ADULT_FILES)
 DOCUMENTADOS = set(DOCUMENTOS_POR_INTENCION)
-TEMAS = {'otra', 'coste', 'plazo', 'cita', 'requisitos', 'seguimiento'}
-PRIORIDAD = ('titular', 'documento', 'tipo_dni', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite')
+TEMAS = {'otra', 'coste', 'plazo', 'cita', 'requisitos', 'seguimiento', 'fotografias'}
+PRIORIDAD = ('titular', 'documento', 'tipo_dni', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite', *PREGUNTAS)
 VALORES = {'titular': {'descendiente', 'menor', 'adulto', 'propio'},
            'edad': {'menor', 'adulto'}, 'operacion': OPERACIONES}
 
@@ -29,7 +31,7 @@ def contexto_inicial(revision=0, turno=0) -> ContextoCanonico:
             'titular': dato(revision=revision), 'edad': dato(revision=revision),
             'operacion': dato(revision=revision), 'rechazadas': [], 'pendientes': {},
             'propuesta_operacion': '', 'tema': 'otra', 'consulta_pendiente': '',
-            'retomar': '', 'ultima_ruta': ''}
+            'retomar': '', 'ultima_ruta': '', 'condiciones_adulto': {}}
 
 
 def validar_contexto(c: dict) -> bool:
@@ -74,7 +76,7 @@ def validar_contexto(c: dict) -> bool:
             return False
         if c['operacion']['estado'] == 'conflicto' and not ({'operacion', 'dni_previo', 'tipo_dni'} & c['pendientes'].keys()):
             return False
-        return True
+        return validar_adulto(c)
     except (KeyError, TypeError, ValueError):
         return False
 
@@ -105,7 +107,7 @@ def ruta_documental(c: dict | None) -> str:
         return 'dni_consulta_estado'
     if not _conocido(c, 'operacion') or c['operacion']['valor'] in c['rechazadas']:
         return ''
-    if c['operacion']['valor'] in {'primera_vez', 'renovacion'} and not _conocido(c, 'edad'):
+    if c['operacion']['valor'] in {'primera_vez', 'renovacion', 'rectificacion'} and not _conocido(c, 'edad'):
         return ''
     candidate = tramite_candidato(c)
     return candidate if candidate in DOCUMENTADOS else ''
@@ -182,6 +184,21 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
         doubt('operacion', 'tipo_dni')
         c['propuesta_operacion'] = ''
 
+    if (old_op == 'rectificacion' and _conocido(c, 'edad') and c['edad']['valor'] == 'adulto'
+            and e.operacion == 'renovacion' and e.observacion):
+        # Tenencia/caducidad complementa la rectificación; no sustituye su operación.
+        from dataclasses import replace
+        e = replace(e, operacion='')
+    if (e.operacion == 'rectificacion' and old_op == 'renovacion'
+            and dict(e.condiciones_adulto).get('modificacion') and not e.cambio):
+        from dataclasses import replace
+        e = replace(e, operacion='')
+    if ((e.edad == 'adulto' or (_conocido(c, 'edad') and c['edad']['valor'] == 'adulto'))
+            and not c['operacion']['valor'] and not e.operacion
+            and dict(e.condiciones_adulto).get('modificacion',
+                c.get('condiciones_adulto', {}).get('modificacion', {}).get('valor')) not in {None, 'ninguna'}):
+        from dataclasses import replace
+        e = replace(e, operacion='rectificacion', observacion=True)
     # Rechazar es un evento persistente, independiente de las demás dudas.
     c['rechazadas'] = sorted(set(c['rechazadas']) | (set(e.rechazadas) & OPERACIONES))
     if c['operacion']['valor'] in c['rechazadas']:
@@ -256,9 +273,10 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
     elif not generic:
         if not _conocido(c, 'operacion') and e.tema != 'seguimiento':
             c['pendientes'].setdefault('operacion', 'faltante')
-        if (_conocido(c, 'operacion') and c['operacion']['valor'] in {'primera_vez', 'renovacion'}
+        if (_conocido(c, 'operacion') and c['operacion']['valor'] in {'primera_vez', 'renovacion', 'rectificacion'}
                 and not _conocido(c, 'edad')):
             c['pendientes'].setdefault('edad', 'faltante')
+    actualizar(c, e)
     if c['pendientes']:
         if e.pregunta_tema:
             c['consulta_pendiente'] = e.tema

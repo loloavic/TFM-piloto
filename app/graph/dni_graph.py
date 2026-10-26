@@ -1,3 +1,4 @@
+import re
 from app.core.privacy import minimizar_texto
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -6,6 +7,7 @@ from langgraph.graph import END, StateGraph
 from app.graph.state import DNIState
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
+from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto
 from app.graph.conversation_style import formular_aclaracion, respuesta_contextual
 from app.rag.retriever import recuperar_contexto
 from app.services.llm_service import LLMService
@@ -165,6 +167,8 @@ def enriquecer_busqueda(
     ]
 
     descripcion_intencion = {
+        "dni_adulto_renovacion": "renovación de DNI de mayor de edad",
+        "dni_adulto_rectificacion": "rectificación de DNI de mayor de edad",
         "dni_menor_renovacion": (
             "renovación de DNI de menor de edad"
         ),
@@ -181,6 +185,9 @@ def enriquecer_busqueda(
     }
 
     partes_busqueda = [pregunta]
+    if intencion in ADULT_FILES:
+        partes_busqueda.append(str({key: d['valor'] for key, d in
+            state['contexto_canonico'].get('condiciones_adulto', {}).items()}))
 
     if intencion in descripcion_intencion:
         partes_busqueda.append(
@@ -280,19 +287,42 @@ def recuperar_documentos(
         "pregunta_busqueda"
     ]
 
+    if intencion in ADULT_FILES and not plan_adulto(state['contexto_canonico']):
+        return {**state, 'fragmentos': [], 'contexto': '', 'fuentes': [],
+                'estado_documental': 'sin_evidencia'}
+
     fragmentos = recuperar_contexto(
         pregunta_busqueda,
         k=10,
     )
 
-    archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
-    filtrados = [fragmento for fragmento in fragmentos
-                 if archivo_autorizado and fragmento.get("metadata", {}).get("archivo") == archivo_autorizado]
-
-    fragmentos_finales = filtrados[:6]
+    if intencion in ADULT_FILES:
+        plan = plan_adulto(state['contexto_canonico'])
+        fragmentos_finales = []
+        found = set()
+        for f in fragmentos:
+            file = f.get('metadata', {}).get('archivo')
+            if file not in plan:
+                continue
+            for rule, content in re.findall(r'\[\[REGLA:([a-z_]+)\]\]\s*(.*?)\[\[FIN\]\]', f['contenido'], flags=re.S):
+                key = (file, rule)
+                if rule in plan[file] and key not in found:
+                    found.add(key)
+                    fragmentos_finales.append({**f, 'contenido': content,
+                        'metadata': {**f['metadata'], 'regla': rule}})
+        required = {(file, rule) for file, rules in plan.items() for rule in rules}
+        if not required or not required <= found:
+            # Nunca contestar una combinación con solo una parte de sus fuentes.
+            fragmentos_finales = []
+    else:
+        archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
+        filtrados = [fragmento for fragmento in fragmentos
+                     if archivo_autorizado and fragmento.get("metadata", {}).get("archivo") == archivo_autorizado]
+        fragmentos_finales = filtrados[:6]
 
     contexto = "\n\n---\n\n".join(
-        fragmento["contenido"]
+        ((f"FUENTE: {fragmento['metadata']['archivo']} | REGLA: {fragmento['metadata']['regla']}\n"
+          if 'regla' in fragmento['metadata'] else '') + fragmento["contenido"])
         for fragmento in fragmentos_finales
     )
 
@@ -305,6 +335,7 @@ def recuperar_documentos(
                 fragmento["metadata"]["chunk"]
             ),
             "distancia": fragmento["score"],
+            **({"regla": fragmento["metadata"]["regla"]} if "regla" in fragmento["metadata"] else {}),
         }
         for fragmento in fragmentos_finales
     ]
@@ -404,6 +435,7 @@ def redactar_respuesta(
 
     if intencion == "general" and state.get("requiere_aclaracion"):
         aclaraciones = {
+            **ADULT_PREGUNTAS,
             "edad": "Indique si el titular del DNI es menor de 18 años o adulto.",
             "operacion": "Indique si es su primer DNI o la renovación de un DNI que ya tuvo.",
             "contradiccion": "Por favor, aclare un único trámite, si el titular es menor o adulto y si ya tuvo DNI.",
@@ -464,6 +496,13 @@ def redactar_respuesta(
             "respuesta_borrador": respuesta,
         }
 
+    if intencion in ADULT_FILES and not plan_adulto(state['contexto_canonico']):
+        return {**state, 'respuesta_borrador': (
+            'La combinación solicitada no está confirmada en las fichas aportadas. '
+            'No puedo proporcionar requisitos combinados ni sumar tasas. '
+            'En rectificación de datos con renovación, indique si el DNI está vencido; '
+            'la combinación con cambio de estado civil requiere confirmación del Consulado.')}
+
     if not state.get("contexto"):
         respuesta = (
             "No cuento con información documental suficiente "
@@ -477,18 +516,37 @@ def redactar_respuesta(
             "respuesta_borrador": respuesta,
         }
 
+    if (intencion in ADULT_FILES and len(plan_adulto(state['contexto_canonico'])) > 1
+            and state['contexto_canonico']['tema'] == 'coste'):
+        return {**state, 'respuesta_borrador': (
+            'Las fichas de rectificación y renovación indican €7 cada una. '
+            'No documentan un importe total ni si las tasas se acumulan para este supuesto; '
+            'confirme el importe aplicable con el Consulado. No puedo afirmar un total de €14.')}
+
+    if intencion in ADULT_FILES and 'OBSERVACIÓN PENDIENTE' in state.get('contexto', ''):
+        return {**state, 'respuesta_borrador': (
+            'La ficha aportada contiene una observación documental pendiente. '
+            'No puedo confirmar una lista definitiva de documentos para este supuesto. '
+            + '\n\n'.join(f['contenido'] for f in state['fragmentos']
+                if 'OBSERVACIÓN PENDIENTE' in f['contenido'])
+            + '\nConfirme esta documentación con el Consulado antes de presentar el trámite.')}
+
     respuesta_breve = respuesta_contextual(state)
     if respuesta_breve is not None:
         return {**state, "respuesta_borrador": respuesta_breve}
 
     historial_texto = construir_texto_historial(
-        historial
+        [] if intencion in ADULT_FILES else historial
     )
 
     llm = LLMService()
 
     prompt = f"""
 Eres un asistente consular especializado en trámites de DNI.
+Si las fuentes contienen una OBSERVACIÓN PENDIENTE, explica la incertidumbre;
+no conviertas alternativas ambiguas en requisitos acumulativos. No sumes tasas.
+No infieras cantidades de fotos, plazos ni apostillas ausentes en las fuentes.
+Atribuye los requisitos a las fuentes incluidas; no uses condiciones de otra regla.
 
 Debes responder únicamente usando la información incluida en el CONTEXTO
 DOCUMENTAL.

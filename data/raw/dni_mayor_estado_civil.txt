@@ -1,0 +1,42 @@
+TRAMITE: DNI de mayor de edad — estado_civil
+FUENTE DECLARADA: https://www.consulado.pe/es/turin/tramite/Paginas/DNI/Mayor-estadocivil.aspx
+CONSULTA DEL PDF APORTADO: 2026-10-26
+PROCEDENCIA: PDF facilitado por el usuario; acceso web no verificable (HTTP 403). No certifica vigencia normativa en línea.
+SHA256 PDF: 530c9eaf52d96291ea259e52fd0032d99a71d807ef064d3fb6fb195d144d9b2c
+ALCANCE: reproducir únicamente las condiciones de esta ficha, sin extrapolar a menores.
+
+[[REGLA:general]]
+Cambio de estado civil en DNI de mayor de edad. Tasa €7. Documentación que acredite el nuevo estado civil. Actas de sustento emitidas en Perú: originales, apostilladas por el Ministerio de Relaciones Exteriores y con emisión no mayor a 12 meses; en buen estado. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde el tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. No se especifican cantidad de fotos ni plazo. No se confirma combinación con renovación ni suma de tasas. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
+[[FIN]]
+
+[[REGLA:matrimonio_peru]]
+De soltero a casado, matrimonio celebrado en Perú: acta de matrimonio peruana original. Aplicar las condiciones generales de documentos peruanos.
+[[FIN]]
+
+[[REGLA:matrimonio_extranjero]]
+De soltero a casado, matrimonio fuera de Perú: copia certificada emitida por el Consulado Peruano donde se registró el matrimonio. El registro debe hacerse en la oficina consular correspondiente a la ciudad donde se celebró el matrimonio civil. No extrapolar automáticamente apostilla o 12 meses a esta copia consular.
+[[FIN]]
+
+[[REGLA:divorcio]]
+De casado a divorciado: acta de matrimonio peruana original con anotación de disolución del divorcio. Aplicar condiciones generales de documentos peruanos.
+[[FIN]]
+
+[[REGLA:apellido]]
+Si desea recuperar el apellido materno tras divorcio o viudez: acta de nacimiento original. Si se emitió en Perú, aplicar las condiciones generales de documentos peruanos.
+[[FIN]]
+
+[[REGLA:viudez_peru]]
+De casado a viudo, defunción en Perú: acta de defunción original y acta de matrimonio original. Aplicar condiciones generales de actas peruanas.
+[[FIN]]
+
+[[REGLA:viudez_italia]]
+De casado a viudo, defunción en Italia: la ficha enumera acta de defunción original, acta de matrimonio original y copia certificada del registro de defunción emitida por el Consulado correspondiente. OBSERVACIÓN PENDIENTE: no aclara si la copia sustituye o se suma al acta original; confirmar con el Consulado antes de afirmar una lista definitiva.
+[[FIN]]
+
+[[REGLA:italiano]]
+Para cónyuge italiano fallecido en Italia: copia del acta plurilingüe emitida por la municipalidad italiana, legalizada por la prefectura correspondiente. OBSERVACIÓN PENDIENTE: la ficha no aclara si este documento sustituye o se suma a la copia consular o al acta original. No exigir los tres por inferencia.
+[[FIN]]
+
+[[REGLA:viudez_otro]]
+La ficha menciona actas de defunción y matrimonio originales, pero no desarrolla el supuesto de defunción en otro país. OBSERVACIÓN PENDIENTE: confirmar documentación específica con el Consulado, sin extrapolar el caso italiano.
+[[FIN]]

@@ -1,0 +1,22 @@
+TRAMITE: DNI de mayor de edad — rectificacion
+FUENTE DECLARADA: https://www.consulado.pe/es/turin/tramite/Paginas/DNI/Mayor-rectificacion.aspx
+CONSULTA DEL PDF APORTADO: 2026-10-26
+PROCEDENCIA: PDF facilitado por el usuario; acceso web no verificable (HTTP 403). No certifica vigencia normativa en línea.
+SHA256 PDF: f7198c3badf3e8d2f380ca4b6c860d0ff61302a96543e2653220c9a5a8d0f8da
+ALCANCE: reproducir únicamente las condiciones de esta ficha, sin extrapolar a menores.
+
+[[REGLA:general]]
+Rectificación o actualización de datos del DNI de mayor de edad. Tasa €7. La fecha de vencimiento se mantiene, salvo DNI vencido: implica además renovación. No se documenta una tasa acumulada; no sumar tasas. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde medio tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. La ficha no indica cantidad de fotos ni plazo. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
+[[FIN]]
+
+[[REGLA:datos]]
+Para rectificar fecha o lugar de nacimiento, datos de padres, nombres o apellidos: partida de nacimiento original apostillada con antigüedad no mayor a 12 meses. Si el acta fue emitida por una oficina consular: copia certificada. La ficha no aclara antigüedad máxima de esa copia consular.
+[[FIN]]
+
+[[REGLA:domicilio]]
+La ficha permite cambio de dirección; no detalla documentos adicionales.
+[[FIN]]
+
+[[REGLA:imagen_firma]]
+La ficha permite cambio de imagen o firma; no detalla otros documentos adicionales.
+[[FIN]]

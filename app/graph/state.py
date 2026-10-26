@@ -37,12 +37,16 @@ class ContextoCanonico(TypedDict):
     tema: str
     consulta_pendiente: str
     retomar: str
+    condiciones_adulto: dict[str, DatoContextual]
     ultima_ruta: str  # Solo presentación histórica, nunca fuente de hechos.
 
 
 @dataclass(frozen=True)
 class EvidenciaTurno:
     """Solo categorías del mensaje actual; no texto ni datos personales nuevos."""
+    lugar_confirmado: str = ''
+    respuesta_binaria: str = ''
+    condiciones_adulto: tuple[tuple[str, str], ...] = ()
     titular: str = ''
     edad: str = ''
     operacion: str = ''
@@ -78,7 +82,7 @@ class DNIState(TypedDict, total=False):
     # Identificación del trámite (puede no estar documentado), no tema del turno.
     tramite_actual: str
     operacion_dni: str
-    tipo_consulta: Literal["requisitos", "coste", "plazo", "cita", "seguimiento", "otra"]
+    tipo_consulta: Literal["requisitos", "fotografias", "coste", "plazo", "cita", "seguimiento", "otra"]
     contexto_solicitante: ContextoSolicitante  # Solo grupo de edad y destinatario genérico.
     tramite_documentado: bool
     estado_documental: str
