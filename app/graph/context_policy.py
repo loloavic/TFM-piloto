@@ -182,10 +182,14 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
         complete_request = selected and bool(e.operacion) and e.solicitud
         if e.funcion_documento or complete_request:
             c['pendientes'].pop('documento', None)
-            if e.funcion_documento == 'titular' and not selected:
-                c['pendientes']['titular'] = 'contradiccion'
-                c['titular'] = dato(revision=c['revision'], estado='conflicto')
+            if e.funcion_documento == 'titular' and not e.edad:
+                # Resolver el rol no identifica cuál de los posibles hijos es
+                # el titular. La edad anterior no sirve como confirmación.
                 c['edad'] = dato(revision=c['revision'])
+                c['pendientes']['edad'] = 'contradiccion'
+                if not selected:
+                    c['pendientes']['titular'] = 'contradiccion'
+                    c['titular'] = dato(revision=c['revision'], estado='conflicto')
 
     if e.mixto:
         c['pendientes']['contradiccion'] = 'contradiccion'
