@@ -346,3 +346,63 @@ def test_matriz_acotada_de_transiciones_categoricas():
             if c['pendientes']:
                 assert not ruta_documental(c), (i, j)
             assert c['operacion']['valor'] not in c['rechazadas'], (i, j)
+
+
+@pytest.mark.parametrize('followup', ['¿Cuánto cuesta?', '¿Cuánto demora?', '¿Dónde solicito la cita?'])
+@pytest.mark.parametrize('kind', ['rechazo_tenencia', 'documento_titular'])
+def test_p2_estabilizacion_evidencia_parcial_no_habilita_rag(kind, followup, motor):
+    service, retrieve, provider = motor
+    first = service.responder('Necesito renovar el DNI de mi hijo de 10 años')
+    sid, token = first['session_id'], first['session_token']
+    before = retrieve.call_count, provider.call_count
+    questions = (['No quiero renovar', 'Es para mi hijo de 10 años, ya tiene DNI']
+                 if kind == 'rechazo_tenencia' else
+                 ['¿Debo presentar el DNI de mi hijo de 25 años?', 'Es el DNI del titular, mi hijo'])
+    for q in [*questions, followup]:
+        result = service.responder(q, sid, token)
+        c = snapshot(service, sid)['contexto_canonico']
+        assert result['session_id'] == sid and result['session_token'] == token
+        assert result['intencion'] == 'general' and not result['fuentes']
+        assert c['pendientes'] and not ruta_documental(c)
+        assert (retrieve.call_count, provider.call_count) == before
+    if kind == 'rechazo_tenencia':
+        assert c['rechazadas'] == ['renovacion']
+        assert not c['operacion']['valor']
+        confirmation = 'Quiero renovar el DNI'
+    else:
+        assert c['edad']['estado'] != 'confirmado'
+        confirmation = 'Es para mi hijo de 10 años'
+    result = service.responder(confirmation, sid, token)
+    assert result['intencion'] == 'dni_menor_renovacion'
+    assert ruta_documental(snapshot(service, sid)['contexto_canonico']) == 'dni_menor_renovacion'
+    assert retrieve.call_count == before[0] + 1
+
+
+def test_documento_titular_confirmado_sin_edad_permite_aclarar_adulto():
+    s = turn({}, 'Necesito renovar el DNI de mi hijo de 10 años')
+    s = turn(s, '¿Debo presentar el DNI de mi hijo de 25 años?')
+    s = turn(s, 'Es el DNI del titular, mi hijo')
+    assert s['requiere_aclaracion'] and not ruta_documental(s['contexto_canonico'])
+    s = turn(s, 'Es para mi hijo adulto')
+    assert not s['requiere_aclaracion']
+    assert s['tramite_actual'] == 'dni_adulto_renovacion'
+    assert s['estado_documental'] == 'no_documentado'
+    assert not ruta_documental(s['contexto_canonico'])
+
+
+@pytest.mark.parametrize('observation', [
+    'Es para mi hijo de 10 años, ya tiene DNI',
+    'Es para mi hijo de 10 años, su DNI está vencido',
+    'Es el DNI del titular, ya tenía DNI',
+])
+def test_tenencia_no_rehabilita_rechazo_pero_peticion_afirmativa_si(observation):
+    s = turn({}, 'Necesito renovar el DNI de mi hijo de 10 años')
+    s = turn(s, 'No quiero renovar')
+    s = turn(s, observation)
+    assert s['contexto_canonico']['rechazadas'] == ['renovacion']
+    assert not s['operacion_dni'] and not ruta_documental(s['contexto_canonico'])
+    s = turn(s, 'No quiero renovar, ya tiene DNI')
+    assert s['contexto_canonico']['rechazadas'] == ['renovacion']
+    s = turn(s, 'Quiero renovar el DNI de mi hijo de 10 años, ya tiene DNI')
+    assert not s['contexto_canonico']['rechazadas']
+    assert ruta_documental(s['contexto_canonico']) == 'dni_menor_renovacion'

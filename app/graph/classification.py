@@ -173,7 +173,7 @@ def dni_vencido(texto: str, contexto_dni: bool = False) -> bool:
         + estado + r'[.!?]?', texto))
 
 
-def operacion(texto: str, contexto_dni: bool = False) -> tuple[str, bool, set[str]]:
+def operacion(texto: str, contexto_dni: bool = False, *, inferir_tenencia: bool = True) -> tuple[str, bool, set[str]]:
     # Las operaciones expresadas como solicitud se conservan, pero el estado
     # de un documento de apoyo no prueba tenencia del DNI del titular.
     texto_roles, _ = identificar_roles(texto)
@@ -189,9 +189,12 @@ def operacion(texto: str, contexto_dni: bool = False) -> tuple[str, bool, set[st
     ) if re.search(patron, texto)}
     texto = re.sub(neg_duplicate, ' ', texto)
     positive = re.sub(neg_first, ' ', re.sub(neg_renew, ' ', texto))
-    first = bool(re.search(r'primera vez|primera inscripcion|primer dni|\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive))
-    renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni|ya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni)\b', positive))
-    renewal = renewal or (dni_vencido(texto_roles, contexto_dni) and 'renovacion' not in denied)
+    first = bool(re.search(r'primera vez|primera inscripcion|primer dni', positive))
+    first = first or (inferir_tenencia and bool(re.search(r'\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive)))
+    renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni)\b', positive))
+    renewal = renewal or (inferir_tenencia and bool(re.search(
+        r'\bya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni\b', positive)))
+    renewal = renewal or (inferir_tenencia and dni_vencido(texto_roles, contexto_dni) and 'renovacion' not in denied)
     duplicate = bool(re.search(r'\bduplicado\s+(?:(?:de|del|mi|su|el|un)\s+)*dni\b|\bdni duplicado\b', positive))
     if duplicate:
         return ('', True, denied) if first or renewal else ('duplicado', False, denied)
@@ -286,6 +289,9 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         r'\bnunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve) (?:un |su )?dni\b', text))
     request = (bool(operation and re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text))
                or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
+    # Extraer por separado la operación afirmada, sin inferencias de tenencia.
+    # Reutilizar el detector mantiene su tratamiento de negaciones y conflictos.
+    affirmative_operation = operacion(text, inferir_tenencia=False)[0]
     return EvidenciaTurno(
         titular=holder['destinatario'] if explicit and not holder_conflict and holder['destinatario'] != 'desconocido' else '',
         edad=holder['grupo_edad'] if not holder_conflict and holder['grupo_edad'] != 'desconocido' else '',
@@ -299,7 +305,9 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         cambio=bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad)\b', text)),
         rectificacion=bool(re.search(r'\b(?:me equivoque|en realidad)\b', text)),
         otro_titular=bool(re.search(r'\b(?:otro|otra)\b', text)), solicitud=request,
-        observacion=possession and not request,
+        # Identificar al destinatario o la función documental no convierte
+        # una observación de tenencia en una solicitud de operación.
+        observacion=possession and affirmative_operation != operation,
         referencia_azul=blue,
         tiene_amarillo=yellow_possession,
         nunca_tuvo_dni=bool(re.search(r'\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', text)),
