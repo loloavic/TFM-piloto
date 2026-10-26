@@ -93,6 +93,15 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
     child_dni = re.search(r'\bdni\s+(?:de|para)\s+(?:(?:mi|su|el|la|un|una)\s+)?(?:hijo|hija|menor|nino|nina|bebe)\b', texto)
     own_positive = re.sub(r'\bno\s+(?:quiero|necesito|debo)\s+(?:renovar|tramitar|solicitar|obtener|sacar)\s+mi\s+dni\b', ' ', texto)
     own_dni = re.search(r'\b(?:renovar|tramitar|solicitar|obtener|sacar)\s+mi\s+dni\b', own_positive)
+    # Presentar requisitos no convierte al solicitante explícito en apoyo.
+    # Exigir un objeto propio de rectificación; la edad sola no basta.
+    own_rectification = re.sub(
+        r'\bno\s+(?:quiero|necesito|debo)\s+(?:rectificar|corregir)\b[^.;?!]*',
+        ' ', texto)
+    own_rectification = re.search(
+        r'\b(?:rectificar|corregir)\s+(?:mi\s+(?:dni|fecha de nacimiento|lugar de nacimiento|nombre|apellido|direccion|firma)\b|'
+        r'mis\s+(?:datos|nombres|apellidos)\b|datos\s+de\s+mi\s+dni\b)', own_rectification)
+    own_dni = own_dni or (own_rectification if re.search(r'\bdni\b', texto) else None)
     if child_dni and own_dni and re.search(
         r'\bno\s+(?:quiero|necesito|debo)\s+' + ACCION + r'\s+' + ART + r'$',
         texto[:child_dni.start()],
@@ -121,6 +130,13 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
         adult = bool(re.match(r'\s*(?:que es |es )?(?:adult[oa]\b|mayor de edad\b)', segment))
     elif re.search(r'\b(?:para (?:un|una) menor|dni (?:(?:de|para) )?(?:un |una )?menor|dni de menor)\b', texto):
         explicit, target, minor, adult = True, 'menor', True, False
+    elif re.match(
+        r'^(?:mi|su) (?:padre|madre) es (?:mayor de edad|adult[oa]) y '
+        r'(?:necesita|quiere) (?:rectificar|corregir) su dni\b', texto
+    ):
+        # Adulto por afirmación explícita, nunca por el parentesco.
+        explicit, target, minor, adult = True, 'adulto', False, True
+        segment = ''
     elif own:
         explicit, target = True, 'propio'
         segment = own_segment

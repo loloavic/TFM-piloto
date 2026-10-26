@@ -303,3 +303,93 @@ def test_derivacion_documental_no_levanta_renovacion_rechazada(motor):
     assert 'renovacion' in c['rechazadas'] and 'adulto_derivacion' in c['pendientes']
     r=service.responder('Quiero renovar el DNI',sid,token)
     assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
+
+
+REPORTED_ADULT_QUERY = ('Soy mayor de edad y necesito rectificar mi fecha de nacimiento en el DNI, '
+    'pero el documento está vencido. ¿Qué requisitos debo presentar y cuánto cuesta?')
+
+
+def test_titular_adulto_reportado_etapas_y_fuentes(motor):
+    from app.graph.classification import normalizar, solicitante, extraer_evidencia
+    holder, explicit, conflict = solicitante(normalizar(REPORTED_ADULT_QUERY))
+    assert holder == {'grupo_edad':'adulto', 'destinatario':'propio'}
+    assert explicit and not conflict
+    e = extraer_evidencia(REPORTED_ADULT_QUERY)
+    assert e.edad == 'adulto' and e.titular == 'propio' and e.operacion == 'rectificacion'
+    s = turn({}, REPORTED_ADULT_QUERY)
+    assert ruta_documental(s['contexto_canonico']) == 'dni_adulto_rectificacion'
+    service, _, prompts = motor
+    r = service.responder(REPORTED_ADULT_QUERY)
+    assert r['intencion'] == 'dni_adulto_rectificacion'
+    assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
+    assert not prompts  # Tasa combinada: respuesta determinista sin sumar.
+    assert 'No documentan un importe total' in r['respuesta']
+
+
+@pytest.mark.parametrize('question,group,holder', [
+    ('Soy mayor de edad y quiero rectificar mi DNI', 'adulto','propio'),
+    ('Soy adulto y necesito corregir mi fecha de nacimiento', 'adulto','propio'),
+    ('Tengo 45 años y necesito rectificar datos de mi DNI vencido', 'adulto','propio'),
+    ('Mi padre es mayor de edad y necesita rectificar su DNI', 'adulto','adulto'),
+    ('Soy menor de edad y necesito rectificar mi DNI', 'menor','propio'),
+    ('Necesito rectificar mi DNI', '', 'propio'),
+])
+def test_variantes_titular_rectificacion(question, group, holder):
+    from app.graph.classification import extraer_evidencia
+    e=extraer_evidencia(question)
+    assert e.edad == group and e.titular == holder
+    s=turn({},question)
+    if 'dni' in question.lower():
+        assert s['operacion_dni'] == 'rectificacion'
+    else:
+        # No atribuir la fecha a un DNI si no se indicó el documento.
+        assert s['requiere_aclaracion'] and not ruta_documental(s['contexto_canonico'])
+        assert s['motivo_aclaracion'] == 'tramite'
+    if group != 'adulto':
+        assert not ruta_documental(s['contexto_canonico'])
+
+
+@pytest.mark.parametrize('followup', ['¿Qué requisitos debo presentar?', '¿Cuánto cuesta?', '¿Qué documentación debo presentar?'])
+def test_titular_reportado_repreguntas_y_cambio_a_menor(followup, motor):
+    service, _, _=motor
+    first=service.responder(REPORTED_ADULT_QUERY)
+    sid,token=first['session_id'],first['session_token']
+    r=service.responder(followup,sid,token)
+    assert r['intencion'] == 'dni_adulto_rectificacion'
+    assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
+    r=service.responder('Ahora necesito renovar el DNI de mi hijo menor',sid,token)
+    assert r['intencion'] == 'dni_menor_renovacion'
+    assert {f['archivo'] for f in r['fuentes']} == {'dni_menor_renovacion.txt'}
+    r=service.responder(REPORTED_ADULT_QUERY,sid,token)
+    assert r['intencion'] == 'dni_adulto_rectificacion'
+    assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
+
+
+def test_titular_reportado_fuente_incompleta_sigue_absteniendose(motor):
+    service,retrieve,prompts=motor
+    retrieve.return_value=[d for d in retrieve.return_value if d['metadata']['archivo'] != 'dni_mayor_renovacion.txt']
+    r=service.responder(REPORTED_ADULT_QUERY)
+    assert not r['fuentes'] and not prompts
+    assert 'No cuento con información documental suficiente' in r['respuesta']
+
+
+@pytest.mark.parametrize('question,group,holder', [
+    ('Mi madre es adulta y quiere corregir su DNI. ¿Qué requisitos debe presentar?', 'adulto','adulto'),
+    ('Mi padre necesita rectificar su DNI', '', ''),
+    ('Soy mayor de edad y debo presentar mi DNI para acompañar a mi hijo menor', 'menor','descendiente'),
+    ('No soy mayor de edad; soy menor y necesito rectificar mi DNI. ¿Qué debo presentar?', 'menor','propio'),
+])
+def test_no_trasladar_edad_de_apoyo_ni_inferirla_por_parentesco(question, group, holder):
+    from app.graph.classification import extraer_evidencia
+    e=extraer_evidencia(question)
+    assert e.edad == group and e.titular == holder
+
+
+def test_edad_numerica_no_se_pierde_por_presentar_requisitos(motor):
+    service, _, _=motor
+    r=service.responder('Tengo 45 años y necesito rectificar datos de mi DNI vencido. ¿Qué requisitos debo presentar?')
+    s=snapshot(service,r['session_id'])
+    assert s['contexto_solicitante'] == {'grupo_edad':'adulto','destinatario':'propio'}
+    assert s['operacion_dni'] == 'rectificacion'
+    # «Datos» no distingue dirección, imagen/firma o datos personales.
+    assert s['motivo_aclaracion'] == 'adulto_modificacion' and not r['fuentes']
