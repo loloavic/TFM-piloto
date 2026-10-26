@@ -102,7 +102,7 @@ def test_r3_contacto_sobrevive_grafo_historial_y_respuesta(entorno_aislado, monk
         def generar_respuesta(self, prompt):
             return 'Escriba a informes@conperturin.org. Dato ficticio 12345678.'
     monkeypatch.setattr(dni_graph, 'LLMService', LLM)
-    r = entorno_aislado.responder('¿Mi trámite está observado en RENIEC?')
+    r = entorno_aislado.responder('¿Mi trámite de DNI está observado en RENIEC?')
     assert 'informes@conperturin.org' in r['respuesta']
     assert '12345678' not in r['respuesta']
     state = entorno_aislado.grafo.get_state({'configurable': {'thread_id': r['session_id']}}).values

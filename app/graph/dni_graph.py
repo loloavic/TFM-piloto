@@ -4,6 +4,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
+from app.graph.classification import clasificar, pregunta_contextual
+from app.graph.context_policy import ruta_documental
 from app.rag.retriever import recuperar_contexto
 from app.services.llm_service import LLMService
 
@@ -50,263 +52,9 @@ def es_mensaje_sobre_contexto(
     )
 
 
-def clasificar_intencion(
-    state: DNIState,
-) -> DNIState:
-    """
-    Clasifica la intención de la consulta actual.
+def clasificar_intencion(state: DNIState) -> DNIState:
+    return clasificar(state)
 
-    Cuando la pregunta no expresa una nueva intención, conserva
-    automáticamente el trámite activo dentro de la misma sesión.
-    """
-    pregunta = state["pregunta"].strip()
-    pregunta_lower = pregunta.lower()
-
-    niega_primera_vez = any(
-        expresion in pregunta_lower
-        for expresion in [
-            "no es dni por primera vez",
-            "no es por primera vez",
-            "no es primera vez",
-            "no es su primer dni",
-            "no necesita su primer dni",
-            "ya tuvo dni",
-            "ya tiene dni",
-        ]
-    )
-
-    niega_renovacion = any(
-        expresion in pregunta_lower
-        for expresion in [
-            "no debo renovar",
-            "no debe renovar",
-            "no quiero renovar",
-            "no es renovación",
-            "no es renovacion",
-            "no corresponde renovar",
-            "nunca tuvo dni",
-            "nunca ha tenido dni",
-            "no tuvo dni",
-        ]
-    )
-
-    # El estado recuperado por LangGraph puede contener la intención
-    # y el trámite de la interacción anterior.
-    intencion_previa = state.get("intencion")
-    tramite_previo = state.get("tramite_actual")
-
-    palabras_fuera_alcance = [
-        "pasaporte",
-        "visa",
-        "visado",
-        "carnet de extranjería",
-        "carnet de extranjeria",
-        "licencia de conducir",
-        "apostilla",
-        "carta poder",
-        "poder consular",
-        "matrimonio",
-        "defunción",
-        "defuncion",
-    ]
-
-    palabras_estado = [
-        "estado del trámite",
-        "estado del tramite",
-        "estado de mi trámite",
-        "estado de mi tramite",
-        "seguimiento",
-        "avance",
-        "ya está listo",
-        "ya esta listo",
-        "si está listo",
-        "si esta listo",
-        "consultar mi dni",
-        "consultar el dni",
-        "consultar trámite",
-        "consultar tramite",
-        "ver mi trámite",
-        "ver mi tramite",
-        "recoger mi dni",
-        "entrega de dni",
-        "ya llegó",
-        "ya llego",
-        "número de ficha",
-        "numero de ficha",
-        "ficha reniec",
-        "reniec",
-        "observado",
-        "subsanado",
-        "100%",
-        "cuánto demora",
-        "cuanto demora",
-        "cuánto tarda",
-        "cuanto tarda",
-        "tiempo de entrega",
-        "plazo de entrega",
-        "después de tramitarlo",
-        "despues de tramitarlo",
-        "cuándo llega",
-        "cuando llega",
-    ]
-
-    palabras_primera_vez = [
-        "primera vez",
-        "por primera vez",
-        "nunca tuvo dni",
-        "nunca ha tenido dni",
-        "no tuvo dni",
-        "no tiene dni",
-        "sacar dni por primera vez",
-        "tramitar su primer dni",
-        "obtener su primer dni",
-        "primera inscripción",
-        "primera inscripcion",
-    ]
-
-    palabras_renovacion = [
-        "renovar",
-        "renovación",
-        "renovacion",
-        "renuevo",
-        "actualizar dni",
-        "ya tuvo dni",
-        "ya tiene dni",
-        "dni vencido",
-        "dni caducado",
-    ]
-
-    indicadores_primera_vez_fuertes = [
-        "nunca tuvo dni",
-        "nunca ha tenido dni",
-        "no tuvo dni",
-        "no tiene dni",
-        "primer dni",
-        "primera inscripción",
-        "primera inscripcion",
-    ]
-
-    indicadores_renovacion_fuertes = [
-        "ya tuvo dni",
-        "ya tiene dni",
-        "dni vencido",
-        "está vencido",
-        "esta vencido",
-        "dni caducado",
-        "está caducado",
-        "esta caducado",
-    ]
-
-    es_primera_vez_fuerte = any(
-        expresion in pregunta_lower
-        for expresion in indicadores_primera_vez_fuertes
-    )
-
-    es_renovacion_fuerte = any(
-        expresion in pregunta_lower
-        for expresion in indicadores_renovacion_fuertes
-    )
-
-    es_fuera_alcance = any(
-        palabra in pregunta_lower
-        for palabra in palabras_fuera_alcance
-    )
-
-    es_estado = any(
-        palabra in pregunta_lower
-        for palabra in palabras_estado
-    )
-
-    es_primera_vez = any(
-        palabra in pregunta_lower
-        for palabra in palabras_primera_vez
-    )
-
-    es_renovacion = any(
-        palabra in pregunta_lower
-        for palabra in palabras_renovacion
-    )
-
-    # Las intenciones explícitas de la pregunta actual
-    # tienen prioridad sobre el contexto anterior.
-    if es_fuera_alcance:
-        intencion = "fuera_alcance"
-
-    elif es_estado:
-        intencion = "dni_consulta_estado"
-
-    # Ejemplo:
-    # "No es primera vez, ya tiene DNI y está vencido."
-    elif (
-        es_renovacion_fuerte
-        and not niega_renovacion
-    ):
-        intencion = "dni_menor_renovacion"
-
-    # Ejemplo:
-    # "No debo renovar porque nunca tuvo DNI."
-    elif (
-        es_primera_vez_fuerte
-        and not niega_primera_vez
-    ):
-        intencion = "dni_menor_primera_vez"
-
-    elif (
-        es_primera_vez
-        and not niega_primera_vez
-        and not es_renovacion
-    ):
-        intencion = "dni_menor_primera_vez"
-
-    elif (
-        es_renovacion
-        and not niega_renovacion
-        and not es_primera_vez
-    ):
-        intencion = "dni_menor_renovacion"
-
-    else:
-        intencion = "general"
-
-    intenciones_contextuales_validas = {
-        "dni_menor_renovacion",
-        "dni_menor_primera_vez",
-        "dni_consulta_estado",
-    }
-
-    # Si la pregunta no contiene una intención nueva, se conserva
-    # automáticamente el trámite activo de la sesión.
-    #
-    # Esto permite interpretar consultas como:
-    # - ¿Puede acompañarlo su hermano?
-    # - ¿Y cuánto cuesta?
-    # - ¿Me ayuda con la cita?
-    # - Ya le dije de qué trámite se trata.
-    if (
-        intencion == "general"
-        and intencion_previa
-        in intenciones_contextuales_validas
-    ):
-        intencion = intencion_previa
-
-    if intencion in intenciones_contextuales_validas:
-        tramite_actual = intencion
-
-    elif intencion == "fuera_alcance":
-        tramite_actual = ""
-
-    else:
-        tramite_actual = tramite_previo or ""
-
-    return {
-        **state,
-        "pregunta": pregunta,
-        "intencion_anterior": (
-            intencion_previa or ""
-        ),
-        "intencion": intencion,
-        "tramite_actual": tramite_actual,
-    }
 
 
 def enriquecer_busqueda(
@@ -318,7 +66,7 @@ def enriquecer_busqueda(
     Añade el trámite identificado para evitar que una repregunta
     breve recupere documentos pertenecientes a otro procedimiento.
     """
-    pregunta = state["pregunta"]
+    pregunta = pregunta_contextual(state)
     pregunta_lower = pregunta.lower()
     intencion = state.get(
         "intencion",
@@ -415,19 +163,6 @@ def enriquecer_busqueda(
         "tarda",
     ]
 
-    palabras_estado = [
-        "estado",
-        "seguimiento",
-        "avance",
-        "listo",
-        "recoger",
-        "entrega",
-        "ficha",
-        "reniec",
-        "observado",
-        "subsanado",
-    ]
-
     descripcion_intencion = {
         "dni_menor_renovacion": (
             "renovación de DNI de menor de edad"
@@ -490,16 +225,12 @@ def enriquecer_busqueda(
         for palabra in palabras_plazo
     ):
         partes_busqueda.append(
-            "tiempo estimado plazo demora entrega "
-            "seguimiento RENIEC avance 100%"
+            "tiempo estimado plazo demora entrega del trámite"
         )  
 
     if (
         intencion == "dni_consulta_estado"
-        or any(
-            palabra in pregunta_lower
-            for palabra in palabras_estado
-        )
+        or state.get("tipo_consulta") == "seguimiento"
     ):
         partes_busqueda.append(
             "consulta estado trámite DNI RENIEC "
@@ -525,7 +256,7 @@ def recuperar_documentos(
     """
     intencion = state["intencion"]
 
-    if intencion in {
+    if state.get("requiere_aclaracion") or intencion in {
         "fuera_alcance",
         "general",
     }:
@@ -535,6 +266,11 @@ def recuperar_documentos(
             "contexto": "",
             "fuentes": [],
         }
+
+    if ruta_documental(state.get("contexto_canonico")) != intencion:
+        return {**state, "fragmentos": [], "contexto": "", "fuentes": [],
+                "intencion": "general", "requiere_aclaracion": True,
+                "motivo_aclaracion": "tramite", "estado_documental": "pendiente_aclaracion"}
 
     pregunta_busqueda = state[
         "pregunta_busqueda"
@@ -597,6 +333,7 @@ def recuperar_documentos(
         "fragmentos": fragmentos_finales,
         "contexto": contexto,
         "fuentes": fuentes,
+        "estado_documental": "disponible" if fragmentos_finales else "sin_evidencia",
     }
 
 
@@ -674,6 +411,27 @@ def redactar_respuesta(
             **state,
             "respuesta_borrador": respuesta,
         }
+
+    if intencion == "general" and state.get("estado_documental") == "no_documentado":
+        identificacion = "de adulto" if state.get("contexto_solicitante", {}).get("grupo_edad") == "adulto" else "solicitado"
+        return {**state, "respuesta_borrador": (
+            f"Identifico el trámite de DNI {identificacion}. El corpus de este piloto "
+            "no documenta sus requisitos, tarifas ni condiciones; no puedo "
+            "proporcionarlos con respaldo suficiente. Por favor, consulte "
+            "los canales oficiales del consulado."
+        )}
+
+    if intencion == "general" and state.get("requiere_aclaracion"):
+        aclaraciones = {
+            "edad": "Indique si el titular del DNI es menor de 18 años o adulto.",
+            "operacion": "Indique si es su primer DNI o la renovación de un DNI que ya tuvo.",
+            "contradiccion": "Por favor, aclare un único trámite, si el titular es menor o adulto y si ya tuvo DNI.",
+            "tramite": "Indique si desea orientación sobre DNI y cuál es el trámite solicitado.",
+            "dni_previo": "¿Su hijo ya tiene un DNI peruano vencido o está solicitando su primer DNI?" if state.get("contexto_solicitante", {}).get("destinatario") == "descendiente" else "¿El titular ya tenía DNI peruano o está solicitando su primer DNI?",
+            "titular": "¿De cuál de las personas mencionadas es el DNI que desea tramitar?",
+            "documento": "¿El DNI mencionado es el que desea tramitar o es un documento de apoyo?",
+        }
+        return {**state, "respuesta_borrador": "Para poder orientarle, " + aclaraciones[state["motivo_aclaracion"]]}
 
     if intencion == "general":
         respuesta = (
@@ -956,7 +714,18 @@ def verificar_respuesta(
 
 
 def redactar_respuesta_minimizada(state: DNIState) -> DNIState:
-    resultado = redactar_respuesta(state)
+    # La pregunta almacenada no se duplica ni se sustituye en el historial.
+    # Solo la entrada al redactor recupera el tema pendiente ya aclarado.
+    entrada = {**state, "pregunta": pregunta_contextual(state)}
+    if not state.get("requiere_aclaracion") and state.get("intencion") not in {"general", "fuera_alcance"} and ruta_documental(state.get("contexto_canonico")) != state.get("intencion"):
+        entrada.update(intencion="general", requiere_aclaracion=True,
+                       motivo_aclaracion="tramite", estado_documental="pendiente_aclaracion")
+    if state.get("requiere_aclaracion"):
+        entrada["intencion"] = "general"
+    if entrada.get("intencion") in {"general", "fuera_alcance"}:
+        entrada.update(contexto="", fuentes=[], fragmentos=[])
+    resultado = redactar_respuesta(entrada)
+    resultado["pregunta"] = state["pregunta"]
     resultado["respuesta_borrador"] = minimizar_texto(resultado["respuesta_borrador"], permitir_oficiales=True)
     return resultado
 
