@@ -186,7 +186,7 @@ def test_temascivil_sin_condiciones_incompatibles(topic, motor):
     service, _, _ = motor
     first = service.responder('Soy adulto y quiero cambiar el estado civil de mi DNI')
     r = service.responder(topic, first['session_id'], first['session_token'])
-    assert {f['regla'] for f in r['fuentes']} == {'general'}
+    assert {f['regla'] for f in r['fuentes']} == ({'plazo'} if 'demora' in topic else {'general'})
 
 
 def test_aclaracion_edad_conserva_coste_civil(motor):

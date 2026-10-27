@@ -9,6 +9,8 @@ VALORES = {
     'italiano': {'si', 'no'}, 'apellido': {'si', 'no'},
     'vigencia': {'vencido', 'vigente'},
 }
+REGLAS_COMUNES = {'plazo', 'seguimiento', 'advertencias'}
+
 ADULT_FILES = {
     'dni_adulto_renovacion': 'dni_mayor_renovacion.txt',
     'dni_adulto_rectificacion': 'dni_mayor_rectificacion.txt',
@@ -167,6 +169,14 @@ def plan(c):
     """Archivos exactos. Nunca mezcla menores; solo combina la derivación documentada."""
     op = c['operacion']['valor']
     mod = valor(c, 'modificacion')
+    if c['tema'] in REGLAS_COMUNES:
+        # Alcance común confirmado; no autoriza requisitos específicos ni combinaciones.
+        if op == 'renovacion' and mod in {'datos','imagen_firma'} and valor(c,'vigencia') == 'vencido':
+            return {file: {c['tema']} for file in ('dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt')}
+        if op == 'rectificacion' and mod != 'estado_civil' and valor(c,'vigencia') == 'vencido':
+            return {file: {c['tema']} for file in ('dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt')}
+        file = 'dni_mayor_estado_civil.txt' if mod == 'estado_civil' and op == 'rectificacion' else ADULT_FILES.get('dni_adulto_' + op)
+        return {file: {c['tema']}} if file else {}
     if mod == 'estado_civil':
         # La ficha no autoriza sumar estado civil a una renovación.
         if op == 'renovacion':

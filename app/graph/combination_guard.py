@@ -1,8 +1,10 @@
 """Salida cerrada para combinaciones: citas individuales, nunca síntesis normativa LLM."""
 import re
 
-from app.graph.adult_context import ADULT_FILES, plan
+from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan
 from app.graph.context_policy import ruta_documental
+
+COMMON_CONFLICT = 'Las disposiciones comunes recuperadas no coinciden; no puedo confirmar su alcance.'
 
 UNSUPPORTED = (
     'La combinación solicitada no está confirmada en las fichas aportadas. '
@@ -34,7 +36,8 @@ def respuesta_controlada(state):
     required = plan(c)
     if not required:
         return UNSUPPORTED
-    if len(required) == 1:
+    common = c['tema'] in REGLAS_COMUNES and all(ids == {c['tema']} for ids in required.values())
+    if len(required) == 1 and not common:
         return None
     rules = {}
     for f in state.get('fragmentos', []):
@@ -48,6 +51,12 @@ def respuesta_controlada(state):
     expected = {(file, rule) for file, ids in required.items() for rule in ids}
     if set(rules) != expected or not all(rules.values()):
         return MISSING
+
+    if common:
+        contents = {text.strip() for text in rules.values()}
+        if len(contents) != 1:
+            return COMMON_CONFLICT
+        return contents.pop()
 
     rect = rules.get(('dni_mayor_rectificacion.txt', 'general'), '')
     renew = rules.get(('dni_mayor_renovacion.txt', 'general'), '')

@@ -27,6 +27,7 @@ def tipo_consulta(texto: str) -> str:
     temas = (
         ('seguimiento', r'estado (?:de|del)|seguimiento|avance|(?:aun|todavia) no (?:ha )?llegado|ya (?:esta listo|llego)|si (?:esta listo|(?:ya )?llego)|recoger (?:mi|el|su) dni|observad[oa]|subsanad[oa]|numero de ficha|100\s*%'),
         ('plazo', r'cuanto (?:demora|tarda)|cuando (?:llega|llegara|estara listo)|tiempo (?:estimado|de entrega)|plazo|demora|tarda'),
+        ('advertencias', r'advertencias?|precauciones|verificar.*antes de la cita'),
         ('cita', r'\bcita\b|reservar|reserva|horarios?|turnos?|bookeo'),
         ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|\bmonto\b|importe'),
         ('fotografias', r'foto'),
@@ -227,6 +228,7 @@ def operacion(texto: str, contexto_dni: bool = False, *, inferir_tenencia: bool 
 # El reconocimiento léxico no consulta el contexto ni restaura hechos anteriores.
 
 CONSULTAS = {
+    'advertencias': '¿Qué advertencias debo tener en cuenta?',
     'fotografias': '¿Qué fotografías necesito?',
     'coste': '¿Cuánto cuesta?', 'plazo': '¿Cuánto demora?',
     'cita': '¿Dónde solicito la cita?', 'requisitos': '¿Cuáles son los requisitos?',

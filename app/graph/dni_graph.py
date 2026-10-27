@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
-from app.graph.combination_guard import respuesta_controlada
+from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
 from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto
@@ -720,7 +720,7 @@ def verificar_respuesta(
 
     advertencias = []
     if replaced:
-        advertencias.append("Borrador sustituido por el control determinista de alcance documental combinado.")
+        advertencias.append("Borrador sustituido por el control determinista de alcance documental.")
 
     if "@" in respuesta:
         advertencias.append(
@@ -764,8 +764,9 @@ def verificar_respuesta(
         )
     )
 
-    if not advertencias and state.get('estado_documental') == 'sin_evidencia':
-        details = ', '.join(state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada'
+    if not advertencias and (state.get('estado_documental') == 'sin_evidencia' or controlled == COMMON_CONFLICT):
+        details = ('disposiciones comunes inconsistentes' if controlled == COMMON_CONFLICT else
+                   ', '.join(state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada')
         verificacion = 'abstencion_documental: ' + details
 
     historial_anterior = state.get(

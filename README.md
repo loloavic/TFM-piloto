@@ -579,3 +579,9 @@ Las combinaciones de renovación y rectificación aplican un
 [control determinista de alcance documental y de salida](docs/control-afirmaciones-combinadas-pr4.md):
 las tasas y condiciones individuales no se convierten en obligaciones conjuntas.
 Este control no constituye una verificación factual universal del resto de respuestas.
+
+La [estabilización de viudez y las disposiciones generales de adultos](docs/estabilizacion-viudez-disposiciones-pr4.md)
+añade reglas de plazo, seguimiento y advertencias a los tres TXT de adultos.
+Esta actualización requiere reconstruir el índice de los siete documentos.
+Las abstenciones por recuperación incompleta se identifican como `abstencion_documental`
+y diagnostican las reglas faltantes; no equivalen a una respuesta factual verificada.

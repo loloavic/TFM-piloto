@@ -84,7 +84,7 @@ class DNIState(TypedDict, total=False):
     # Identificación del trámite (puede no estar documentado), no tema del turno.
     tramite_actual: str
     operacion_dni: str
-    tipo_consulta: Literal["requisitos", "fotografias", "coste", "plazo", "cita", "seguimiento", "otra"]
+    tipo_consulta: Literal["requisitos", "advertencias", "fotografias", "coste", "plazo", "cita", "seguimiento", "otra"]
     contexto_solicitante: ContextoSolicitante  # Solo grupo de edad y destinatario genérico.
     tramite_documentado: bool
     estado_documental: str

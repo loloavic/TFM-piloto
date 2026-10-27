@@ -3,10 +3,11 @@ FUENTE DECLARADA: https://www.consulado.pe/es/turin/tramite/Paginas/DNI/Mayor-es
 CONSULTA DEL PDF APORTADO: 2026-10-26
 PROCEDENCIA: PDF facilitado por el usuario; acceso web no verificable (HTTP 403). No certifica vigencia normativa en línea.
 SHA256 PDF: 530c9eaf52d96291ea259e52fd0032d99a71d807ef064d3fb6fb195d144d9b2c
-ALCANCE: reproducir únicamente las condiciones de esta ficha, sin extrapolar a menores.
+DISPOSICIONES GENERALES: confirmación explícita del usuario el 2026-10-27, aplicable a todas las modalidades DNI. Formulaciones de los cuatro TXT originales del piloto y enlace de dni_consulta_estado.txt; procedencia distinta del PDF específico.
+ALCANCE: requisitos particulares de la ficha PDF y disposiciones generales confirmadas por el usuario, con procedencias diferenciadas. No extrapolar requisitos de menores ni combinar tasas.
 
 [[REGLA:general]]
-Cambio de estado civil en DNI de mayor de edad. Tasa €7. Documentación que acredite el nuevo estado civil. Actas de sustento emitidas en Perú: originales, apostilladas por el Ministerio de Relaciones Exteriores y con emisión no mayor a 12 meses; en buen estado. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde el tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. No se especifican cantidad de fotos ni plazo. No se confirma combinación con renovación ni suma de tasas. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
+Cambio de estado civil en DNI de mayor de edad. Tasa €7. Documentación que acredite el nuevo estado civil. Actas de sustento emitidas en Perú: originales, apostilladas por el Ministerio de Relaciones Exteriores y con emisión no mayor a 12 meses; en buen estado. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde el tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. La ficha PDF específica no indica cantidad de fotos; el plazo común se registra por separado. No se confirma combinación con renovación ni suma de tasas. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
 [[FIN]]
 
 [[REGLA:matrimonio_peru]]
@@ -39,4 +40,16 @@ Para cónyuge italiano fallecido en Italia: copia del acta plurilingüe emitida 
 
 [[REGLA:viudez_otro]]
 La ficha menciona actas de defunción y matrimonio originales, pero no desarrolla el supuesto de defunción en otro país. OBSERVACIÓN PENDIENTE: confirmar documentación específica con el Consulado, sin extrapolar el caso italiano.
+[[FIN]]
+
+[[REGLA:advertencias]]
+No acudir a la oficina consular sin cita previa. Verificar que los requisitos estén vigentes antes de la cita. Cuando el procedimiento exija fotografías, comprobar que cumplan todas las características establecidas.
+[[FIN]]
+
+[[REGLA:plazo]]
+El tiempo estimado para la entrega del DNI es de aproximadamente 3 a 4 meses, contado desde la realización del trámite consular. Este plazo es referencial y puede variar según el procesamiento efectuado por RENIEC y el envío del documento a la oficina consular. La indicación de un plazo estimado no significa que el DNI se encuentre disponible para entrega. La disponibilidad debe confirmarse mediante el seguimiento oficial del trámite y las indicaciones de la oficina consular.
+[[FIN]]
+
+[[REGLA:seguimiento]]
+El ciudadano debe realizar el seguimiento directamente en el portal oficial de RENIEC y verificar que el avance del trámite haya alcanzado el 100 % antes de acudir a recoger el documento. Portal oficial: https://serviciosportal.reniec.gob.pe/cetdnipi/inicio.htm . El ciudadano debe ingresar allí personalmente su número de DNI, nunca en el asistente. El avance del 100 % no constituye por sí solo garantía automática de disponibilidad para entrega: deben confirmarse el seguimiento oficial y las indicaciones de la oficina consular.
 [[FIN]]

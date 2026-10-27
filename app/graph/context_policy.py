@@ -14,7 +14,7 @@ DOCUMENTOS_POR_INTENCION = {
 }
 DOCUMENTOS_POR_INTENCION.update(ADULT_FILES)
 DOCUMENTADOS = set(DOCUMENTOS_POR_INTENCION)
-TEMAS = {'otra', 'coste', 'plazo', 'cita', 'requisitos', 'seguimiento', 'fotografias'}
+TEMAS = {'otra', 'coste', 'plazo', 'cita', 'requisitos', 'seguimiento', 'fotografias', 'advertencias'}
 PRIORIDAD = ('titular', 'documento', 'tipo_dni', 'dni_previo', 'contradiccion', 'operacion', 'edad', 'tramite', *PREGUNTAS)
 VALORES = {'titular': {'descendiente', 'menor', 'adulto', 'propio'},
            'edad': {'menor', 'adulto'}, 'operacion': OPERACIONES}
@@ -104,6 +104,9 @@ def ruta_documental(c: dict | None) -> str:
     if not c or not validar_contexto(c) or c['ambito'] != 'dni' or c['pendientes']:
         return ''
     if c['tema'] == 'seguimiento':
+        candidate = tramite_candidato(c)
+        if candidate in ADULT_FILES and _conocido(c,'operacion') and _conocido(c,'edad'):
+            return candidate
         return 'dni_consulta_estado'
     if not _conocido(c, 'operacion') or c['operacion']['valor'] in c['rechazadas']:
         return ''

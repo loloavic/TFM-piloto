@@ -3,10 +3,11 @@ FUENTE DECLARADA: https://www.consulado.pe/es/turin/tramite/Paginas/DNI/Mayor-re
 CONSULTA DEL PDF APORTADO: 2026-10-26
 PROCEDENCIA: PDF facilitado por el usuario; acceso web no verificable (HTTP 403). No certifica vigencia normativa en línea.
 SHA256 PDF: f7198c3badf3e8d2f380ca4b6c860d0ff61302a96543e2653220c9a5a8d0f8da
-ALCANCE: reproducir únicamente las condiciones de esta ficha, sin extrapolar a menores.
+DISPOSICIONES GENERALES: confirmación explícita del usuario el 2026-10-27, aplicable a todas las modalidades DNI. Formulaciones de los cuatro TXT originales del piloto y enlace de dni_consulta_estado.txt; procedencia distinta del PDF específico.
+ALCANCE: requisitos particulares de la ficha PDF y disposiciones generales confirmadas por el usuario, con procedencias diferenciadas. No extrapolar requisitos de menores ni combinar tasas.
 
 [[REGLA:general]]
-Rectificación o actualización de datos del DNI de mayor de edad. Tasa €7. La fecha de vencimiento se mantiene, salvo DNI vencido: implica además renovación. No se documenta una tasa acumulada; no sumar tasas. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde medio tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. La ficha no indica cantidad de fotos ni plazo. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
+Rectificación o actualización de datos del DNI de mayor de edad. Tasa €7. La fecha de vencimiento se mantiene, salvo DNI vencido: implica además renovación. No se documenta una tasa acumulada; no sumar tasas. Fotografía obligatoria: 35x43 mm, sin marco, lisa no porosa, fondo blanco, de frente desde medio tórax hacia arriba; sin lentes, uniforme, sombras, manchas, sonrisa, retoque, aretes faciales ni adornos en el rostro. Sin prendas en la cabeza salvo motivos religiosos; frente descubierta y cabello detrás de las orejas. Evitar prendas blancas; cuello visible. La ficha PDF específica no indica cantidad de fotos; el plazo común se registra por separado. Cita: https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT
 [[FIN]]
 
 [[REGLA:datos]]
@@ -19,4 +20,16 @@ La ficha permite cambio de dirección; no detalla documentos adicionales.
 
 [[REGLA:imagen_firma]]
 La ficha permite cambio de imagen o firma; no detalla otros documentos adicionales.
+[[FIN]]
+
+[[REGLA:advertencias]]
+No acudir a la oficina consular sin cita previa. Verificar que los requisitos estén vigentes antes de la cita. Cuando el procedimiento exija fotografías, comprobar que cumplan todas las características establecidas.
+[[FIN]]
+
+[[REGLA:plazo]]
+El tiempo estimado para la entrega del DNI es de aproximadamente 3 a 4 meses, contado desde la realización del trámite consular. Este plazo es referencial y puede variar según el procesamiento efectuado por RENIEC y el envío del documento a la oficina consular. La indicación de un plazo estimado no significa que el DNI se encuentre disponible para entrega. La disponibilidad debe confirmarse mediante el seguimiento oficial del trámite y las indicaciones de la oficina consular.
+[[FIN]]
+
+[[REGLA:seguimiento]]
+El ciudadano debe realizar el seguimiento directamente en el portal oficial de RENIEC y verificar que el avance del trámite haya alcanzado el 100 % antes de acudir a recoger el documento. Portal oficial: https://serviciosportal.reniec.gob.pe/cetdnipi/inicio.htm . El ciudadano debe ingresar allí personalmente su número de DNI, nunca en el asistente. El avance del 100 % no constituye por sí solo garantía automática de disponibilidad para entrega: deben confirmarse el seguimiento oficial y las indicaciones de la oficina consular.
 [[FIN]]

@@ -66,7 +66,7 @@ def test_ciclo_de_temas_conserva_limites_y_fuentes(hostile):
         r=service.responder(question,sid,token)
         assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
         assert r['verificacion'] == 'ok'  # Plantilla de alcance cerrado, no borrador LLM.
-        assert 'combinad' in r['respuesta']
+        assert ('3 a 4 meses' in r['respuesta'] if 'demora' in question else 'combinad' in r['respuesta'])
         assert r['session_id'] == sid and r['session_token'] == token
         assert not calls
     assert snapshot(service,sid)['operacion_dni'] == 'rectificacion'
