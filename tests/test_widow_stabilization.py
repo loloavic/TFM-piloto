@@ -19,7 +19,8 @@ def test_apellido_negativo_resuelve_y_preserva_viudez(answer,motor):
         assert valor(c,'italiano') == 'si' and valor(c,'defuncion') == 'italia'
         assert valor(c,'transicion') == 'viudez'
         assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia','italiano'}
-        assert 'OBSERVACIÓN PENDIENTE' in r['respuesta']
+        assert 'OBSERVACIÓN PENDIENTE' not in r['respuesta']
+        assert 'acta de defunción plurilingüe' in r['respuesta']
 
 
 def test_regla_ausente_diagnosticada_no_es_ok(motor):

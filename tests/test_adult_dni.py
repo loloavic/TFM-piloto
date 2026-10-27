@@ -76,7 +76,9 @@ def test_estado_civil_solo_reglas_aplicables(case, expected, absent, motor):
     assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_estado_civil.txt'}
     rules = {f['regla'] for f in r['fuentes']}
     assert rules == expected | {'general'} and not rules & absent
-    if 'viudez_italia' in rules or 'viudez_otro' in rules:
+    if 'italiano' in rules:
+        assert 'OBSERVACIÓN PENDIENTE' not in r['respuesta'] and not prompts
+    elif 'viudez_italia' in rules or 'viudez_otro' in rules:
         assert 'OBSERVACIÓN PENDIENTE' in r['respuesta'] and not prompts
     else:
         assert prompts

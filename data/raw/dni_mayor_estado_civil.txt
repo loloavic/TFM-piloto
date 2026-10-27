@@ -4,6 +4,7 @@ CONSULTA DEL PDF APORTADO: 2026-10-26
 PROCEDENCIA: PDF facilitado por el usuario; acceso web no verificable (HTTP 403). No certifica vigencia normativa en línea.
 SHA256 PDF: 530c9eaf52d96291ea259e52fd0032d99a71d807ef064d3fb6fb195d144d9b2c
 DISPOSICIONES GENERALES: confirmación explícita del usuario el 2026-10-27, aplicable a todas las modalidades DNI. Formulaciones de los cuatro TXT originales del piloto y enlace de dni_consulta_estado.txt; procedencia distinta del PDF específico.
+CONFIRMACIÓN OPERATIVA: usuario responsable del piloto, 2026-10-27; procedencia distinta del PDF. Exclusivamente cónyuge italiano fallecido en Italia: acta de defunción plurilingüe municipal legalizada por Prefectura sustituye a certificación consular de defunción. La denominación aprobada es «acta plurilingüe»; «acta integral» no se considera equivalente automáticamente. No extrapolar a otros países o nacionalidades.
 ALCANCE: requisitos particulares de la ficha PDF y disposiciones generales confirmadas por el usuario, con procedencias diferenciadas. No extrapolar requisitos de menores ni combinar tasas.
 
 [[REGLA:general]]
@@ -31,11 +32,11 @@ De casado a viudo, defunción en Perú: acta de defunción original y acta de ma
 [[FIN]]
 
 [[REGLA:viudez_italia]]
-De casado a viudo, defunción en Italia: la ficha enumera acta de defunción original, acta de matrimonio original y copia certificada del registro de defunción emitida por el Consulado correspondiente. OBSERVACIÓN PENDIENTE: no aclara si la copia sustituye o se suma al acta original; confirmar con el Consulado antes de afirmar una lista definitiva.
+Para viudez por fallecimiento en Italia, acreditar el matrimonio de forma independiente: si está registrado en Perú, acta de matrimonio peruana original con las condiciones generales de documentos peruanos; si está registrado en una oficina consular peruana, copia certificada emitida por dicha oficina. No confundir la acreditación del matrimonio con la defunción. Para cónyuge italiano aplicar exclusivamente la regla italiano para la defunción. Para otras nacionalidades, OBSERVACIÓN PENDIENTE: la ficha enumera acta de defunción original y copia certificada del registro consular de defunción sin aclarar su sustitución o acumulación. En ese supuesto, consulte con el Consulado qué documento de defunción corresponde; no se confirma una lista definitiva.
 [[FIN]]
 
 [[REGLA:italiano]]
-Para cónyuge italiano fallecido en Italia: copia del acta plurilingüe emitida por la municipalidad italiana, legalizada por la prefectura correspondiente. OBSERVACIÓN PENDIENTE: la ficha no aclara si este documento sustituye o se suma a la copia consular o al acta original. No exigir los tres por inferencia.
+Únicamente para cónyuge italiano fallecido en Italia: presentar un acta de defunción plurilingüe emitida por la municipalidad italiana y legalizada por la Prefectura competente. Este documento sustituye a la certificación consular de defunción. No necesita presentar una certificación consular de defunción del cónyuge italiano: su fallecimiento no se registra como defunción de un ciudadano peruano en el registro consular peruano. No exigir adicionalmente otra acta de defunción por inferencia. La acreditación del matrimonio y, cuando corresponda, la recuperación del apellido materno son condiciones independientes.
 [[FIN]]
 
 [[REGLA:viudez_otro]]

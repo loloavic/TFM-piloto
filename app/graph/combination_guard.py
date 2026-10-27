@@ -1,7 +1,7 @@
 """Salida cerrada para combinaciones: citas individuales, nunca síntesis normativa LLM."""
 import re
 
-from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan
+from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan, valor
 from app.graph.context_policy import ruta_documental
 
 COMMON_CONFLICT = 'Las disposiciones comunes recuperadas no coinciden; no puedo confirmar su alcance.'
@@ -37,7 +37,12 @@ def respuesta_controlada(state):
     if not required:
         return UNSUPPORTED
     common = c['tema'] in REGLAS_COMUNES and all(ids == {c['tema']} for ids in required.values())
-    if len(required) == 1 and not common:
+    italian_widow = (valor(c, 'modificacion') == 'estado_civil'
+                     and valor(c, 'transicion') == 'viudez'
+                     and valor(c, 'defuncion') == 'italia'
+                     and valor(c, 'italiano') == 'si'
+                     and c['tema'] in {'otra', 'requisitos'})
+    if len(required) == 1 and not common and not italian_widow:
         return None
     rules = {}
     for f in state.get('fragmentos', []):
@@ -51,6 +56,17 @@ def respuesta_controlada(state):
     expected = {(file, rule) for file, ids in required.items() for rule in ids}
     if set(rules) != expected or not all(rules.values()):
         return MISSING
+
+    if italian_widow:
+        file = 'dni_mayor_estado_civil.txt'
+        # Excluir únicamente la reserva de defunción de otras nacionalidades.
+        marriage, separator, _ = rules[(file, 'viudez_italia')].partition(' Para cónyuge italiano aplicar')
+        if not separator:
+            return MISSING  # Versión incompatible: no emitir una reserva antigua.
+        paragraphs = [rules[(file, 'general')], marriage, rules[(file, 'italiano')]]
+        if (file, 'apellido') in rules:
+            paragraphs.append(rules[(file, 'apellido')])
+        return '\n\n'.join(paragraphs)
 
     if common:
         contents = {text.strip() for text in rules.values()}

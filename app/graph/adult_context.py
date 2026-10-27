@@ -44,7 +44,7 @@ def extraer(text):
         facts['matrimonio'] = 'peru'
     elif re.search(r'\b(?:matrimonio|me case|nos casamos)\b.*(?:fuera (?:de|del) peru|en (?:italia|el extranjero))', clean):
         facts['matrimonio'] = 'extranjero'
-    death = re.search(r'(?:defuncion|fallecio|murio)\b.*\ben (?:el )?(peru|italia|otro pais)\b', clean)
+    death = re.search(r'(?:defuncion|fallecio|murio)\b[^.;?!]*?\ben (?:el )?(peru|italia|otro pais)\b', clean)
     if death:
         facts['defuncion'] = {'peru':'peru','italia':'italia','otro pais':'otro'}[death[1]]
     nationality = nacionalidad(text)
