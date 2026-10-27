@@ -266,6 +266,7 @@ def recuperar_documentos(
     Recupera y filtra los fragmentos documentales según la
     intención actual.
     """
+    state = {**state, "reglas_faltantes": []}
     intencion = state["intencion"]
 
     if state.get("requiere_aclaracion") or intencion in {
@@ -301,19 +302,27 @@ def recuperar_documentos(
         plan = plan_adulto(state['contexto_canonico'])
         fragmentos_finales = []
         found = set()
-        for f in fragmentos:
-            file = f.get('metadata', {}).get('archivo')
-            if file not in plan:
-                continue
-            for rule, content in re.findall(r'\[\[REGLA:([a-z_]+)\]\]\s*(.*?)\[\[FIN\]\]', f['contenido'], flags=re.S):
-                key = (file, rule)
-                if rule in plan[file] and key not in found:
-                    found.add(key)
-                    fragmentos_finales.append({**f, 'contenido': content,
-                        'metadata': {**f['metadata'], 'regla': rule}})
+        def seleccionar(candidates):
+            for f in candidates:
+                file = f.get('metadata', {}).get('archivo')
+                if file not in plan:
+                    continue
+                for rule, content in re.findall(r'\[\[REGLA:([a-z_]+)\]\]\s*(.*?)\[\[FIN\]\]', f['contenido'], flags=re.S):
+                    key = (file, rule)
+                    if rule in plan[file] and key not in found:
+                        found.add(key)
+                        fragmentos_finales.append({**f, 'contenido': content,
+                            'metadata': {**f['metadata'], 'regla': rule}})
+        seleccionar(fragmentos)
         required = {(file, rule) for file, rules in plan.items() for rule in rules}
+        # El top-k semántico no garantiza que incluya todas las reglas de un plan.
+        # Reintento acotado, solo para reglas autorizadas; nunca relaja la completitud.
+        for file, rule in sorted(required - found):
+            if (file, rule) not in found:
+                seleccionar(recuperar_contexto(
+                    f'{pregunta_busqueda} Fuente {file} REGLA {rule}', k=10))
+        state['reglas_faltantes'] = [f'{file}#{rule}' for file, rule in sorted(required - found)]
         if not required or not required <= found:
-            # Nunca contestar una combinación con solo una parte de sus fuentes.
             fragmentos_finales = []
     else:
         archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
@@ -507,6 +516,12 @@ def redactar_respuesta(
             'No puedo proporcionar requisitos combinados ni sumar tasas. '
             'En rectificación de datos con renovación, indique si el DNI está vencido; '
             'la combinación con cambio de estado civil requiere confirmación del Consulado.')}
+
+    if not state.get("contexto") and state.get('reglas_faltantes'):
+        return {**state, 'respuesta_borrador': (
+            'No cuento con información documental suficiente: la consulta ya está identificada, '
+            'pero faltan reglas verificables en la recuperación. Es necesario revisar el corpus o el índice; '
+            'no puedo sustituirlas por requisitos de otro procedimiento.')}
 
     if not state.get("contexto"):
         respuesta = (
@@ -748,6 +763,10 @@ def verificar_respuesta(
             + " | ".join(advertencias)
         )
     )
+
+    if not advertencias and state.get('estado_documental') == 'sin_evidencia':
+        details = ', '.join(state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada'
+        verificacion = 'abstencion_documental: ' + details
 
     historial_anterior = state.get(
         "historial",

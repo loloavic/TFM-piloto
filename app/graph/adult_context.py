@@ -50,7 +50,7 @@ def extraer(text):
         facts['italiano'] = nationality
     if re.search(r'\brecuperar (?:mi |el )?apellido materno\b', text):
         facts['apellido'] = 'no' if re.search(r'\bno (?:quiero |deseo |necesito )?recuperar\b', text) else 'si'
-    if re.search(r'\b(?:sin (?:cambios|modificaciones)|solo (?:quiero )?renovar|no (?:quiero|necesito) (?:rectificar|corregir|cambiar|actualizar))\b', text):
+    if re.search(r'\b(?:sin (?:cambios|modificaciones)|solo (?:quiero )?renovar|no (?:quiero|necesito) (?:rectificar|corregir|cambiar|actualizar)(?!\s+(?:mi|el)\s+apellido\b))\b', text):
         facts['modificacion'] = 'ninguna'
     if re.search(r'\bdni\b.*\b(?:vencido|caducado|expirado)\b', text):
         facts['vigencia'] = 'vigente' if re.search(r'\bno (?:esta |ha )?(?:vencido|caducado|expirado)\b', text) else 'vencido'
@@ -77,6 +77,10 @@ def actualizar(c, evidence):
             incoming.setdefault('matrimonio', 'peru' if evidence.lugar_confirmado == 'peru' else 'extranjero')
         elif 'adulto_defuncion' in c['pendientes']:
             incoming.setdefault('defuncion', evidence.lugar_confirmado)
+    if (evidence.respuesta_apellido and valor(c, 'modificacion') == 'estado_civil'
+            and valor(c, 'transicion') in {'divorcio', 'viudez'}
+            and ('adulto_apellido' in c['pendientes'] or 'apellido' in conditions)):
+        incoming['apellido'] = evidence.respuesta_apellido
     if (evidence.respuesta_nacionalidad
             and valor(c, 'modificacion') == 'estado_civil'
             and valor(c, 'transicion') == 'viudez'
@@ -230,3 +234,13 @@ def respuesta_nacionalidad(text):
     if prefix == 'no' and not negative:
         return 'conflicto'  # «no, era italiano» no confirma un valor inequívoco.
     return 'no' if negative else 'si'
+
+
+def respuesta_apellido(text):
+    """Decisión sobre recuperar apellido, nunca el apellido ni una identidad."""
+    negative = bool(re.search(
+        r'\bno (?:quiero|necesito|deseo) (?:cambiar|recuperar) (?:mi|el) apellido(?: materno)?\b|'
+        r'\bno[, ]+(?:(?:ya )?(?:utilizo|uso|mantengo)|he mantenido(?: siempre)?) mi apellido materno\b', text))
+    positive_text = re.sub(r'\bno (?:quiero|necesito|deseo) recuperar[^.;?!]*', ' ', text)
+    positive = bool(re.search(r'\b(?:quiero|necesito|deseo) recuperar (?:mi|el) apellido materno\b', positive_text))
+    return 'conflicto' if negative and positive else 'no' if negative else 'si' if positive else ''
