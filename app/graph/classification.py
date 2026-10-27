@@ -24,10 +24,33 @@ def normalizar(texto: str) -> str:
 
 def tipo_consulta(texto: str) -> str:
     texto = re.sub(r'\bno\s+(?:(?:quiero|necesito|deseo)\s+)?(?:consultar|saber|ver)\s+(?:el\s+)?(?:estado(?: del tramite)?|seguimiento)\b', ' ', texto)
+    # Una negación de recomendaciones no debe eclipsar la pregunta posterior.
+    texto = re.sub(
+        r'\bno\s+(?:(?:quiero|necesito|deseo)|me des)\s+'
+        r'(?:advertencias?|precaucion(?:es)?|recomendacion(?:es)?)\b.*?(?=[.;?!]|\b(?:pero|sino)\b|$)',
+        ' ', texto)
+    advice_pattern = (
+        r'\b(?:advertencias?|precaucion(?:es)?|recomendacion(?:es)?)\b|'
+        r'\b(?:tener en cuenta|revisar|verificar)\b[^.;?!]{0,100}'
+        r'\bantes de\b[^.;?!]{0,50}\b(?:acudir|ir|cita)\b')
+    advice_topic = 'advertencias'
+    if re.search(advice_pattern, texto):
+        # El objeto específico prima sobre una fórmula genérica de recomendación.
+        # «Para mi cita» es contexto; reservar, lugar u horario sí son preguntas de cita.
+        specific = (
+            ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|importe'),
+            ('fotografias', r'\bfotos?\b|fotograf'),
+            ('requisitos', r'\brequisitos?\b|\bdocumentos?\b|\bfotocopia\b'),
+            ('cita', r'bookeo|reservar|reserva|horarios?|turnos?|'
+                      r'\b(?:donde|como|solicitar|pedir|conseguir)\b[^.;?!]{0,50}\bcita\b'),
+        )
+        specific_text = re.sub(r'\bvigencia de (?:los )?requisitos\b', ' ', texto)
+        advice_topic = next((topic for topic, pattern in specific
+                             if re.search(pattern, specific_text)), 'advertencias')
     temas = (
         ('seguimiento', r'estado (?:de|del)|seguimiento|avance|(?:aun|todavia) no (?:ha )?llegado|ya (?:esta listo|llego)|si (?:esta listo|(?:ya )?llego)|recoger (?:mi|el|su) dni|observad[oa]|subsanad[oa]|numero de ficha|100\s*%'),
         ('plazo', r'cuanto (?:demora|tarda)|cuando (?:llega|llegara|estara listo)|tiempo (?:estimado|de entrega)|plazo|demora|tarda'),
-        ('advertencias', r'advertencias?|precauciones|verificar.*antes de la cita'),
+        (advice_topic, advice_pattern),
         ('cita', r'\bcita\b|reservar|reserva|horarios?|turnos?|bookeo'),
         ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|\bmonto\b|importe'),
         ('fotografias', r'foto'),
