@@ -585,3 +585,8 @@ añade reglas de plazo, seguimiento y advertencias a los tres TXT de adultos.
 Esta actualización requiere reconstruir el índice de los siete documentos.
 Las abstenciones por recuperación incompleta se identifican como `abstencion_documental`
 y diagnostican las reglas faltantes; no equivalen a una respuesta factual verificada.
+
+La [lectura exacta de reglas autorizadas](docs/recuperacion-exacta-reniec-pr4.md)
+resuelve omisiones del top-k sin aumentar `k` ni responder desde TXT ausentes del índice.
+Puede diagnosticarse el índice local con `python -m app.rag.inspect_rules` (sin OpenAI).
+Las fuentes exactas se identifican como `recuperacion: exacta`, con `distancia: null`.

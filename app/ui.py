@@ -78,7 +78,7 @@ def responder_consulta(
                 (
                     f'- {fuente["archivo"]} | '
                     f'chunk {fuente["chunk"]} | '
-                    f'distancia {fuente["distancia"]:.4f}'
+                    + (f'distancia {fuente["distancia"]:.4f}' if fuente['distancia'] is not None else 'recuperación exacta, sin distancia semántica')
                 )
                 for fuente in resultado["fuentes"]
             ]

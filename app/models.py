@@ -6,7 +6,8 @@ from app.core.query_validation import validar_consulta
 class FuenteResponse(BaseModel):
     archivo: str
     chunk: int
-    distancia: float
+    distancia: float | None
+    recuperacion: str = "semantica"
 
 
 class ConsultaRequest(BaseModel):

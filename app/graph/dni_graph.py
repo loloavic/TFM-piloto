@@ -11,6 +11,7 @@ from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
 from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto
 from app.graph.conversation_style import formular_aclaracion, respuesta_contextual
 from app.rag.retriever import recuperar_contexto
+from app.rag.exact_rules import recuperar_reglas_exactas
 from app.services.llm_service import LLMService
 
 
@@ -321,6 +322,8 @@ def recuperar_documentos(
             if (file, rule) not in found:
                 seleccionar(recuperar_contexto(
                     f'{pregunta_busqueda} Fuente {file} REGLA {rule}', k=10))
+        if required - found:
+            seleccionar(recuperar_reglas_exactas(state['contexto_canonico'], required - found))
         state['reglas_faltantes'] = [f'{file}#{rule}' for file, rule in sorted(required - found)]
         if not required or not required <= found:
             fragmentos_finales = []
@@ -345,6 +348,7 @@ def recuperar_documentos(
                 fragmento["metadata"]["chunk"]
             ),
             "distancia": fragmento["score"],
+            "recuperacion": fragmento["metadata"].get("recuperacion", "semantica"),
             **({"regla": fragmento["metadata"]["regla"]} if "regla" in fragmento["metadata"] else {}),
         }
         for fragmento in fragmentos_finales
