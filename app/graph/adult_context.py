@@ -45,10 +45,9 @@ def extraer(text):
     death = re.search(r'(?:defuncion|fallecio|murio)\b.*\ben (?:el )?(peru|italia|otro pais)\b', clean)
     if death:
         facts['defuncion'] = {'peru':'peru','italia':'italia','otro pais':'otro'}[death[1]]
-    if re.search(r'\b(?:conyuge|esposo|esposa)\b.*\b(?:era|es) italian[oa]\b', clean):
-        facts['italiano'] = 'si'
-    if re.search(r'\b(?:conyuge|esposo|esposa)\b.*\bno (?:era|es) italian[oa]\b', text):
-        facts['italiano'] = 'no'
+    nationality = nacionalidad(text)
+    if nationality:
+        facts['italiano'] = nationality
     if re.search(r'\brecuperar (?:mi |el )?apellido materno\b', text):
         facts['apellido'] = 'no' if re.search(r'\bno (?:quiero |deseo |necesito )?recuperar\b', text) else 'si'
     if re.search(r'\b(?:sin (?:cambios|modificaciones)|solo (?:quiero )?renovar|no (?:quiero|necesito) (?:rectificar|corregir|cambiar|actualizar))\b', text):
@@ -78,6 +77,12 @@ def actualizar(c, evidence):
             incoming.setdefault('matrimonio', 'peru' if evidence.lugar_confirmado == 'peru' else 'extranjero')
         elif 'adulto_defuncion' in c['pendientes']:
             incoming.setdefault('defuncion', evidence.lugar_confirmado)
+    if (evidence.respuesta_nacionalidad
+            and valor(c, 'modificacion') == 'estado_civil'
+            and valor(c, 'transicion') == 'viudez'
+            and valor(c, 'defuncion') == 'italia'
+            and ('adulto_italiano' in c['pendientes'] or 'italiano' in conditions)):
+        incoming.setdefault('italiano', evidence.respuesta_nacionalidad)
     # Las respuestas breves solo completan la dimensión preguntada.
     if evidence.respuesta_binaria:
         for key in ('italiano', 'apellido'):
@@ -197,3 +202,31 @@ PREGUNTAS = {
     'adulto_italiano': '¿El cónyuge fallecido era italiano? Indique solo sí o no, sin datos identificativos.',
     'adulto_apellido': '¿Desea recuperar el apellido materno? No indique su apellido.',
 }
+
+
+# Las referencias al cónyuge y las respuestas elípticas tienen ámbitos distintos.
+_NATIONAL_CLAUSE = r'(no\s+)?(?:era|es)\s+(?:ciudadan[oa]\s+|de nacionalidad\s+)?italian[oa]\b'
+
+
+def nacionalidad(text):
+    """Solo un cónyuge explícito; otra persona no acredita esta condición."""
+    subject = (r'\b(?:mi\s+)?(?:conyuge|esposo|esposa)\s+'
+               r'(?:(?:fallecio|murio)\s+en\s+(?:italia|peru|otro pais)\s+y\s+)?')
+    values = {'no' if m[1] else 'si' for m in re.finditer(subject + _NATIONAL_CLAUSE, text)}
+    return 'conflicto' if len(values) > 1 else next(iter(values), '')
+
+
+def respuesta_nacionalidad(text):
+    """Fragmento solo aplicable a una condición de cónyuge ya contextualizada."""
+    text = re.sub(r'^(?:me equivoque|en realidad)[, ]+', '', text)
+    if re.fullmatch(r'no[, ]+(?:era|es) (?:ciudadan[oa] )?peruan[oa][.!]?', text):
+        return 'no'  # El no explícito responde a la pregunta; no excluye por nacionalidad.
+    match = re.fullmatch(r'(?:(si[, ]+|no,\s*))?' + _NATIONAL_CLAUSE + r'[.!]?', text)
+    if not match:
+        return ''
+    prefix, negative = (match[1] or '').strip(' ,'), match[2]
+    if prefix == 'si' and negative:
+        return 'conflicto'
+    if prefix == 'no' and not negative:
+        return 'conflicto'  # «no, era italiano» no confirma un valor inequívoco.
+    return 'no' if negative else 'si'

@@ -44,6 +44,7 @@ class ContextoCanonico(TypedDict):
 @dataclass(frozen=True)
 class EvidenciaTurno:
     """Solo categorías del mensaje actual; no texto ni datos personales nuevos."""
+    respuesta_nacionalidad: str = ''
     lugar_confirmado: str = ''
     respuesta_binaria: str = ''
     condiciones_adulto: tuple[tuple[str, str], ...] = ()

@@ -7,7 +7,7 @@ import re
 import unicodedata
 
 from app.graph.state import EvidenciaTurno
-from app.graph.adult_context import extraer as extraer_adulto
+from app.graph.adult_context import extraer as extraer_adulto, respuesta_nacionalidad
 from app.graph.context_policy import (
     CAMBIO_AZUL, DOCUMENTADOS, PRIORIDAD, ruta_documental, tramite_candidato, transicionar, validar_contexto,
 )
@@ -333,6 +333,7 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         affirmative_operation = CAMBIO_AZUL
     return EvidenciaTurno(
         condiciones_adulto=adult_facts,
+        respuesta_nacionalidad=respuesta_nacionalidad(text),
         lugar_confirmado=next((place for word, place in [('peru','peru'),('italia','italia'),('otro pais','otro')]
             if re.fullmatch(r'(?:fue |ocurrio )?en (?:el )?' + word + r'[.!]?', text)), ''),
         respuesta_binaria='si' if re.fullmatch(r'si[.!]?', text) else 'no' if re.fullmatch(r'no[.!]?', text) else '',
