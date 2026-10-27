@@ -96,12 +96,14 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
     # Presentar requisitos no convierte al solicitante explícito en apoyo.
     # Exigir un objeto propio de rectificación; la edad sola no basta.
     own_rectification = re.sub(
-        r'\bno\s+(?:quiero|necesito|debo)\s+(?:rectificar|corregir)\b[^.;?!]*',
+        r'\bno\s+(?:quiero|necesito|debo)\s+(?:rectificar|corregir|actualizar|cambiar)\b[^.;?!]*',
         ' ', texto)
+    own_civil_update = re.search(
+        r'\b(?:actualizar|cambiar|rectificar|corregir)\s+mi\s+estado civil\b', own_rectification)
     own_rectification = re.search(
         r'\b(?:rectificar|corregir)\s+(?:mi\s+(?:dni|fecha de nacimiento|lugar de nacimiento|nombre|apellido|direccion|firma)\b|'
         r'mis\s+(?:datos|nombres|apellidos)\b|datos\s+de\s+mi\s+dni\b)', own_rectification)
-    own_dni = own_dni or (own_rectification if re.search(r'\bdni\b', texto) else None)
+    own_dni = own_dni or ((own_rectification or own_civil_update) if re.search(r'\bdni\b', texto) else None)
     if child_dni and own_dni and re.search(
         r'\bno\s+(?:quiero|necesito|debo)\s+' + ACCION + r'\s+' + ART + r'$',
         texto[:child_dni.start()],
