@@ -1,5 +1,11 @@
 # Ampliación de DNI de mayor de edad
 
+## Estado consolidado — 28 de octubre de 2026
+
+Consulte la [corrección de la auditoría final](integridad-metricas-pr4.md): validación compartida de reglas semánticas y exactas, métricas y pruebas actuales. Los resultados iniciales son históricos.
+
+La confirmación operativa del usuario del 27/10/2026, diferenciada de los PDF, resuelve exclusivamente la sustitución de la certificación consular de defunción por el acta plurilingüe municipal legalizada por Prefectura para cónyuge italiano fallecido en Italia. No equipara acta integral y plurilingüe ni amplía otros escenarios. El matrimonio y el apellido conservan requisitos independientes.
+
 ## Base y procedencia
 
 Rama `feature/dni-mayor-ampliacion`, creada desde `main` en `33c344b` (incluye PR #3). No se incorpora V2 ni se modifica main. No hay dependencias nuevas.
@@ -32,8 +38,8 @@ Esta matriz se presentó en la conversación antes de modificar código:
 | Soltero a casado, extranjero | Copia certificada del Consulado donde se registró; oficina de la ciudad del matrimonio civil | No aplicar automáticamente apostilla/12 meses de actas peruanas |
 | Casado a divorciado | Acta peruana original de matrimonio con anotación de disolución; nacimiento original si recupera apellido materno | Preguntar si desea recuperar el apellido, nunca cuál es |
 | Casado a viudo, Perú | Defunción y matrimonio originales | Apostilla/12 meses para actas emitidas en Perú |
-| Viudez en Italia | Se enumera copia consular de defunción | No se aclara sustitución o acumulación respecto al original |
-| Cónyuge italiano fallecido en Italia | Acta plurilingüe municipal legalizada por prefectura | No exigir simultáneamente tres alternativas por inferencia |
+| Viudez en Italia, otras nacionalidades | El PDF enumera copia consular de defunción | Subsiste incertidumbre sobre sustitución o acumulación |
+| Cónyuge italiano fallecido en Italia | Confirmación operativa del usuario del 27/10/2026: acta plurilingüe municipal legalizada por Prefectura | Sustituye la certificación consular de defunción; matrimonio independiente |
 | Defunción en otro país | La ficha da requisitos generales | Falta detalle específico: observación pendiente |
 | Actas de estado civil emitidas en Perú | Originales, apostilladas por Relaciones Exteriores, no más de 12 meses | No trasladar a documentos extranjeros ni a otros servicios |
 
@@ -105,7 +111,7 @@ No reutilizar un índice de siete documentos al comparar versiones antiguas: cam
 1. Revisión humana de procedencia, vigencia y observaciones pendientes del corpus aportado.
 2. Suite determinista completa aprobada en Windows/Conda, sin OpenAI real.
 3. Pruebas reales separadas, con índice de siete TXT: fuentes correctas y abstención si faltan reglas. No confundir sus resultados con simulaciones.
-4. Conversaciones sintéticas: renovar adulto → coste/fotos/cita/plazo; rectificar nacimiento → DNI vencido → tasa sin suma; matrimonio Perú/extranjero; divorcio con/sin apellido; viudez Italia con observación; cambio explícito a hijo menor y nueva sesión.
+4. Conversaciones sintéticas: renovar adulto → coste/fotos/cita/plazo; rectificar nacimiento → DNI vencido → tasa sin suma; matrimonio Perú/extranjero; divorcio con/sin apellido; viudez italiana en Italia con sustitución confirmada y otros supuestos con reserva; cambio explícito a hijo menor y nueva sesión.
 5. Ninguna fuente de menor en una respuesta adulta, ni viceversa; no cerrar conflictos de titular/operación/condiciones sin evidencia suficiente.
 6. La combinación renovación/estado civil y la acumulación de actas/tasas permanecen pendientes hasta confirmación documental, incluso aunque un usuario o el LLM afirmen que son válidas.
 

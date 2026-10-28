@@ -1,5 +1,8 @@
 # Confirmación operativa de viudez — PR #4
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 Fecha: 27 de octubre de 2026. Rama: feature/dni-mayor-ampliacion.
 
 ## Alcance y procedencia

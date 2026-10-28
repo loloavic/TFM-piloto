@@ -1,5 +1,8 @@
 # PR #4: viudez, nacionalidad y respuestas breves
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 27 de octubre de 2026. Base `357ef51`, rama `feature/dni-mayor-ampliacion`.
 
 ## Causas confirmadas y reproducción

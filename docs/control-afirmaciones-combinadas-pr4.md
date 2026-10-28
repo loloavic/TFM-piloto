@@ -1,5 +1,8 @@
 # PR #4: control de afirmaciones documentales combinadas
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 Fecha: 27 de octubre de 2026. Base: `faa9b7e`, rama `feature/dni-mayor-ampliacion`.
 
 ## Causa confirmada y reproducción

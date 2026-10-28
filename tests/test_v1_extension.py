@@ -20,9 +20,11 @@ def turn(s, q):
 @pytest.fixture
 def motor(monkeypatch, entorno_aislado):
     from app.graph import dni_graph
-    docs = [{'contenido': p.read_text(encoding='utf-8'), 'score': 0.1,
-             'metadata': {'archivo': p.name, 'chunk': 0}}
-            for p in sorted(Path('data/raw').glob('*.txt'))]
+    from app.rag.document_loader import cargar_documentos_txt
+    from app.rag.text_splitter import dividir_documentos
+    docs = [{'contenido': f['contenido'], 'score': 0.1,
+                  'metadata': {'archivo': f['archivo'], 'chunk': f['chunk']}}
+                 for f in dividir_documentos(cargar_documentos_txt())]
     retrieve = Mock(return_value=docs)
     prompts = []
     class GroundedStub:

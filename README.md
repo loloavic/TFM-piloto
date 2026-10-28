@@ -590,3 +590,30 @@ La [lectura exacta de reglas autorizadas](docs/recuperacion-exacta-reniec-pr4.md
 resuelve omisiones del top-k sin aumentar `k` ni responder desde TXT ausentes del índice.
 Puede diagnosticarse el índice local con `python -m app.rag.inspect_rules` (sin OpenAI).
 Las fuentes exactas se identifican como `recuperacion: exacta`, con `distancia: null`.
+
+
+### Estado consolidado del PR #4 — 28/10/2026
+
+Renovación y rectificación adultas, matrimonio, divorcio y viudez usan siete TXT
+(43 fragmentos al reconstruir). La confirmación operativa del usuario del
+27/10/2026 autoriza exclusivamente la sustitución de la certificación consular
+de defunción por acta plurilingüe municipal legalizada por Prefectura para
+cónyuge italiano fallecido en Italia. Es procedencia distinta de los PDF;
+otras nacionalidades y países conservan sus reservas documentales.
+
+La recuperación semántica y exacta comparten autorización e integridad por
+archivo/regla: contenido completo vigente y metadata coherente. Una incidencia
+observada no se rehabilita por otro resultado; se abstiene sin responder desde
+TXT ausentes del índice. Los TXT se consultan solo para validar los bloques.
+
+`verificacion: ok` significa que se superaron los controles disponibles, **no
+certifica exactitud factual universal**. La API conserva sus campos y valores;
+Gradio muestra esta aclaración. Las métricas conservan columnas y distinguen
+las intenciones adultas, amarillo a azul y `abstencion_documental`.
+
+Validación determinista actual: **601 aprobadas, 6 de integración excluidas**.
+Los informes anteriores son históricos. Ver [causas, política de rechazo,
+compatibilidad de métricas, límites e instrucciones Windows/Conda](docs/integridad-metricas-pr4.md).
+El cambio de código no modifica TXT ni obliga a reconstruir un índice ya
+sincronizado; inspeccionarlo con `python -m app.rag.inspect_rules`. Si está
+obsoleto, reconstruirlo localmente antes de validar con OpenAI real.

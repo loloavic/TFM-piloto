@@ -1,5 +1,8 @@
 # PR #4: reconocimiento del titular en rectificación
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 ## Causa raíz y reproducción
 
 Base: `1e3217b`, rama `feature/dni-mayor-ampliacion`.

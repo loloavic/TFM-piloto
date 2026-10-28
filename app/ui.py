@@ -96,7 +96,7 @@ def responder_consulta(
             f'Intención clasificada: '
             f'{resultado["intencion"]}\n'
             f'Verificación: '
-            f'{resultado["verificacion"]}\n'
+            f'{resultado["verificacion"]} (controles disponibles; no certifica exactitud factual universal)\n'
             f'Sesión temporal: {session_id["id"]}'
         )
 

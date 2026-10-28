@@ -1,5 +1,8 @@
 # PR #4: estabilización de viudez y disposiciones generales
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 27 de octubre de 2026. Base inicial `e19d9f8`, rama `feature/dni-mayor-ampliacion`.
 
 ## Fase A — Viudez y recuperación

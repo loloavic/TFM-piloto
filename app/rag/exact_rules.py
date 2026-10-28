@@ -1,5 +1,4 @@
 """Lectura exacta del docstore indexado; no embeddings, ranking ni TXT de respaldo."""
-import re
 from pathlib import Path
 
 from langchain_core.embeddings import Embeddings
@@ -8,8 +7,7 @@ from langchain_community.vectorstores import FAISS
 from app.graph.adult_context import ADULT_FILES, plan
 from app.graph.context_policy import ruta_documental
 from app.rag.index_builder import VECTOR_STORE_PATH
-
-_BLOCK = re.compile(r'\[\[REGLA:([a-z_]+)\]\]\s*(.*?)\s*\[\[FIN\]\]', re.S)
+from app.rag.rule_integrity import RuleIntegrity, IntegrityResults
 
 
 class _SinEmbeddings(Embeddings):
@@ -37,37 +35,16 @@ def recuperar_reglas_exactas(contexto, faltantes, ruta_indice=VECTOR_STORE_PATH)
     requested = set(faltantes)
     if not requested or not requested <= authorized:
         return []
-    approved = {}
-    for file in {pair[0] for pair in requested}:
-        try:
-            text = (Path(__file__).resolve().parents[2] / 'data' / 'raw' / file).read_text(encoding='utf-8')
-        except OSError:
-            continue
-        for match in _BLOCK.finditer(text):
-            approved[file, match[1]] = match[0].strip()
+    validator = RuleIntegrity(requested)
     try:
         index = cargar_indice_exacto(ruta_indice)
     except (OSError, ValueError, RuntimeError, EOFError):
         return []
-    found, conflicts = {}, set()
+    candidates = []
     for doc_id in dict.fromkeys(index.index_to_docstore_id.values()):
         doc = index.docstore.search(doc_id)
-        if not hasattr(doc, 'metadata') or not hasattr(doc, 'page_content'):
-            continue
-        file, chunk = doc.metadata.get('archivo'), doc.metadata.get('chunk')
-        if file not in {key[0] for key in requested} or type(chunk) is not int or chunk < 0:
-            continue
-        match = _BLOCK.fullmatch(doc.page_content.strip())
-        if not match or not match[2].strip() or len(doc.page_content) > 1800:
-            continue
-        key = file, match[1]
-        if key not in requested or doc.metadata.get('regla', match[1]) != match[1]:
-            continue
-        if approved.get(key) != doc.page_content.strip():
-            continue  # Regla indexada distinta del corpus actual: no rescatar desde TXT.
-        if key in found and found[key]['contenido'].strip() != doc.page_content.strip():
-            conflicts.add(key)
-        else:
-            found[key] = {'contenido': doc.page_content, 'score': None,
-                          'metadata': {**doc.metadata, 'recuperacion': 'exacta'}}
-    return [found[key] for key in sorted(found.keys() - conflicts)]
+        if hasattr(doc, 'metadata') and hasattr(doc, 'page_content'):
+            candidates.append({'contenido': doc.page_content, 'score': None,
+                               'metadata': {**doc.metadata, 'recuperacion': 'exacta'}})
+    validator.add(candidates)
+    return IntegrityResults(validator)

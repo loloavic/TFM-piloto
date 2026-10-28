@@ -1,5 +1,8 @@
 # PR #4: actualización de estado civil y continuidad
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 27 de octubre de 2026. Base `e4e31e1`, rama `feature/dni-mayor-ampliacion`.
 
 ## Causa raíz confirmada

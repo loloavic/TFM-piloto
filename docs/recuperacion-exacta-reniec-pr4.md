@@ -1,5 +1,8 @@
 # PR #4: recuperación exacta de reglas autorizadas
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 27 de octubre de 2026. Base `dfa4af1`; rama `feature/dni-mayor-ampliacion`.
 
 ## Causa confirmada y límites de la investigación

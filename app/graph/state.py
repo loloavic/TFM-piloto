@@ -96,6 +96,7 @@ class DNIState(TypedDict, total=False):
 
     pregunta_busqueda: str
     reglas_faltantes: list[str]
+    rechazos_documentales: list[str]
     fragmentos: list[dict]
     contexto: str
     fuentes: list[dict]

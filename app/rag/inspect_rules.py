@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 from app.graph.adult_context import ADULT_FILES
-from app.rag.exact_rules import cargar_indice_exacto, _BLOCK
+from app.rag.exact_rules import cargar_indice_exacto
+from app.rag.rule_integrity import BLOCK as _BLOCK
 from app.rag.index_builder import VECTOR_STORE_PATH
 from app.rag.document_loader import cargar_documentos_txt
 from app.rag.text_splitter import dividir_documentos

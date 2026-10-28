@@ -1,5 +1,8 @@
 # Resultado ejecutado: ampliación DNI adulto
 
+> Evidencia histórica de su entrega. El estado consolidado, pruebas y correcciones posteriores se describen en [integridad y métricas del PR #4](integridad-metricas-pr4.md). Los resultados de este informe corresponden a su versión.
+
+
 Entorno: Linux, Python 3.11.17, entorno virtual existente. Sin instalación de dependencias, sin OpenAI real ni embeddings reales.
 
 ```bash

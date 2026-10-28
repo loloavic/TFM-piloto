@@ -138,10 +138,11 @@ def motor_local(monkeypatch, entorno_aislado):
     from pathlib import Path
     from app.graph import dni_graph
     calls = {'retrieval': [], 'llm': []}
-    documents = [{
-        'contenido': path.read_text(encoding='utf-8'), 'score': 0.1,
-        'metadata': {'archivo': path.name, 'chunk': 0},
-    } for path in Path('data/raw').glob('*.txt')]
+    from app.rag.document_loader import cargar_documentos_txt
+    from app.rag.text_splitter import dividir_documentos
+    documents = [{'contenido': f['contenido'], 'score': 0.1,
+                  'metadata': {'archivo': f['archivo'], 'chunk': f['chunk']}}
+                 for f in dividir_documentos(cargar_documentos_txt())]
     def retrieve(question, **kwargs):
         calls['retrieval'].append(question)
         return documents
