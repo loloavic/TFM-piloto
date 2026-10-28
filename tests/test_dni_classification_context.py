@@ -196,7 +196,7 @@ def test_grafo_seguimiento_y_cambio_de_procedimiento(motor_local):
 
 
 @pytest.mark.parametrize('question,word', [
-    ('Soy adulto y quiero solicitar mi primer DNI.', 'no documenta'),
+    ('Soy adulto y quiero solicitar mi primer DNI.', 'no dispongo de información confirmada'),
     ('Quiero renovar el DNI de mi hijo.', 'menor de 18'),
     ('Quiero el DNI de mi hijo menor.', 'primer DNI'),
 ])
@@ -380,7 +380,7 @@ def test_duplicado_identificado_no_habilita_nuevo_procedimiento(motor_local):
     assert state['estado_documental'] == 'no_documentado'
     assert not state['requiere_aclaracion'] and not state['tramite_documentado']
     assert not result['fuentes'] and not calls['retrieval'] and not calls['llm']
-    assert 'no documenta' in result['respuesta'] and 'adulto' not in result['respuesta']
+    assert 'no dispongo de información confirmada' in result['respuesta'] and 'adulto' not in result['respuesta']
 
 
 def test_duplicado_negado_no_impide_renovacion():

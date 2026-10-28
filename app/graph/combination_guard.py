@@ -3,27 +3,32 @@ import re
 
 from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan, valor
 from app.graph.context_policy import ruta_documental
+from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez
 
-COMMON_CONFLICT = 'Las disposiciones comunes recuperadas no coinciden; no puedo confirmar su alcance.'
+COMMON_CONFLICT = 'No puedo confirmar esta información porque hay versiones incompatibles. Consulte con el Consulado antes de acudir.'
 
 UNSUPPORTED = (
-    'La combinación solicitada no está confirmada en las fichas aportadas. '
-    'No puedo proporcionar requisitos combinados ni sumar tasas. '
-    'En rectificación de datos con renovación, indique si el DNI está vencido; '
-    'la combinación con cambio de estado civil requiere confirmación del Consulado.'
+    'La combinación solicitada no está confirmada. '
+    'Consulte con el Consulado si puede realizar ambos trámites y qué debe pagar. '
+    'No puedo proporcionar requisitos combinados ni sumar tasas.'
 )
 MISSING = (
     'No cuento con información documental suficiente para responder con seguridad. '
-    'Faltan reglas o fuentes necesarias; no puedo confirmar condiciones combinadas.'
+    'Consulte con el Consulado antes de acudir; no puedo confirmar las condiciones de su consulta.'
 )
 LIMIT = (
-    'Las condiciones individuales no permiten confirmar una lista combinada definitiva, '
-    'acumular requisitos, trasladar cantidades de fotografías ni establecer '
-    'un importe total, una tasa única o una exoneración. Confirme el alcance combinado con el Consulado.'
+    'Confirme con el Consulado los requisitos y el pago para los trámites combinados. '
+    'No puedo confirmar una lista conjunta, sumar requisitos o fotografías, '
+    'ni establecer un importe total, una tasa única o una exoneración.'
 )
 
 
 def respuesta_controlada(state):
+    result = _respuesta_controlada(state)
+    return texto_ciudadano(result) if result is not None else None
+
+
+def _respuesta_controlada(state):
     """Recalcular desde contexto validado y reglas recuperadas, sin confiar en el borrador.
 
     None significa ámbito ajeno al control; no certifica su fundamentación.
@@ -42,7 +47,12 @@ def respuesta_controlada(state):
                      and valor(c, 'defuncion') == 'italia'
                      and valor(c, 'italiano') == 'si'
                      and c['tema'] in {'otra', 'requisitos'})
-    if len(required) == 1 and not common and not italian_widow:
+    uncertain_widow = (valor(c, 'modificacion') == 'estado_civil'
+                       and valor(c, 'transicion') == 'viudez'
+                       and c['tema'] in {'otra', 'requisitos'}
+                       and any('OBSERVACIÓN PENDIENTE' in f.get('contenido', '')
+                               for f in state.get('fragmentos', [])))
+    if len(required) == 1 and not common and not italian_widow and not uncertain_widow:
         return None
     rules = {}
     for f in state.get('fragmentos', []):
@@ -63,10 +73,16 @@ def respuesta_controlada(state):
         marriage, separator, _ = rules[(file, 'viudez_italia')].partition(' Para cónyuge italiano aplicar')
         if not separator:
             return MISSING  # Versión incompatible: no emitir una reserva antigua.
-        paragraphs = [rules[(file, 'general')], marriage, rules[(file, 'italiano')]]
-        if (file, 'apellido') in rules:
-            paragraphs.append(rules[(file, 'apellido')])
-        return '\n\n'.join(paragraphs)
+        return requisitos_viudez(rules[(file, 'general')], marriage, rules[(file, 'italiano')],
+                                 rules.get((file, 'apellido'), ''))
+
+    if uncertain_widow:
+        file = 'dni_mayor_estado_civil.txt'
+        marriage = rules.get((file, 'viudez_italia'), '').partition(' Para cónyuge italiano aplicar')[0]
+        if not marriage:
+            marriage = 'Confirme con el Consulado cómo acreditar el matrimonio en su situación.'
+        return requisitos_viudez(rules[(file, 'general')], marriage,
+                                 incertidumbre_viudez(state), rules.get((file, 'apellido'), ''))
 
     if common:
         contents = {text.strip() for text in rules.values()}
@@ -84,9 +100,9 @@ def respuesta_controlada(state):
         fees = [re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', text) for text in (rect, renew)]
         if not all(fees):
             return 'Las fuentes recuperadas no permiten verificar las tasas individuales. ' + LIMIT
-        return (f'La ficha de rectificación indica {fees[0][1]} y la de renovación {fees[1][1]}, '
+        return (f'La rectificación cuesta {fees[0][1]} y la renovación {fees[1][1]}, '
                 'cada una para su procedimiento individual. '
-                'No documentan un importe total ni si las tasas se acumulan para este supuesto. ' + LIMIT)
+                'No puedo confirmar el importe total ni si las tasas se acumulan para este supuesto. ' + LIMIT)
     if topic == 'fotografias':
         # Citar el párrafo original, conservando explícitamente su ámbito.
         excerpts = []
@@ -94,16 +110,16 @@ def respuesta_controlada(state):
             match = re.search(r'(?:Dos fotografías\. )?Fotografía obligatoria:.*?(?= Cita:| Puede solicitar|$)', text)
             if not match:
                 return 'No puedo verificar las condiciones fotográficas individuales. ' + LIMIT
-            excerpts.append(label + ' — cita de su ficha: «' + match[0].strip() + '»')
+            excerpts.append(label + ' — ' + texto_ciudadano(match[0].strip()))
         return 'No se confirma una cantidad de fotografías para el supuesto combinado.\n\n' + '\n\n'.join(excerpts) + '\n\n' + LIMIT
     if topic in {'requisitos', 'otra'}:
         specific = [(file, rule, text) for (file, rule), text in rules.items() if rule != 'general']
         paragraphs = ['Información documentada para cada procedimiento individual; no es una lista combinada definitiva.']
         for file, rule, text in sorted(specific):
-            paragraphs.append(f'Ficha de rectificación ({file}, regla {rule}) — cita: «{text.strip()}»')
+            paragraphs.append('**Rectificación — documentación individual:**\n\n' + texto_ciudadano(text.strip()))
         if not specific:
-            paragraphs.append('No se han recuperado reglas específicas de documentación adicional para este caso.')
-        paragraphs.append('La ficha de rectificación vincula el DNI vencido a renovación, pero no concreta cómo se integran ambas listas de requisitos.')
+            paragraphs.append('No puedo confirmar la documentación adicional que necesita en este caso.')
+        paragraphs.append('Al estar vencido el DNI, la rectificación requiere además renovación. Confirme con el Consulado cómo se presentan los requisitos de ambos trámites.')
         paragraphs.append(LIMIT)
         return '\n\n'.join(paragraphs)
     if topic == 'plazo':
@@ -114,6 +130,6 @@ def respuesta_controlada(state):
         common = set(urls[0]) & set(urls[1])
         if len(common) != 1:
             return 'No puedo verificar un enlace común de reserva en las fuentes recuperadas. ' + LIMIT
-        return ('Ambas fichas individuales indican este enlace: ' + common.pop().rstrip('.') +
+        return ('Puede consultar las citas de cada trámite aquí: ' + common.pop().rstrip('.') +
                 '\nNo puedo confirmar que una sola reserva cubra ambos procedimientos. ' + LIMIT)
     return 'No puedo confirmar condiciones conjuntas para esa consulta. ' + LIMIT

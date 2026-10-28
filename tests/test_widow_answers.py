@@ -29,7 +29,7 @@ def test_confirmaciones_ampliadas_resuelven_pendiente(answer,value,motor):
     c=snapshot(service,first['session_id'])['contexto_canonico']
     assert valor(c,'italiano') == value and not c['pendientes']
     assert {f['regla'] for f in r['fuentes']} == ({'general','viudez_italia','italiano'} if value == 'si' else {'general','viudez_italia'})
-    assert ('OBSERVACIÓN PENDIENTE' in r['respuesta']) == (value == 'no')
+    assert ('No puedo confirmar' in r['respuesta']) == (value == 'no')
 
 
 @pytest.mark.parametrize('answer', ['sí','si','no'])
@@ -47,7 +47,7 @@ def test_api_y_gradio_aceptan_respuesta_breve_con_credencial(answer,motor,monkey
     initial=ui.responder_consulta(PENDING,[],ui.generar_session_id())
     result=ui.responder_consulta(answer,[],initial[2])
     assert result[1][-1]['role'] == 'assistant'
-    assert ('OBSERVACIÓN PENDIENTE' in result[1][-1]['content']) == (answer == 'no')
+    assert ('No puedo confirmar' in result[1][-1]['content']) == (answer == 'no')
 
 
 @pytest.mark.parametrize('statement', [
@@ -98,7 +98,7 @@ def test_nacionalidad_confirmada_correccion_explicita_y_continuidad(motor):
     assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia'}
     r=service.responder('¿Qué documentos debo presentar?',sid,token)
     assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia'}
-    assert 'OBSERVACIÓN PENDIENTE' in r['respuesta']
+    assert 'No puedo confirmar' in r['respuesta']
 
 
 def test_contradiccion_no_se_resuelve_por_cambio_a_tasas(motor):

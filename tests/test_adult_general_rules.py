@@ -76,7 +76,7 @@ def test_plazo_combinado_exige_reglas_comunes_coherentes(motor):
     s=snapshot(service,first['session_id'])
     s['fragmentos'][0]['contenido']='Plazo alternativo no confirmado'
     r=dni_graph.verificar_respuesta({**s,'respuesta_borrador':'3 a 4 meses siempre'})
-    assert 'no coinciden' in r['respuesta_final'] and r['verificacion'].startswith('observada:')
+    assert 'versiones incompatibles' in r['respuesta_final'] and r['verificacion'].startswith('observada:')
 
     drafted=dni_graph.redactar_respuesta(s)
     verified=dni_graph.verificar_respuesta(drafted)

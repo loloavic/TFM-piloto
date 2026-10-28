@@ -79,7 +79,7 @@ def test_estado_civil_solo_reglas_aplicables(case, expected, absent, motor):
     if 'italiano' in rules:
         assert 'OBSERVACIÓN PENDIENTE' not in r['respuesta'] and not prompts
     elif 'viudez_italia' in rules or 'viudez_otro' in rules:
-        assert 'OBSERVACIÓN PENDIENTE' in r['respuesta'] and not prompts
+        assert 'No puedo confirmar' in r['respuesta'] and not prompts
     else:
         assert prompts
 
@@ -255,7 +255,7 @@ def test_tasas_combinadas_no_se_suman(motor):
     first=service.responder('Soy adulto y quiero rectificar nombres en mi DNI vencido')
     before=len(prompts)
     r=service.responder('¿Cuánto cuesta?',first['session_id'],first['session_token'])
-    assert 'No documentan un importe total' in r['respuesta']
+    assert 'No puedo confirmar el importe total' in r['respuesta']
     assert len(prompts) == before
     assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt'}
 
@@ -327,7 +327,7 @@ def test_titular_adulto_reportado_etapas_y_fuentes(motor):
     assert r['intencion'] == 'dni_adulto_rectificacion'
     assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_rectificacion.txt','dni_mayor_renovacion.txt'}
     assert not prompts  # Tasa combinada: respuesta determinista sin sumar.
-    assert 'No documentan un importe total' in r['respuesta']
+    assert 'No puedo confirmar el importe total' in r['respuesta']
 
 
 @pytest.mark.parametrize('question,group,holder', [

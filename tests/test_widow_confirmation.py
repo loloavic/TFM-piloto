@@ -29,7 +29,7 @@ def test_correccion_nacionalidad_no_extrapola(motor):
     service, _, _ = motor
     first = service.responder(PENDING + ' Mi esposo era italiano.')
     r = service.responder('Me equivoqué, no era italiano', first['session_id'], first['session_token'])
-    assert 'OBSERVACIÓN PENDIENTE' in r['respuesta']
+    assert 'No puedo confirmar' in r['respuesta']
     assert 'italiano' not in {f['regla'] for f in r['fuentes']}
     r = service.responder('¿Qué documentos debo presentar?', first['session_id'], first['session_token'])
     assert 'No necesita presentar una certificación consular' not in r['respuesta']
@@ -47,7 +47,7 @@ def test_otro_pais_no_sustituye(motor):
     r = service.responder(PENDING.replace('Italia', 'otro país') + ' Mi esposo era italiano.')
     assert 'viudez_otro' in {f['regla'] for f in r['fuentes']}
     assert 'italiano' not in {f['regla'] for f in r['fuentes']}
-    assert 'OBSERVACIÓN PENDIENTE' in r['respuesta']
+    assert 'No puedo confirmar' in r['respuesta']
 
 
 def test_guardia_reemplaza_borrador_no_autorizado(motor):
@@ -76,6 +76,6 @@ def test_peruano_registrado_consular_no_recibe_exencion_italiana(motor):
     service, _, _ = motor
     r = service.responder(PENDING + ' Mi esposo no era italiano, era peruano. '
                           'Su fallecimiento está registrado en una oficina consular peruana.')
-    assert 'OBSERVACIÓN PENDIENTE' in r['respuesta']
+    assert 'No puedo confirmar' in r['respuesta']
     assert 'italiano' not in {f['regla'] for f in r['fuentes']}
     assert 'No necesita presentar una certificación consular' not in r['respuesta']

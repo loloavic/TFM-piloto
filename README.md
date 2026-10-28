@@ -617,3 +617,15 @@ compatibilidad de métricas, límites e instrucciones Windows/Conda](docs/integr
 El cambio de código no modifica TXT ni obliga a reconstruir un índice ya
 sincronizado; inspeccionarlo con `python -m app.rag.inspect_rules`. Si está
 obsoleto, reconstruirlo localmente antes de validar con OpenAI real.
+
+### Presentación ciudadana del PR #4
+
+Las respuestas controladas separan documentos, condiciones e incertidumbre del
+lenguaje de auditoría. Las notas técnicas quedan en la trazabilidad. La plantilla
+de viudez conserva las características fotográficas completas en un bloque
+desplegable; las combinaciones mantienen sus restricciones de requisitos y pago.
+No hay una reformulación LLM posterior al verificador. Para las respuestas
+individuales, las instrucciones de claridad son una guía de estilo, no una
+certificación factual. Ver [cambios, ejemplos y validación Windows/Conda](docs/claridad-conversacional-pr4.md).
+Resultado actualizado: **622 pruebas aprobadas y 6 de integración excluidas**.
+No cambia el corpus ni es necesario reconstruir FAISS por esta mejora.

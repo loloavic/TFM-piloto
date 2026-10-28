@@ -7,10 +7,11 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
+from app.graph.presentation import incertidumbre_viudez
 from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
-from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto
+from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto, valor as valor_adulto
 from app.graph.conversation_style import formular_aclaracion, respuesta_contextual
 from app.rag.retriever import recuperar_contexto
 from app.rag.exact_rules import recuperar_reglas_exactas
@@ -431,11 +432,8 @@ def redactar_respuesta(
 
     if intencion == "fuera_alcance":
         respuesta = (
-            "No cuento con información suficiente en las "
-            "fuentes cargadas para responder sobre ese trámite. "
-            "Este asistente piloto está limitado a consultas "
-            "relacionadas con trámites de DNI cargados en la "
-            "base documental."
+            "Este asistente orienta sobre determinados trámites de DNI. "
+            "Para el trámite que solicita, consulte los canales oficiales del Consulado."
         )
 
         return {
@@ -446,9 +444,8 @@ def redactar_respuesta(
     if intencion == "general" and state.get("estado_documental") == "no_documentado":
         identificacion = "de adulto" if state.get("contexto_solicitante", {}).get("grupo_edad") == "adulto" else "solicitado"
         return {**state, "respuesta_borrador": (
-            f"Identifico el trámite de DNI {identificacion}. El corpus de este piloto "
-            "no documenta sus requisitos, tarifas ni condiciones; no puedo "
-            "proporcionarlos con respaldo suficiente. Por favor, consulte "
+            f"Identifico el trámite de DNI {identificacion}, pero no dispongo de información confirmada "
+            "sobre sus requisitos, tarifas y condiciones. Por favor, consulte "
             "los canales oficiales del consulado."
         )}
 
@@ -524,9 +521,8 @@ def redactar_respuesta(
 
     if not state.get("contexto") and state.get('reglas_faltantes'):
         return {**state, 'respuesta_borrador': (
-            'No cuento con información documental suficiente: la consulta ya está identificada, '
-            'pero faltan reglas verificables en la recuperación. Es necesario revisar el corpus o el índice; '
-            'no puedo sustituirlas por requisitos de otro procedimiento.')}
+            'No cuento con información documental suficiente para confirmar los requisitos de su consulta. '
+            'Consulte con el Consulado antes de acudir; no debe utilizar los requisitos de otro trámite.')}
 
     if not state.get("contexto"):
         respuesta = (
@@ -542,12 +538,7 @@ def redactar_respuesta(
         }
 
     if intencion in ADULT_FILES and 'OBSERVACIÓN PENDIENTE' in state.get('contexto', ''):
-        return {**state, 'respuesta_borrador': (
-            'La ficha aportada contiene una observación documental pendiente. '
-            'No puedo confirmar una lista definitiva de documentos para este supuesto. '
-            + '\n\n'.join(f['contenido'] for f in state['fragmentos']
-                if 'OBSERVACIÓN PENDIENTE' in f['contenido'])
-            + '\nConfirme esta documentación con el Consulado antes de presentar el trámite.')}
+        return {**state, 'respuesta_borrador': incertidumbre_viudez(state)}
 
     respuesta_breve = respuesta_contextual(state)
     if respuesta_breve is not None:
@@ -561,6 +552,17 @@ def redactar_respuesta(
 
     prompt = f"""
 Eres un asistente consular especializado en trámites de DNI.
+Presentación para el ciudadano:
+- Responde primero y únicamente a su pregunta actual o a la pregunta pendiente ya aclarada.
+- Usa español claro y listas breves de documentos o pasos cuando ayuden.
+- No menciones TXT, PDF, corpus, reglas, nodos ni estados internos.
+- Expresa la incertidumbre indicando qué debe confirmar con el Consulado, sin inventar requisitos.
+- No copies observaciones técnicas. No añadas importes totales, obligaciones ni excepciones.
+- No enumeres características de fotografías si solo pregunta por coste, cita, plazo o seguimiento.
+- Si pide requisitos, conserva todas las condiciones obligatorias que correspondan.
+- Copia los enlaces oficiales completos y no termines siempre con otra pregunta.
+- No repitas datos ya aclarados ni información de temas distintos.
+Estas instrucciones son de estilo, no autorizan a cambiar hechos o condiciones.
 Si las fuentes contienen una OBSERVACIÓN PENDIENTE, explica la incertidumbre;
 no conviertas alternativas ambiguas en requisitos acumulativos. No sumes tasas.
 No infieras cantidades de fotos, plazos ni apostillas ausentes en las fuentes.
@@ -768,6 +770,13 @@ def verificar_respuesta(
             + " | ".join(advertencias)
         )
     )
+
+    incertidumbre = ('OBSERVACIÓN PENDIENTE' in state.get('contexto', '')
+                     and state.get('intencion') in ADULT_FILES
+                     and not (valor_adulto(state.get('contexto_canonico', {}), 'italiano') == 'si'
+                              and valor_adulto(state.get('contexto_canonico', {}), 'defuncion') == 'italia'))
+    if not advertencias and incertidumbre:
+        verificacion = 'abstencion_documental: condiciones parcialmente no confirmadas'
 
     if not advertencias and (state.get('estado_documental') == 'sin_evidencia' or controlled == COMMON_CONFLICT):
         details = ('disposiciones comunes inconsistentes' if controlled == COMMON_CONFLICT else
