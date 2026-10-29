@@ -679,3 +679,15 @@ vigencia. No enumera tasas/fotografías salvo solicitud pertinente. No cambia la
 elegibilidad, clasificación, corpus ni índice: no requiere reconstruir FAISS.
 **743 pruebas aprobadas, 6 de integración excluidas.** Ver [evidencia, límites
 y validación Windows/Conda](docs/presentacion-elegibilidad-pr4.md).
+
+### Continuidad de elegibilidad tras aclarar edad — PR #4
+
+El propósito de elegibilidad se conserva como categorías del contexto canónico,
+sin recuperar hechos ni preguntas desde texto arbitrario del historial. Tras
+aclarar edad o vigencia, la respuesta retoma el sí/no y los componentes solicitados.
+Respuestas como «mayor» o «para mayor de edad» se interpretan en la aclaración
+contextual autorizada, sin asignar al titular la edad de un acompañante.
+
+**787 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
+las tarifas ni el índice de 44 fragmentos; no requiere reconstruir FAISS.
+Ver [causas, límites, ejemplos y validación Windows/Conda](docs/continuidad-elegibilidad-edad-pr4.md).

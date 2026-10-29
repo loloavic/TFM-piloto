@@ -101,7 +101,7 @@ def identificar_roles(texto: str) -> tuple[str, bool]:
     return texto, documento_ambiguo
 
 
-def solicitante(texto: str) -> tuple[dict, bool, bool]:
+def solicitante(texto: str, *, aclaracion_edad: bool = False) -> tuple[dict, bool, bool]:
     """Solo categoría de edad y destinatario, nunca edad exacta o identidad.
 
     Una edad del progenitor/documento de apoyo no se asigna al menor. Se busca
@@ -109,8 +109,17 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
     """
     texto, documento_ambiguo = identificar_roles(texto)
     if documento_ambiguo:
-        return {'grupo_edad': 'desconocido',
-                'destinatario': 'desconocido'}, False, True
+        return {'grupo_edad': 'desconocido', 'destinatario': 'desconocido'}, False, True
+    if aclaracion_edad:
+        # Respuesta completa sobre el titular pendiente, no mención de terceros.
+        match = re.fullmatch(
+            r'(?:(?:el titular es|es|soy|para) )?(?:un |una )?'
+            r'(adult[oa]|mayor(?: de edad)?|menor(?: de edad)?)[.!]?', texto)
+        adult_range = re.fullmatch(r'(?:el titular )?tiene mas de 18 anos[.!]?', texto)
+        minor_range = re.fullmatch(r'(?:el titular )?tiene menos de 18 anos[.!]?', texto)
+        if match or adult_range or minor_range:
+            group = 'menor' if minor_range or (match and match[1].startswith('menor')) else 'adulto'
+            return {'grupo_edad': group, 'destinatario': 'desconocido'}, False, False
     # Una negación del grupo no lo convierte en contexto afirmativo.
     texto = re.sub(r'\bno (?:es|soy) (?:para )?(?:un |una )?(?:menor(?: de edad)?|adult[oa]|mayor de edad)\b', ' ', texto)
     child = re.search(r'\b(?:mi|su|el|la|un|una|otro|otra)\s+(hijo|hija|nino|nina|bebe|menor)\b', texto)
@@ -118,6 +127,11 @@ def solicitante(texto: str) -> tuple[dict, bool, bool]:
     child_dni = re.search(r'\bdni\s+(?:de|para)\s+(?:(?:mi|su|el|la|un|una)\s+)?(?:hijo|hija|menor|nino|nina|bebe)\b', texto)
     own_positive = re.sub(r'\bno\s+(?:quiero|necesito|debo)\s+(?:renovar|tramitar|solicitar|obtener|sacar)\s+mi\s+dni\b', ' ', texto)
     own_dni = re.search(r'\b(?:renovar|tramitar|solicitar|obtener|sacar)\s+mi\s+dni\b', own_positive)
+    # Pronombre ligado al DNI propio, sin otro titular o rol de apoyo.
+    if (not child and re.search(r'\bmi dni\b', texto) and re.search(r'\brenovarlo\b', texto)
+            and not re.search(r'\b(?:padre|madre|herman[oa]|representante|apoderad[oa]|acompanante|conyuge|espos[oa])\b', texto)
+            and operacion(texto, inferir_tenencia=False)[0] == 'renovacion'):
+        own_dni = True
     # Presentar requisitos no convierte al solicitante explícito en apoyo.
     # Exigir un objeto propio de rectificación; la edad sola no basta.
     own_rectification = re.sub(
@@ -282,10 +296,10 @@ def evidencia_color(text: str) -> tuple[str, bool, bool]:
     return positive, transition, denied
 
 
-def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
+def extraer_evidencia(pregunta: str, *, aclaracion_edad: bool = False) -> EvidenciaTurno:
     text = normalizar(pregunta)
     role_text, document_conflict = identificar_roles(text)
-    holder, explicit, holder_conflict = solicitante(text)
+    holder, explicit, holder_conflict = solicitante(text, aclaracion_edad=aclaracion_edad)
     positive_color, transition, denied_color = evidencia_color(text)
     blue = bool(re.search(r'\bazul\b', positive_color))
     operation_text = positive_color if denied_color else text
@@ -359,6 +373,7 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
                or (operation == 'renovacion' and affirmative_operation == 'renovacion')
                or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
     return EvidenciaTurno(
+        consulta_renovacion=componentes_elegibilidad(text, topic) if 'renovacion' not in denied else (),
         condiciones_adulto=adult_facts,
         respuesta_nacionalidad=respuesta_nacionalidad(text),
         respuesta_apellido=respuesta_apellido(text),
@@ -418,7 +433,11 @@ def proyectar(c: dict) -> dict:
 
 
 def clasificar(state: dict) -> dict:
-    c = transicionar(state.get('contexto_canonico'), extraer_evidencia(state['pregunta']))
+    previous = state.get('contexto_canonico')
+    age_pending = bool(previous and validar_contexto(previous) and previous['ambito'] == 'dni'
+                       and 'edad' in previous['pendientes']
+                       and not ({'titular', 'documento'} & previous['pendientes'].keys()))
+    c = transicionar(previous, extraer_evidencia(state['pregunta'], aclaracion_edad=age_pending))
     return {**state, **proyectar(c), 'contexto_canonico': c,
             'pregunta': state['pregunta'].strip(), 'intencion_anterior': state.get('intencion', '')}
 
@@ -429,3 +448,23 @@ def pregunta_contextual(state: dict) -> str:
     if pending in CONSULTAS:
         return f'Consulta pendiente: {CONSULTAS[pending]}\nAclaración recibida: {state["pregunta"]}'
     return state['pregunta']
+
+
+def consulta_elegibilidad(pregunta):
+    """Reconoce el propósito de la pregunta, no su respuesta normativa."""
+    return bool(re.search(
+        r'\b(?:puedo|puede|podr[ií]a|me corresponde|corresponde|se puede|es posible)\b'
+        r'[^?!.]{0,90}\brenovar(?:lo|la)?\b', pregunta, re.I))
+
+
+def componentes_elegibilidad(text, topic):
+    if not consulta_elegibilidad(text):
+        return ()
+    result = {'elegibilidad'}
+    if topic in {'coste', 'fotografias', 'cita'}:
+        result.add(topic)
+    if re.search(r'documentaci[oó]n|documentos|requisit|fotograf|\bfotos?\b|qu[eé] (?:debo )?(?:llevar|presentar)', text):
+        result.add('requisitos')
+    if re.search(r'cuanto cuesta|coste|costo|tasas?|\b(?:pago|pagar|pagan|abonar)\b', text):
+        result.add('coste')
+    return tuple(sorted(result))

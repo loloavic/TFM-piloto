@@ -1,6 +1,8 @@
 """Presentación determinista de textos ya autorizados; sin inferir hechos."""
 import re
 
+from app.graph.classification import consulta_elegibilidad
+
 
 def texto_ciudadano(text):
     replacements = {
@@ -63,29 +65,15 @@ ACLARACION_VIGENCIA = ('¿El DNI está vencido, vence dentro de 60 días o menos
                        'o le quedan más de 60 días? No indique la fecha exacta.')
 
 
-def consulta_elegibilidad(pregunta):
-    """Tema de presentación; no confirma operaciones, edad ni elegibilidad."""
-    return bool(re.search(
-        r'\b(?:puedo|puede|podr[ií]a|me corresponde|corresponde|se puede|es posible)\b'
-        r'[^?!.]{0,90}\brenovar(?:lo|la)?\b', pregunta, re.I))
-
-
-def renovacion_adulta(general, c, pregunta, historial=()):
+def renovacion_adulta(general, c, pregunta):
     """Lista cerrada desde la regla general autorizada, nunca desde el LLM."""
     from app.graph.adult_context import valor
     authorized = 'Corresponde únicamente si el DNI está vencido o le quedan 60 días o menos de vigencia; con más de 60 días no corresponde renovar.'
     if authorized not in general:
         return None
-    eligibility = consulta_elegibilidad(pregunta)
+    requested = set(c.get('consulta_renovacion', []))
+    eligibility = 'elegibilidad' in requested or consulta_elegibilidad(pregunta)
     requested_question = pregunta
-    # Una respuesta a nuestra aclaración continúa esa pregunta, sin convertir
-    # el historial en fuente de hechos. La decisión usa solo vigencia canónica.
-    if (c['tema'] == 'otra' and re.search(r'\b(?:vence|vencera|vencido|vigencia|quedan|faltan)\b', pregunta, re.I)
-            and any(turn.get('respuesta') == ACLARACION_VIGENCIA for turn in historial[-2:])):
-        eligibility = True
-        previous = next(turn for turn in reversed(historial[-2:])
-                        if turn.get('respuesta') == ACLARACION_VIGENCIA)
-        requested_question = previous.get('pregunta', '') + '\n' + pregunta
     validity = valor(c, 'vigencia')
     if eligibility and validity in {'', 'vigente'}:
         return ACLARACION_VIGENCIA
@@ -101,6 +89,7 @@ def renovacion_adulta(general, c, pregunta, historial=()):
     topic = c['tema']
     # La consulta puede pedir a la vez importe y documentos; no perder la segunda parte.
     explicit_documents = bool(re.search(r'documentaci[oó]n|documentos|requisit|fotograf|\bfotos?\b|qu[eé] (?:debo )?(?:llevar|presentar)', requested_question, re.I))
+    explicit_documents = explicit_documents or bool(requested & {'requisitos', 'fotografias'})
     documents = (topic == 'fotografias' or (topic in {'requisitos', 'otra'} and not eligibility) or explicit_documents)
     parts = []
     if eligibility and validity in {'vencido', 'hasta_60'}:
@@ -109,7 +98,7 @@ def renovacion_adulta(general, c, pregunta, historial=()):
     if valor(c, 'vigencia') in {'', 'vigente'}:
         parts.append('La renovación corresponde si el DNI está vencido o le quedan 60 días o menos; '
                      'con más de 60 días de vigencia no corresponde renovarlo.')
-    if topic == 'coste' or (topic == 'otra' and not eligibility) or re.search(r'cu[aá]nto cuesta|coste|costo|tasa', requested_question, re.I):
+    if 'coste' in requested or topic == 'coste' or (topic == 'otra' and not eligibility) or re.search(r'cu[aá]nto cuesta|coste|costo|tasa', requested_question, re.I):
         parts.append('**Tasa de renovación individual:** ' + fee[1] + '.')
     if documents:
         parts.append('**Documentación confirmada para la renovación:**\n\n- ' + photo[0])
@@ -119,6 +108,6 @@ def renovacion_adulta(general, c, pregunta, historial=()):
         address = 'Puede solicitar cambio de dirección durante la renovación.'
         if address in general:
             parts.append(address)
-    if topic == 'cita':
+    if topic == 'cita' or 'cita' in requested:
         parts.append('**Cita previa:**\n' + url[0].rstrip('.'))
     return '\n\n'.join(parts)

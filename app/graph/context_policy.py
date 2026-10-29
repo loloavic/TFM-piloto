@@ -31,7 +31,7 @@ def contexto_inicial(revision=0, turno=0) -> ContextoCanonico:
             'titular': dato(revision=revision), 'edad': dato(revision=revision),
             'operacion': dato(revision=revision), 'rechazadas': [], 'pendientes': {},
             'propuesta_operacion': '', 'tema': 'otra', 'consulta_pendiente': '',
-            'retomar': '', 'ultima_ruta': '', 'condiciones_adulto': {}}
+            'retomar': '', 'ultima_ruta': '', 'condiciones_adulto': {}, 'consulta_renovacion': []}
 
 
 def validar_contexto(c: dict) -> bool:
@@ -40,6 +40,11 @@ def validar_contexto(c: dict) -> bool:
         if c['ambito'] not in {'dni', 'desconocido', 'fuera_alcance'}:
             return False
         if c['turno'] < 0 or c['revision'] < 0 or c['tema'] not in TEMAS:
+            return False
+        purpose = c.get('consulta_renovacion', [])
+        if (not isinstance(purpose, list) or any(not isinstance(x, str) for x in purpose)
+                or set(purpose) - {'elegibilidad', 'coste', 'requisitos', 'fotografias', 'cita'}
+                or (purpose and 'elegibilidad' not in purpose) or len(purpose) != len(set(purpose))):
             return False
         if c['consulta_pendiente'] not in TEMAS | {''} or c['retomar'] not in TEMAS | {''}:
             return False
@@ -163,6 +168,13 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
             c['titular'] = dato(revision=c['revision'], estado='conflicto')
         had_pending = had_pending and not (generic or (e.cambio and replaced))
     c['tema'] = e.tema
+    if e.consulta_renovacion and c['ambito'] == 'dni':
+        c['consulta_renovacion'] = list(e.consulta_renovacion)
+    elif (e.tema != 'otra' or 'renovacion' in e.rechazadas
+          or (e.operacion and e.operacion != 'renovacion' and e.solicitud)):
+        c['consulta_renovacion'] = []
+    else:
+        c.setdefault('consulta_renovacion', [])
 
     def confirm(field, value):
         c[field] = dato(value, c['turno'], c['revision'],

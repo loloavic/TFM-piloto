@@ -35,6 +35,7 @@ class ContextoCanonico(TypedDict):
     pendientes: dict[str, str]  # motivo -> faltante/contradiccion
     propuesta_operacion: str
     tema: str
+    consulta_renovacion: list[str]  # Propósito categórico; nunca texto del historial.
     consulta_pendiente: str
     retomar: str
     condiciones_adulto: dict[str, DatoContextual]
@@ -44,6 +45,7 @@ class ContextoCanonico(TypedDict):
 @dataclass(frozen=True)
 class EvidenciaTurno:
     """Solo categorías del mensaje actual; no texto ni datos personales nuevos."""
+    consulta_renovacion: tuple[str, ...] = ()
     respuesta_apellido: str = ''
     respuesta_nacionalidad: str = ''
     lugar_confirmado: str = ''
