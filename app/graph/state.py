@@ -81,6 +81,7 @@ class EvidenciaTurno:
 
 class DNIState(TypedDict, total=False):
     pregunta: str
+    respuesta_social: str  # Respuesta efímera; vacía en cada turno material.
 
     intencion: str
     intencion_anterior: str

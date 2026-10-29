@@ -728,3 +728,5 @@ No se trasladan instrucciones internas al ciudadano ni se reformula mediante LLM
 contexto, fuentes, tarifas ni corpus; no requiere reconstruir FAISS (siete TXT,
 44 fragmentos). Ver [fidelidad, respuestas completas antes/después y validación
 Windows/Conda](docs/presentacion-ciudadana-divorcio-viudez-pr4.md).
+
+Actualización de cortesía conversacional del PR #4: **900 pruebas deterministas aprobadas, 6 de integración excluidas**. Saludos e introducciones acotadas no consultan proveedores ni alteran el contexto canónico. Véanse alcance, trazabilidad y validación Windows en [saludos e introducción](docs/saludos-introduccion-pr4.md).

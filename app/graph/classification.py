@@ -12,7 +12,7 @@ from app.graph.context_policy import (
     CAMBIO_AZUL, DOCUMENTADOS, PRIORIDAD, ruta_documental, tramite_candidato, transicionar, validar_contexto,
 )
 
-OTROS = r'pasaporte|visa|visado|apostilla|matrimonio|defuncion|carta poder|poder consular|licencia de conducir|carnet de extranjeria'
+OTROS = r'pasaportes?|visa|visado|apostilla|matrimonio|defuncion|carta poder|poder consular|licencia de conducir|carnet de extranjeria'
 ART = r'(?:(?:un|una|el|la|mi|su)\s+)?'
 RENOVACION = r'\b(?:renovar(?:lo|la)?|renovacion|renuevo|actualizar dni)\b'
 ACCION = r'(?:renovar|tramitar|solicitar|obtener|sacar|renovacion (?:de|del)|inscripcion (?:de|del))'

@@ -6,6 +6,7 @@ from app.core.privacy import minimizar_texto
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
+from app.graph.social import respuesta_social, saludo
 from app.graph.state import DNIState
 from app.graph.presentation import incertidumbre_viudez
 from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT, MISSING
@@ -61,8 +62,25 @@ def es_mensaje_sobre_contexto(
 
 
 def clasificar_intencion(state: DNIState) -> DNIState:
-    return clasificar(state)
+    social = respuesta_social(state["pregunta"])
+    if social is not None:
+        return {**state, "respuesta_social": social}
+    return {**clasificar(state), "respuesta_social": ""}
 
+
+
+def responder_social(state: DNIState) -> DNIState:
+    """No cambia hechos canónicos ni pasa por recuperación o generación."""
+    respuesta = state['respuesta_social']
+    return {**state, 'intencion': 'general', 'fuentes': [], 'fragmentos': [],
+            'estado_documental': 'interaccion_social', 'requiere_aclaracion': False,
+            'motivo_aclaracion': '', 'tramite_documentado': False,
+            'contexto': '', 'pregunta_busqueda': '', 'reglas_faltantes': [],
+            'rechazos_documentales': [], 'respuesta_borrador': respuesta,
+            'respuesta_final': respuesta, 'verificacion': 'ok',
+            'historial': (state.get('historial', []) + [{
+                'pregunta': state['pregunta'], 'respuesta': respuesta,
+                'intencion': 'general'}])[-MAX_TURNOS_HISTORIAL:]}
 
 
 def enriquecer_busqueda(
@@ -783,6 +801,10 @@ def verificar_respuesta(
                    ', '.join(state.get('rechazos_documentales', []) or state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada')
         verificacion = 'abstencion_documental: ' + details
 
+    greeting = saludo(state["pregunta"])
+    if greeting:
+        respuesta = f"¡{greeting}!\n\n{respuesta}"
+
     historial_anterior = state.get(
         "historial",
         [],
@@ -862,10 +884,13 @@ def construir_grafo_dni():
         "clasificar_intencion"
     )
 
-    workflow.add_edge(
+    workflow.add_node("responder_social", responder_social)
+    workflow.add_conditional_edges(
         "clasificar_intencion",
-        "enriquecer_busqueda",
+        lambda state: "social" if state.get("respuesta_social") else "documental",
+        {"social": "responder_social", "documental": "enriquecer_busqueda"},
     )
+    workflow.add_edge("responder_social", END)
 
     workflow.add_edge(
         "enriquecer_busqueda",
