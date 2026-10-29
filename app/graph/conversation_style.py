@@ -9,6 +9,9 @@ def menciona_domicilio(pregunta: str) -> bool:
 
 
 def formular_aclaracion(state: dict, pregunta_base: str) -> str:
+    if state.get('motivo_aclaracion') == 'adulto_transicion':
+        return ('Con gusto puedo orientarle sobre la actualización de su estado civil en el DNI.\n\n'
+                '¿Qué cambio necesita realizar: de soltero a casado, de casado a divorciado o de casado a viudo?')
     issue = tipo_incidencia(state['pregunta'])
     if issue:
         acknowledgment = {

@@ -10,7 +10,7 @@ from app.services.rag_service import RAGService
 
 
 @pytest.fixture(autouse=True)
-def entorno_aislado(tmp_path, monkeypatch):
+def entorno_aislado(tmp_path, monkeypatch, request):
     """No escribir consultas ni métricas en el almacenamiento de la aplicación."""
     # Se monta el demo global en una app ASGI nueva por prueba. Gradio enlaza
     # su cola a la primera app que recibe queue/join y no borra ese enlace al
@@ -18,6 +18,9 @@ def entorno_aislado(tmp_path, monkeypatch):
     ui = sys.modules.get('app.ui')
     if ui is not None:
         ui.demo._queue.set_server_app(None)
+    if not request.node.get_closest_marker('integration'):
+        # El docstore local del usuario no forma parte de las pruebas unitarias.
+        monkeypatch.setattr('app.graph.dni_graph.recuperar_reglas_exactas', lambda *args, **kwargs: [])
     log = tmp_path / 'metricas.csv'
     monkeypatch.setattr(log_service, 'LOG_PATH', log)
     monkeypatch.setattr(evaluation_service, 'LOG_PATH', log)

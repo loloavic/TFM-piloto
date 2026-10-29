@@ -20,9 +20,11 @@ def turn(s, q):
 @pytest.fixture
 def motor(monkeypatch, entorno_aislado):
     from app.graph import dni_graph
-    docs = [{'contenido': p.read_text(encoding='utf-8'), 'score': 0.1,
-             'metadata': {'archivo': p.name, 'chunk': 0}}
-            for p in sorted(Path('data/raw').glob('*.txt'))]
+    from app.rag.document_loader import cargar_documentos_txt
+    from app.rag.text_splitter import dividir_documentos
+    docs = [{'contenido': f['contenido'], 'score': 0.1,
+                  'metadata': {'archivo': f['archivo'], 'chunk': f['chunk']}}
+                 for f in dividir_documentos(cargar_documentos_txt())]
     retrieve = Mock(return_value=docs)
     prompts = []
     class GroundedStub:
@@ -249,7 +251,8 @@ def test_cambio_a_titular_adulto_no_reutiliza_amarillo_azul(motor):
     result = service.responder('Ahora quiero renovar mi DNI, soy adulto', first['session_id'], first['session_token'])
     s = state(service, first['session_id'])
     assert s['tramite_actual'] == 'dni_adulto_renovacion'
-    assert result['intencion'] == 'general' and not result['fuentes']
+    assert result['intencion'] == 'dni_adulto_renovacion'
+    assert {f['archivo'] for f in result['fuentes']} == {'dni_mayor_renovacion.txt'}
     assert s['contexto_canonico']['titular']['valor'] == 'propio'
 
 

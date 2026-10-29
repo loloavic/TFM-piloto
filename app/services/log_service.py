@@ -4,10 +4,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
 
+from app.graph.context_policy import DOCUMENTADOS
+
 # No volver a abrir el CSV histórico que contenía preguntas y respuestas.
 LOG_PATH = Path('data/logs/consultas_metricas.csv')
 LOG_LOCK = RLock()
-INTENCIONES = {'dni_menor_renovacion', 'dni_menor_primera_vez', 'dni_consulta_estado', 'fuera_alcance', 'general'}
+INTENCIONES = DOCUMENTADOS | {'fuera_alcance', 'general'}
 
 
 def registrar_consulta(pregunta: str, respuesta: str, intencion: str,
@@ -26,5 +28,7 @@ def registrar_consulta(pregunta: str, respuesta: str, intencion: str,
                 'fecha_hora': datetime.now(timezone.utc).isoformat(timespec='seconds'),
                 'pregunta': '', 'respuesta': '', 'fuentes': '[]',
                 'intencion': intencion if intencion in INTENCIONES else 'general',
-                'verificacion': 'ok' if verificacion == 'ok' else 'observada',
+                'verificacion': ('ok' if verificacion == 'ok' else 'abstencion_documental'
+                                 if verificacion == 'abstencion_documental' or verificacion.startswith('abstencion_documental:')
+                                 else 'observada'),
             })

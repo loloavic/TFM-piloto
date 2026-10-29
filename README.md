@@ -565,3 +565,172 @@ La [guía V1 de ampliación](docs/v1-dni-amarillo-azul.md) describe las fuentes
 separadas, la tasa de €7, las mejoras acotadas de conversación, las pruebas y
 la actualización Windows/Conda. Requiere reconstruir el índice local después
 de verificar el corpus; para comparar con V1 debe utilizarse su índice correspondiente.
+
+### Ampliación de DNI de mayor de edad (en revisión)
+
+La rama `feature/dni-mayor-ampliacion` incorpora tres fichas aportadas como PDF,
+rectificación separada de renovación y condiciones de estado civil. Consulte
+[alcance, observaciones pendientes y reconstrucción del índice de siete TXT](docs/ampliacion-dni-mayor.md)
+y los [resultados deterministas](docs/resultado-pruebas-dni-mayor.md).
+Las combinaciones no confirmadas requieren revisión documental; las simulaciones
+no sustituyen la validación local con el recuperador real.
+
+Las combinaciones de renovación y rectificación aplican un
+[control determinista de alcance documental y de salida](docs/control-afirmaciones-combinadas-pr4.md):
+las tasas y condiciones individuales no se convierten en obligaciones conjuntas.
+Este control no constituye una verificación factual universal del resto de respuestas.
+
+La [estabilización de viudez y las disposiciones generales de adultos](docs/estabilizacion-viudez-disposiciones-pr4.md)
+añade reglas de plazo, seguimiento y advertencias a los tres TXT de adultos.
+Esta actualización requiere reconstruir el índice de los siete documentos.
+Las abstenciones por recuperación incompleta se identifican como `abstencion_documental`
+y diagnostican las reglas faltantes; no equivalen a una respuesta factual verificada.
+
+La [lectura exacta de reglas autorizadas](docs/recuperacion-exacta-reniec-pr4.md)
+resuelve omisiones del top-k sin aumentar `k` ni responder desde TXT ausentes del índice.
+Puede diagnosticarse el índice local con `python -m app.rag.inspect_rules` (sin OpenAI).
+Las fuentes exactas se identifican como `recuperacion: exacta`, con `distancia: null`.
+
+
+### Estado consolidado del PR #4 — 28/10/2026
+
+Renovación y rectificación adultas, matrimonio, divorcio y viudez usan siete TXT
+(43 fragmentos al reconstruir). La confirmación operativa del usuario del
+27/10/2026 autoriza exclusivamente la sustitución de la certificación consular
+de defunción por acta plurilingüe municipal legalizada por Prefectura para
+cónyuge italiano fallecido en Italia. Es procedencia distinta de los PDF;
+otras nacionalidades y países conservan sus reservas documentales.
+
+La recuperación semántica y exacta comparten autorización e integridad por
+archivo/regla: contenido completo vigente y metadata coherente. Una incidencia
+observada no se rehabilita por otro resultado; se abstiene sin responder desde
+TXT ausentes del índice. Los TXT se consultan solo para validar los bloques.
+
+`verificacion: ok` significa que se superaron los controles disponibles, **no
+certifica exactitud factual universal**. La API conserva sus campos y valores;
+Gradio muestra esta aclaración. Las métricas conservan columnas y distinguen
+las intenciones adultas, amarillo a azul y `abstencion_documental`.
+
+Validación determinista actual: **601 aprobadas, 6 de integración excluidas**.
+Los informes anteriores son históricos. Ver [causas, política de rechazo,
+compatibilidad de métricas, límites e instrucciones Windows/Conda](docs/integridad-metricas-pr4.md).
+El cambio de código no modifica TXT ni obliga a reconstruir un índice ya
+sincronizado; inspeccionarlo con `python -m app.rag.inspect_rules`. Si está
+obsoleto, reconstruirlo localmente antes de validar con OpenAI real.
+
+### Presentación ciudadana del PR #4
+
+Las respuestas controladas separan documentos, condiciones e incertidumbre del
+lenguaje de auditoría. Las notas técnicas quedan en la trazabilidad. La plantilla
+de viudez conserva las características fotográficas completas en un bloque
+desplegable; las combinaciones mantienen sus restricciones de requisitos y pago.
+No hay una reformulación LLM posterior al verificador. Para las respuestas
+individuales, las instrucciones de claridad son una guía de estilo, no una
+certificación factual. Ver [cambios, ejemplos y validación Windows/Conda](docs/claridad-conversacional-pr4.md).
+Resultado actualizado: **622 pruebas aprobadas y 6 de integración excluidas**.
+No cambia el corpus ni es necesario reconstruir FAISS por esta mejora.
+
+### Renovación adulta por vigencia — 29/10/2026
+
+Confirmación operativa del usuario, diferenciada de los PDF: renovación con DNI
+vencido o con 60 días o menos de vigencia restante; con más de 60 días no
+corresponde. Puede incorporar rectificación de datos cuando procede renovar,
+sin confirmar un importe conjunto ni que deban pagarse dos tasas. La política
+no amplía menores, amarillo a azul ni combinaciones de estado civil.
+
+La renovación adulta general usa una respuesta determinista con sus documentos
+autorizados, sin añadir DNI anterior ni otras obligaciones del LLM. El estado
+canónico conserva categorías de vigencia; cuando hace falta decidir una
+combinación se solicita el intervalo, no una fecha exacta.
+
+**658 pruebas aprobadas, 6 de integración excluidas.** Esta entrega actualiza dos
+TXT y **requiere reconstruir FAISS** aunque sigan siendo siete fuentes y 43
+fragmentos. Las indicaciones anteriores de no reconstrucción correspondían a
+sus entregas de solo código. Ver [procedencia, matriz, límites y pasos Windows/Conda](docs/vigencia-renovacion-pr4.md).
+
+### No acumulación de renovación con rectificación — 29/10/2026
+
+Confirmación operativa del usuario, separada de los PDF: las tasas de renovación
+y rectificación de datos adultas realizadas conjuntamente **no son acumulables**.
+Se mantienen los importes individuales de €7, pero no se deduce una tarifa
+conjunta de €7 ni de €14: el importe exacto aplicable debe confirmarse con el
+Consulado. No se extiende a estado civil, menores ni otras combinaciones.
+
+La combinación exige la regla indexada `no_acumulacion`; si falta o falla su
+integridad, se abstiene. **681 pruebas aprobadas y 6 de integración excluidas.**
+Esta actualización requiere reconstruir FAISS: **siete TXT y 44 fragmentos**.
+Las cifras anteriores de 43 fragmentos corresponden a versiones previas.
+Ver [procedencia, alcance, pruebas y pasos Windows/Conda](docs/no-acumulacion-tasas-pr4.md).
+
+### Renovación con pronombres — PR #4
+
+Se reconocen «quiero/necesito renovarlo» y «¿puedo/me corresponde renovarlo?»
+cuando el referente DNI está establecido, manteniendo las negaciones. «Vence
+dentro de 59/60/61 días» conserva el intervalo para aplicar la política existente.
+**717 pruebas aprobadas, 6 de integración excluidas.** El corpus y FAISS no
+cambian; no requiere reconstrucción por esta corrección.
+Ver [causa, reproducción y validación Windows/Conda](docs/renovacion-pronombres-pr4.md).
+
+### Decisión inicial en preguntas de elegibilidad — PR #4
+
+«¿Puedo renovarlo ahora?» abre con una afirmación para DNI vencido o hasta 60
+días, con una negativa si quedan más de 60 y con una aclaración si falta la
+vigencia. No enumera tasas/fotografías salvo solicitud pertinente. No cambia la
+elegibilidad, clasificación, corpus ni índice: no requiere reconstruir FAISS.
+**743 pruebas aprobadas, 6 de integración excluidas.** Ver [evidencia, límites
+y validación Windows/Conda](docs/presentacion-elegibilidad-pr4.md).
+
+### Continuidad de elegibilidad tras aclarar edad — PR #4
+
+El propósito de elegibilidad se conserva como categorías del contexto canónico,
+sin recuperar hechos ni preguntas desde texto arbitrario del historial. Tras
+aclarar edad o vigencia, la respuesta retoma el sí/no y los componentes solicitados.
+Respuestas como «mayor» o «para mayor de edad» se interpretan en la aclaración
+contextual autorizada, sin asignar al titular la edad de un acompañante.
+
+**787 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
+las tarifas ni el índice de 44 fragmentos; no requiere reconstruir FAISS.
+Ver [causas, límites, ejemplos y validación Windows/Conda](docs/continuidad-elegibilidad-edad-pr4.md).
+
+### Cambio independiente de renovación a estado civil — PR #4
+
+Una nueva solicitud de actualización de estado civil no queda bloqueada por la
+renovación anterior: conserva titular, edad y vigencia, retira el propósito
+anterior y solicita solo las aclaraciones del nuevo procedimiento. Una petición
+adicional o conjunta conserva sus controles documentales y tarifarios.
+
+**808 pruebas aprobadas, 6 de integración excluidas.** Se recuperaron y revisaron
+los cambios de la ejecución interrumpida. No cambia el corpus ni el índice de
+44 fragmentos; no requiere reconstruir FAISS. Ver [causas, recuperación, pruebas
+y validación Windows/Conda](docs/cambio-objetivo-estado-civil-pr4.md).
+
+### Divorcio y viudez sin aclaración obligatoria de apellido — PR #4
+
+Los documentos principales se presentan sin exigir antes una decisión sobre
+recuperación del apellido materno. Esa documentación adicional aparece en un
+apartado condicional cuando la decisión es desconocida, se incluye ante una
+solicitud expresa y se excluye ante una negativa. Las contradicciones y otras
+condiciones materiales siguen requiriendo aclaración. Los requisitos se formatean
+y verifican de forma determinista, sin reformulación LLM posterior.
+
+**839 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
+el índice de 44 fragmentos, tarifas ni vigencia; no requiere reconstruir FAISS.
+Ver [política, evidencia, límites y validación Windows/Conda](docs/apellido-condicional-estado-civil-pr4.md).
+
+### Presentación ciudadana de divorcio y viudez italiana — PR #4
+
+Las respuestas controladas muestran documentos principales, apellido condicional
+y condiciones generales por separado. Las formalidades peruanas aparecen junto
+al acta correspondiente, sin aplicarlas a documentos italianos o copias consulares.
+No se trasladan instrucciones internas al ciudadano ni se reformula mediante LLM.
+
+**867 pruebas aprobadas, 6 de integración excluidas.** No cambian clasificación,
+contexto, fuentes, tarifas ni corpus; no requiere reconstruir FAISS (siete TXT,
+44 fragmentos). Ver [fidelidad, respuestas completas antes/después y validación
+Windows/Conda](docs/presentacion-ciudadana-divorcio-viudez-pr4.md).
+
+Actualización de cortesía conversacional del PR #4: **900 pruebas deterministas aprobadas, 6 de integración excluidas**. Saludos e introducciones acotadas no consultan proveedores ni alteran el contexto canónico. Véanse alcance, trazabilidad y validación Windows en [saludos e introducción](docs/saludos-introduccion-pr4.md).
+
+Aclaraciones civiles del PR #4: **925 pruebas deterministas aprobadas, 6 de integración excluidas**. La selección ordinaria de la ficha civil se distingue de la edad declarada; véanse [política, límites y validación Windows](docs/aclaraciones-civiles-ruta-ordinaria-pr4.md).
+
+Contacto en derivaciones del PR #4: **958 pruebas deterministas aprobadas, 6 de integración excluidas**. Las recomendaciones expresas de consulta consular incorporan el canal operativo controlado, conservando su verificación. Véanse [alcance y validación Windows](docs/contacto-derivaciones-pr4.md).

@@ -7,6 +7,7 @@ from app.core.gradio_conversation import ConversationBlocks
 from app.services.rag_service import RAGService
 from app.core.config import settings
 from app.core.privacy import minimizar_texto
+from app.core.query_validation import validar_consulta, ERROR_CONSULTA
 from app.services.session_service import SesionNoAutorizada, SesionOcupada, SesionCaducada
 
 
@@ -36,13 +37,15 @@ def responder_consulta(
     session_id = session_id or generar_session_id()
     historial = session_id.get("history", [])
 
-    if not pregunta or len(pregunta.strip()) < 3:
+    try:
+        pregunta = validar_consulta(pregunta or "")
+    except ValueError:
         return (
             "",
             historial,
             session_id or generar_session_id(),
             "",
-            "Ingrese una consulta válida de al menos 3 caracteres.",
+            ERROR_CONSULTA,
         )
 
     pregunta = minimizar_texto(pregunta.strip())
@@ -75,7 +78,7 @@ def responder_consulta(
                 (
                     f'- {fuente["archivo"]} | '
                     f'chunk {fuente["chunk"]} | '
-                    f'distancia {fuente["distancia"]:.4f}'
+                    + (f'distancia {fuente["distancia"]:.4f}' if fuente['distancia'] is not None else 'recuperación exacta, sin distancia semántica')
                 )
                 for fuente in resultado["fuentes"]
             ]
@@ -93,7 +96,7 @@ def responder_consulta(
             f'Intención clasificada: '
             f'{resultado["intencion"]}\n'
             f'Verificación: '
-            f'{resultado["verificacion"]}\n'
+            f'{resultado["verificacion"]} (controles disponibles; no certifica exactitud factual universal)\n'
             f'Sesión temporal: {session_id["id"]}'
         )
 

@@ -1,3 +1,5 @@
+import re
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
@@ -15,7 +17,16 @@ def dividir_documentos(
     fragmentos = []
 
     for documento in documentos:
-        partes = splitter.split_text(documento["contenido"])
+        if documento['archivo'] in {
+            'dni_mayor_renovacion.txt', 'dni_mayor_rectificacion.txt', 'dni_mayor_estado_civil.txt'
+        }:
+            # Mantener cada regla completa, sin solapamiento entre condiciones.
+            partes = re.findall(r'\[\[REGLA:[a-z_]+\]\].*?\[\[FIN\]\]',
+                                documento['contenido'], flags=re.S)
+            if not partes or any(len(p) > 1800 for p in partes):
+                raise ValueError('Formato o tamaño inválido de reglas documentales de adulto')
+        else:
+            partes = splitter.split_text(documento["contenido"])
 
         for indice, texto in enumerate(partes):
             fragmentos.append(

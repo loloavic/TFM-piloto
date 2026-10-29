@@ -1,19 +1,26 @@
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from app.core.query_validation import validar_consulta
 
 
 class FuenteResponse(BaseModel):
     archivo: str
     chunk: int
-    distancia: float
+    distancia: float | None
+    recuperacion: str = "semantica"
 
 
 class ConsultaRequest(BaseModel):
     pregunta: str = Field(
-        min_length=3,
+        min_length=2,
         max_length=1000,
-        description="Consulta formulada por el ciudadano",
+        description="Consulta de 3 a 1000 caracteres o respuesta breve sí, si o no",
     )
+
+    @field_validator("pregunta")
+    @classmethod
+    def validar_pregunta(cls, value: str) -> str:
+        return validar_consulta(value)
 
     session_id: str | None = Field(
         default=None,

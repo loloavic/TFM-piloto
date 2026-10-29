@@ -1,13 +1,22 @@
+import re
+
+from app.rag.rule_integrity import RuleIntegrity, BLOCK
 from app.core.privacy import minimizar_texto
 
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
+from app.graph.referral import incorporar_contacto
+from app.graph.social import respuesta_social, saludo
 from app.graph.state import DNIState
+from app.graph.presentation import incertidumbre_viudez
+from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT, MISSING
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
+from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto, valor as valor_adulto
 from app.graph.conversation_style import formular_aclaracion, respuesta_contextual
 from app.rag.retriever import recuperar_contexto
+from app.rag.exact_rules import recuperar_reglas_exactas
 from app.services.llm_service import LLMService
 
 
@@ -54,8 +63,25 @@ def es_mensaje_sobre_contexto(
 
 
 def clasificar_intencion(state: DNIState) -> DNIState:
-    return clasificar(state)
+    social = respuesta_social(state["pregunta"])
+    if social is not None:
+        return {**state, "respuesta_social": social}
+    return {**clasificar(state), "respuesta_social": ""}
 
+
+
+def responder_social(state: DNIState) -> DNIState:
+    """No cambia hechos canónicos ni pasa por recuperación o generación."""
+    respuesta = state['respuesta_social']
+    return {**state, 'intencion': 'general', 'fuentes': [], 'fragmentos': [],
+            'estado_documental': 'interaccion_social', 'requiere_aclaracion': False,
+            'motivo_aclaracion': '', 'tramite_documentado': False,
+            'contexto': '', 'pregunta_busqueda': '', 'reglas_faltantes': [],
+            'rechazos_documentales': [], 'respuesta_borrador': respuesta,
+            'respuesta_final': respuesta, 'verificacion': 'ok',
+            'historial': (state.get('historial', []) + [{
+                'pregunta': state['pregunta'], 'respuesta': respuesta,
+                'intencion': 'general'}])[-MAX_TURNOS_HISTORIAL:]}
 
 
 def enriquecer_busqueda(
@@ -165,6 +191,8 @@ def enriquecer_busqueda(
     ]
 
     descripcion_intencion = {
+        "dni_adulto_renovacion": "renovación de DNI de mayor de edad",
+        "dni_adulto_rectificacion": "rectificación de DNI de mayor de edad",
         "dni_menor_renovacion": (
             "renovación de DNI de menor de edad"
         ),
@@ -181,6 +209,9 @@ def enriquecer_busqueda(
     }
 
     partes_busqueda = [pregunta]
+    if intencion in ADULT_FILES:
+        partes_busqueda.append(str({key: d['valor'] for key, d in
+            state['contexto_canonico'].get('condiciones_adulto', {}).items()}))
 
     if intencion in descripcion_intencion:
         partes_busqueda.append(
@@ -258,6 +289,7 @@ def recuperar_documentos(
     Recupera y filtra los fragmentos documentales según la
     intención actual.
     """
+    state = {**state, "reglas_faltantes": [], "rechazos_documentales": []}
     intencion = state["intencion"]
 
     if state.get("requiere_aclaracion") or intencion in {
@@ -280,19 +312,51 @@ def recuperar_documentos(
         "pregunta_busqueda"
     ]
 
+    if intencion in ADULT_FILES and not plan_adulto(state['contexto_canonico']):
+        return {**state, 'fragmentos': [], 'contexto': '', 'fuentes': [],
+                'estado_documental': 'sin_evidencia'}
+
     fragmentos = recuperar_contexto(
         pregunta_busqueda,
         k=10,
     )
 
-    archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
-    filtrados = [fragmento for fragmento in fragmentos
-                 if archivo_autorizado and fragmento.get("metadata", {}).get("archivo") == archivo_autorizado]
-
-    fragmentos_finales = filtrados[:6]
+    if intencion in ADULT_FILES:
+        plan = plan_adulto(state['contexto_canonico'])
+        required = {(file, rule) for file, rules in plan.items() for rule in rules}
+        integrity = RuleIntegrity(required)
+        integrity.add(fragmentos)
+        # Reintentos finitos solo por ausencia; una incidencia no se rehabilita.
+        for file, rule in sorted(required - integrity.found.keys()):
+            key = file, rule
+            if key not in integrity.found and key not in integrity.rejected:
+                integrity.add(recuperar_contexto(
+                    f'{pregunta_busqueda} Fuente {file} REGLA {rule}', k=10))
+        missing = required - integrity.found.keys()
+        recoverable = missing - integrity.rejected.keys()
+        if recoverable:
+            exact = recuperar_reglas_exactas(state['contexto_canonico'], recoverable)
+            integrity.add(exact)
+            for key, reasons in getattr(exact, 'rejected', {}).items():
+                if key in recoverable:
+                    for reason in reasons:
+                        integrity.reject(key, reason)
+        state['rechazos_documentales'] = integrity.diagnostics()
+        state['reglas_faltantes'] = [f'{file}#{rule}' for file, rule in sorted(required - integrity.found.keys())]
+        fragmentos_finales = []
+        if required and required <= integrity.found.keys():
+            for (file, rule), f in integrity.found.items():
+                fragmentos_finales.append({**f, 'contenido': BLOCK.fullmatch(f['contenido'].strip())[2].strip(),
+                    'metadata': {**f['metadata'], 'regla': rule}})
+    else:
+        archivo_autorizado = DOCUMENTOS_POR_INTENCION.get(intencion)
+        filtrados = [fragmento for fragmento in fragmentos
+                     if archivo_autorizado and fragmento.get("metadata", {}).get("archivo") == archivo_autorizado]
+        fragmentos_finales = filtrados[:6]
 
     contexto = "\n\n---\n\n".join(
-        fragmento["contenido"]
+        ((f"FUENTE: {fragmento['metadata']['archivo']} | REGLA: {fragmento['metadata']['regla']}\n"
+          if 'regla' in fragmento['metadata'] else '') + fragmento["contenido"])
         for fragmento in fragmentos_finales
     )
 
@@ -305,6 +369,8 @@ def recuperar_documentos(
                 fragmento["metadata"]["chunk"]
             ),
             "distancia": fragmento["score"],
+            "recuperacion": fragmento["metadata"].get("recuperacion", "semantica"),
+            **({"regla": fragmento["metadata"]["regla"]} if "regla" in fragmento["metadata"] else {}),
         }
         for fragmento in fragmentos_finales
     ]
@@ -371,6 +437,10 @@ def redactar_respuesta(
     El historial se utiliza solamente para interpretar la
     conversación, nunca como fuente oficial.
     """
+    controlled = respuesta_controlada(state)
+    if controlled is not None:
+        return {**state, "respuesta_borrador": controlled}
+
     intencion = state["intencion"]
     pregunta = state["pregunta"]
     pregunta_lower = pregunta.lower()
@@ -381,11 +451,8 @@ def redactar_respuesta(
 
     if intencion == "fuera_alcance":
         respuesta = (
-            "No cuento con información suficiente en las "
-            "fuentes cargadas para responder sobre ese trámite. "
-            "Este asistente piloto está limitado a consultas "
-            "relacionadas con trámites de DNI cargados en la "
-            "base documental."
+            "Este asistente orienta sobre determinados trámites de DNI. "
+            "Para el trámite que solicita, consulte los canales oficiales del Consulado."
         )
 
         return {
@@ -396,14 +463,14 @@ def redactar_respuesta(
     if intencion == "general" and state.get("estado_documental") == "no_documentado":
         identificacion = "de adulto" if state.get("contexto_solicitante", {}).get("grupo_edad") == "adulto" else "solicitado"
         return {**state, "respuesta_borrador": (
-            f"Identifico el trámite de DNI {identificacion}. El corpus de este piloto "
-            "no documenta sus requisitos, tarifas ni condiciones; no puedo "
-            "proporcionarlos con respaldo suficiente. Por favor, consulte "
+            f"Identifico el trámite de DNI {identificacion}, pero no dispongo de información confirmada "
+            "sobre sus requisitos, tarifas y condiciones. Por favor, consulte "
             "los canales oficiales del consulado."
         )}
 
     if intencion == "general" and state.get("requiere_aclaracion"):
         aclaraciones = {
+            **ADULT_PREGUNTAS,
             "edad": "Indique si el titular del DNI es menor de 18 años o adulto.",
             "operacion": "Indique si es su primer DNI o la renovación de un DNI que ya tuvo.",
             "contradiccion": "Por favor, aclare un único trámite, si el titular es menor o adulto y si ya tuvo DNI.",
@@ -464,6 +531,18 @@ def redactar_respuesta(
             "respuesta_borrador": respuesta,
         }
 
+    if intencion in ADULT_FILES and not plan_adulto(state['contexto_canonico']):
+        return {**state, 'respuesta_borrador': (
+            'La combinación solicitada no está confirmada en las fichas aportadas. '
+            'No puedo proporcionar requisitos combinados ni sumar tasas. '
+            'En rectificación de datos con renovación, indique si el DNI está vencido; '
+            'la combinación con cambio de estado civil requiere confirmación del Consulado.')}
+
+    if not state.get("contexto") and state.get('reglas_faltantes'):
+        return {**state, 'respuesta_borrador': (
+            'No cuento con información documental suficiente para confirmar los requisitos de su consulta. '
+            'Consulte con el Consulado antes de acudir; no debe utilizar los requisitos de otro trámite.')}
+
     if not state.get("contexto"):
         respuesta = (
             "No cuento con información documental suficiente "
@@ -477,18 +556,36 @@ def redactar_respuesta(
             "respuesta_borrador": respuesta,
         }
 
+    if intencion in ADULT_FILES and 'OBSERVACIÓN PENDIENTE' in state.get('contexto', ''):
+        return {**state, 'respuesta_borrador': incertidumbre_viudez(state)}
+
     respuesta_breve = respuesta_contextual(state)
     if respuesta_breve is not None:
         return {**state, "respuesta_borrador": respuesta_breve}
 
     historial_texto = construir_texto_historial(
-        historial
+        [] if intencion in ADULT_FILES else historial
     )
 
     llm = LLMService()
 
     prompt = f"""
 Eres un asistente consular especializado en trámites de DNI.
+Presentación para el ciudadano:
+- Responde primero y únicamente a su pregunta actual o a la pregunta pendiente ya aclarada.
+- Usa español claro y listas breves de documentos o pasos cuando ayuden.
+- No menciones TXT, PDF, corpus, reglas, nodos ni estados internos.
+- Expresa la incertidumbre indicando qué debe confirmar con el Consulado, sin inventar requisitos.
+- No copies observaciones técnicas. No añadas importes totales, obligaciones ni excepciones.
+- No enumeres características de fotografías si solo pregunta por coste, cita, plazo o seguimiento.
+- Si pide requisitos, conserva todas las condiciones obligatorias que correspondan.
+- Copia los enlaces oficiales completos y no termines siempre con otra pregunta.
+- No repitas datos ya aclarados ni información de temas distintos.
+Estas instrucciones son de estilo, no autorizan a cambiar hechos o condiciones.
+Si las fuentes contienen una OBSERVACIÓN PENDIENTE, explica la incertidumbre;
+no conviertas alternativas ambiguas en requisitos acumulativos. No sumes tasas.
+No infieras cantidades de fotos, plazos ni apostillas ausentes en las fuentes.
+Atribuye los requisitos a las fuentes incluidas; no uses condiciones de otra regla.
 
 Debes responder únicamente usando la información incluida en el CONTEXTO
 DOCUMENTAL.
@@ -640,10 +737,16 @@ def verificar_respuesta(
     al historial temporal de la sesión.
     """
     respuesta = state["respuesta_borrador"]
+    controlled = respuesta_controlada(state)
+    replaced = controlled is not None and respuesta != controlled
+    if replaced:
+        respuesta = controlled
     respuesta_lower = respuesta.lower()
     intencion = state["intencion"]
 
     advertencias = []
+    if replaced:
+        advertencias.append("Borrador sustituido por el control determinista de alcance documental.")
 
     if "@" in respuesta:
         advertencias.append(
@@ -687,6 +790,25 @@ def verificar_respuesta(
         )
     )
 
+    incertidumbre = ('OBSERVACIÓN PENDIENTE' in state.get('contexto', '')
+                     and state.get('intencion') in ADULT_FILES
+                     and not (valor_adulto(state.get('contexto_canonico', {}), 'italiano') == 'si'
+                              and valor_adulto(state.get('contexto_canonico', {}), 'defuncion') == 'italia'))
+    if not advertencias and incertidumbre:
+        verificacion = 'abstencion_documental: condiciones parcialmente no confirmadas'
+
+    if not advertencias and (state.get('estado_documental') == 'sin_evidencia' or controlled in {COMMON_CONFLICT, MISSING}):
+        details = ('disposiciones comunes inconsistentes' if controlled == COMMON_CONFLICT else
+                   ', '.join(state.get('rechazos_documentales', []) or state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada')
+        verificacion = 'abstencion_documental: ' + details
+
+    # Contacto operativo fijo después del verificador: no reinterpreta su dictamen.
+    respuesta = incorporar_contacto(respuesta)
+
+    greeting = saludo(state["pregunta"])
+    if greeting:
+        respuesta = f"¡{greeting}!\n\n{respuesta}"
+
     historial_anterior = state.get(
         "historial",
         [],
@@ -705,6 +827,7 @@ def verificar_respuesta(
     return {
         **state,
         "verificacion": verificacion,
+        "respuesta_borrador": respuesta,
         "respuesta_final": respuesta,
         "historial": historial_actualizado,
     }
@@ -765,10 +888,13 @@ def construir_grafo_dni():
         "clasificar_intencion"
     )
 
-    workflow.add_edge(
+    workflow.add_node("responder_social", responder_social)
+    workflow.add_conditional_edges(
         "clasificar_intencion",
-        "enriquecer_busqueda",
+        lambda state: "social" if state.get("respuesta_social") else "documental",
+        {"social": "responder_social", "documental": "enriquecer_busqueda"},
     )
+    workflow.add_edge("responder_social", END)
 
     workflow.add_edge(
         "enriquecer_busqueda",
