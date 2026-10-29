@@ -208,11 +208,11 @@ def plan(c):
         if mod in {'datos', 'imagen_firma'}:
             if valor(c, 'vigencia') not in {'vencido', 'hasta_60'}:
                 return {}
-            return {'dni_mayor_renovacion.txt': {'general'}, 'dni_mayor_rectificacion.txt': {'general', mod}}
+            return {'dni_mayor_renovacion.txt': {'general', 'no_acumulacion'}, 'dni_mayor_rectificacion.txt': {'general', mod}}
         return {'dni_mayor_renovacion.txt': {'general'}}
     result = {'dni_mayor_rectificacion.txt': {'general', mod} - {''}}
     if valor(c, 'vigencia') in {'vencido', 'hasta_60'}:
-        result['dni_mayor_renovacion.txt'] = {'general'}
+        result['dni_mayor_renovacion.txt'] = {'general', 'no_acumulacion'}
     return result
 
 

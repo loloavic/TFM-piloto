@@ -52,14 +52,14 @@ def test_rectificacion_selecciona_solo_modalidades_procedentes(validity,files,mo
     assert {f['archivo'] for f in r['fuentes']}==files
     assert snapshot(service,r['session_id'])['operacion_dni']=='rectificacion'
     if len(files)>1:
-        for fact in ['puede incorporar','partida de nacimiento original apostillada','12 meses','copia certificada','no se confirma que deba pagar dos tasas']:
+        for fact in ['puede incorporar','partida de nacimiento original apostillada','12 meses','copia certificada','no son acumulables']:
             assert fact in r['respuesta']
 
 
 def test_consulta_combinada_importe_y_documentos(motor):
     service,_,_=motor
     r=service.responder('Soy mayor de edad y necesito rectificar mi fecha de nacimiento en el DNI, pero mi documento está vencido. ¿Qué requisitos debo presentar y cuánto cuesta?')
-    for fact in ['corresponde renovar','puede incorporar','partida de nacimiento original apostillada','12 meses','copia certificada','No puedo confirmar el importe total','No se confirma que deba pagar dos tasas']:
+    for fact in ['corresponde renovar','puede incorporar','partida de nacimiento original apostillada','12 meses','copia certificada','No puedo confirmar el importe total','no son acumulables']:
         assert fact in r['respuesta']
     assert '14' not in r['respuesta']
     assert snapshot(service,r['session_id'])['contexto_canonico']['pendientes']=={}

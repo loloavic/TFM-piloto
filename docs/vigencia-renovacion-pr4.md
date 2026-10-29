@@ -1,5 +1,8 @@
 # Vigencia y fidelidad de renovación adulta — PR #4
 
+> Evidencia histórica de la entrega 06b8313. La [confirmación tarifaria posterior](no-acumulacion-tasas-pr4.md) resuelve la no acumulación, sin confirmar importe conjunto. El índice actual tiene 44 fragmentos y requiere reconstrucción; los resultados inferiores corresponden a esta entrega.
+
+
 Fecha: 29/10/2026. Base: facfe3c. Rama: feature/dni-mayor-ampliacion. No se modifica main, no se fusiona el PR ni se cambia su estado.
 
 ## Procedencia y alcance

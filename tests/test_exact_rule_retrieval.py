@@ -70,7 +70,7 @@ def test_faiss_local_regla_real_fuera_del_ranking_y_lectura_sin_embeddings(index
     assert found[0]['metadata']['archivo']=='dni_mayor_estado_civil.txt'
     assert found[0]['metadata']['recuperacion']=='exacta'
     assert 'no constituye' in found[0]['contenido']
-    assert len(fragments)==43
+    assert len(fragments)==44
 
 
 @pytest.mark.parametrize('body',[
@@ -157,7 +157,7 @@ def test_inventario_del_indice_completo_corresponde_a_los_43_fragmentos(indexed)
     from app.rag.inspect_rules import diagnosticar_indice
     path,_,_=indexed
     report=diagnosticar_indice(path)
-    assert report['fragmentos_indexados']==report['fragmentos_corpus_actual']==43
+    assert report['fragmentos_indexados']==report['fragmentos_corpus_actual']==44
     assert not report['fragmentos_invalidos']
     assert set(report['reglas'].values())=={'coincide_con_txt_actual'}
 

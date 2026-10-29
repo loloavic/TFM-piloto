@@ -38,7 +38,7 @@ def tipo_consulta(texto: str) -> str:
         # El objeto específico prima sobre una fórmula genérica de recomendación.
         # «Para mi cita» es contexto; reservar, lugar u horario sí son preguntas de cita.
         specific = (
-            ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|importe'),
+            ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\b(?:pago|pagar|pagan|abonar)\b|\btasas?\b|importe'),
             ('fotografias', r'\bfotos?\b|fotograf'),
             ('requisitos', r'\brequisitos?\b|\bdocumentos?\b|\bfotocopia\b'),
             ('cita', r'bookeo|reservar|reserva|horarios?|turnos?|'
@@ -52,7 +52,7 @@ def tipo_consulta(texto: str) -> str:
         ('plazo', r'cuanto (?:demora|tarda)|cuando (?:llega|llegara|estara listo)|tiempo (?:estimado|de entrega)|plazo|demora|tarda'),
         (advice_topic, advice_pattern),
         ('cita', r'\bcita\b|reservar|reserva|horarios?|turnos?|bookeo'),
-        ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\bpago\b|\btasa\b|\bmonto\b|importe'),
+        ('coste', r'\bcost[oe]\b|cuanto cuesta|precio|\b(?:pago|pagar|pagan|abonar)\b|\btasas?\b|\bmonto\b|importe'),
         ('fotografias', r'foto'),
         ('requisitos', r'requisitos?|documentos?|\bllevar\b|\bpresentar\b|acompan|apoderad|representante'),
     )

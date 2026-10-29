@@ -101,45 +101,49 @@ def _respuesta_controlada(state):
     # Las únicas combinaciones autorizadas hoy contienen estas dos fichas.
     if not rect or not renew:
         return MISSING
+    tariff = rules.get(('dni_mayor_renovacion.txt', 'no_acumulacion'), '')
+    if 'no son acumulables cuando ambas operaciones se realizan conjuntamente' not in tariff:
+        return MISSING
+    # La política tarifaria es evidencia obligatoria, no una inferencia de €7 + €7.
+    limit = LIMIT + '\n\n' + tariff.strip()
     topic = c['tema']
     if topic == 'coste':
         fees = [re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', text) for text in (rect, renew)]
         if not all(fees):
-            return 'Las fuentes recuperadas no permiten verificar las tasas individuales. ' + LIMIT
-        specific = [texto_ciudadano(text.strip()) for (file, rule), text in rules.items() if rule != 'general']
+            return 'Las fuentes recuperadas no permiten verificar las tasas individuales. ' + limit
+        specific = [texto_ciudadano(text.strip()) for (file, rule), text in rules.items() if file == 'dni_mayor_rectificacion.txt' and rule != 'general']
         docs = ('\n\n**Para rectificar los datos:**\n\n' + '\n\n'.join(specific)) if re.search(r'document|requisit', state.get('pregunta', ''), re.I) else ''
         return ('Por la vigencia indicada corresponde renovar y puede incorporar la rectificación solicitada. '
                 f'La rectificación cuesta {fees[0][1]} y la renovación {fees[1][1]}, '
                 'cada una para su procedimiento individual. '
-                'No puedo confirmar el importe total ni si las tasas se acumulan para este supuesto. '
-                'No se confirma que deba pagar dos tasas. ' + LIMIT + docs)
+                'No puedo confirmar el importe total del caso conjunto. ' + limit + docs)
     if topic == 'fotografias':
         # Citar el párrafo original, conservando explícitamente su ámbito.
         excerpts = []
         for label, text in [('Rectificación individual', rect), ('Renovación individual', renew)]:
             match = re.search(r'(?:Dos fotografías\. )?Fotografía obligatoria:.*?(?= Cita:| Puede solicitar|$)', text)
             if not match:
-                return 'No puedo verificar las condiciones fotográficas individuales. ' + LIMIT
+                return 'No puedo verificar las condiciones fotográficas individuales. ' + limit
             excerpts.append(label + ' — ' + texto_ciudadano(match[0].strip()))
-        return 'No se confirma una cantidad de fotografías para el supuesto combinado.\n\n' + '\n\n'.join(excerpts) + '\n\n' + LIMIT
+        return 'No se confirma una cantidad de fotografías para el supuesto combinado.\n\n' + '\n\n'.join(excerpts) + '\n\n' + limit
     if topic in {'requisitos', 'otra'}:
-        specific = [(file, rule, text) for (file, rule), text in rules.items() if rule != 'general']
+        specific = [(file, rule, text) for (file, rule), text in rules.items() if file == 'dni_mayor_rectificacion.txt' and rule != 'general']
         paragraphs = ['Información documentada para cada procedimiento individual; no es una lista combinada definitiva.']
         for file, rule, text in sorted(specific):
             paragraphs.append('**Rectificación — documentación individual:**\n\n' + texto_ciudadano(text.strip()))
         if not specific:
             paragraphs.append('No puedo confirmar la documentación adicional que necesita en este caso.')
-        paragraphs.append('Por la vigencia indicada corresponde renovar el DNI y puede incorporar la rectificación solicitada. Confirme con el Consulado cómo presentar la documentación y cuál es el importe aplicable; no se confirma que deba pagar dos tasas.')
-        paragraphs.append(LIMIT)
+        paragraphs.append('Por la vigencia indicada corresponde renovar el DNI y puede incorporar la rectificación solicitada. Confirme con el Consulado cómo presentar la documentación y cuál es el importe aplicable; las tasas conjuntas no son acumulables.')
+        paragraphs.append(limit)
         return '\n\n'.join(paragraphs)
     if topic == 'plazo':
-        return 'No puedo confirmar un plazo para la combinación a partir de estas fichas. ' + LIMIT
+        return 'No puedo confirmar un plazo para la combinación a partir de estas fichas. ' + limit
     if topic == 'cita':
         # Una URL común no demuestra autorización para gestionar una cita conjunta.
         urls = [re.findall(r'https://bookeo\.com/[^\s]+', text) for text in (rect, renew)]
         common = set(urls[0]) & set(urls[1])
         if len(common) != 1:
-            return 'No puedo verificar un enlace común de reserva en las fuentes recuperadas. ' + LIMIT
+            return 'No puedo verificar un enlace común de reserva en las fuentes recuperadas. ' + limit
         return ('Puede consultar las citas de cada trámite aquí: ' + common.pop().rstrip('.') +
-                '\nNo puedo confirmar que una sola reserva cubra ambos procedimientos. ' + LIMIT)
-    return 'No puedo confirmar condiciones conjuntas para esa consulta. ' + LIMIT
+                '\nNo puedo confirmar que una sola reserva cubra ambos procedimientos. ' + limit)
+    return 'No puedo confirmar condiciones conjuntas para esa consulta. ' + limit

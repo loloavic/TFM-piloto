@@ -647,3 +647,17 @@ combinación se solicita el intervalo, no una fecha exacta.
 TXT y **requiere reconstruir FAISS** aunque sigan siendo siete fuentes y 43
 fragmentos. Las indicaciones anteriores de no reconstrucción correspondían a
 sus entregas de solo código. Ver [procedencia, matriz, límites y pasos Windows/Conda](docs/vigencia-renovacion-pr4.md).
+
+### No acumulación de renovación con rectificación — 29/10/2026
+
+Confirmación operativa del usuario, separada de los PDF: las tasas de renovación
+y rectificación de datos adultas realizadas conjuntamente **no son acumulables**.
+Se mantienen los importes individuales de €7, pero no se deduce una tarifa
+conjunta de €7 ni de €14: el importe exacto aplicable debe confirmarse con el
+Consulado. No se extiende a estado civil, menores ni otras combinaciones.
+
+La combinación exige la regla indexada `no_acumulacion`; si falta o falla su
+integridad, se abstiene. **681 pruebas aprobadas y 6 de integración excluidas.**
+Esta actualización requiere reconstruir FAISS: **siete TXT y 44 fragmentos**.
+Las cifras anteriores de 43 fragmentos corresponden a versiones previas.
+Ver [procedencia, alcance, pruebas y pasos Windows/Conda](docs/no-acumulacion-tasas-pr4.md).

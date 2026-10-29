@@ -1,5 +1,9 @@
 # Ampliación de DNI de mayor de edad
 
+## Actualización tarifaria — 29 de octubre de 2026
+
+La [no acumulación de renovación con rectificación](no-acumulacion-tasas-pr4.md) queda confirmada operativamente por el usuario, sin fijar importe conjunto exacto. Es regla obligatoria del plan autorizado, distinta de los PDF y no extensible a estado civil o menores. Estado actual: 681 pruebas aprobadas, 6 excluidas; siete TXT y 44 fragmentos, con reconstrucción FAISS obligatoria. Las cifras inferiores reflejan entregas anteriores.
+
 ## Estado consolidado — 29 de octubre de 2026
 
 La [regla operativa de vigencia y fidelidad de renovación](vigencia-renovacion-pr4.md) actualiza renovación y rectificación adultas: vencido o hasta 60 días, sin importe conjunto confirmado. Requiere reconstruir el índice de siete TXT/43 fragmentos. Resultado actual: 658 pruebas aprobadas y 6 excluidas.
@@ -115,6 +119,6 @@ No reutilizar un índice de siete documentos al comparar versiones antiguas: cam
 3. Pruebas reales separadas, con índice de siete TXT: fuentes correctas y abstención si faltan reglas. No confundir sus resultados con simulaciones.
 4. Conversaciones sintéticas: renovar adulto → coste/fotos/cita/plazo; rectificar nacimiento → DNI vencido → tasa sin suma; matrimonio Perú/extranjero; divorcio con/sin apellido; viudez italiana en Italia con sustitución confirmada y otros supuestos con reserva; cambio explícito a hijo menor y nueva sesión.
 5. Ninguna fuente de menor en una respuesta adulta, ni viceversa; no cerrar conflictos de titular/operación/condiciones sin evidencia suficiente.
-6. La combinación renovación/estado civil y la acumulación de actas/tasas permanecen pendientes hasta confirmación documental, incluso aunque un usuario o el LLM afirmen que son válidas.
+6. La combinación renovación/estado civil y la acumulación de actas permanecen sujetas a sus reservas. La no acumulación tarifaria de renovación con rectificación de datos está confirmada operativamente; el importe conjunto exacto no lo está. Una afirmación del ciudadano o del LLM no modifica estas autorizaciones.
 
 La entrega está orientada a **revisión en borrador y validación local**, no a integración automática ni a certificar requisitos legales vigentes.
