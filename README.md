@@ -629,3 +629,21 @@ individuales, las instrucciones de claridad son una guía de estilo, no una
 certificación factual. Ver [cambios, ejemplos y validación Windows/Conda](docs/claridad-conversacional-pr4.md).
 Resultado actualizado: **622 pruebas aprobadas y 6 de integración excluidas**.
 No cambia el corpus ni es necesario reconstruir FAISS por esta mejora.
+
+### Renovación adulta por vigencia — 29/10/2026
+
+Confirmación operativa del usuario, diferenciada de los PDF: renovación con DNI
+vencido o con 60 días o menos de vigencia restante; con más de 60 días no
+corresponde. Puede incorporar rectificación de datos cuando procede renovar,
+sin confirmar un importe conjunto ni que deban pagarse dos tasas. La política
+no amplía menores, amarillo a azul ni combinaciones de estado civil.
+
+La renovación adulta general usa una respuesta determinista con sus documentos
+autorizados, sin añadir DNI anterior ni otras obligaciones del LLM. El estado
+canónico conserva categorías de vigencia; cuando hace falta decidir una
+combinación se solicita el intervalo, no una fecha exacta.
+
+**658 pruebas aprobadas, 6 de integración excluidas.** Esta entrega actualiza dos
+TXT y **requiere reconstruir FAISS** aunque sigan siendo siete fuentes y 43
+fragmentos. Las indicaciones anteriores de no reconstrucción correspondían a
+sus entregas de solo código. Ver [procedencia, matriz, límites y pasos Windows/Conda](docs/vigencia-renovacion-pr4.md).

@@ -57,3 +57,40 @@ def incertidumbre_viudez(state):
     return ('No puedo confirmar los documentos específicos de defunción para ese país. '
             'Consulte con el Consulado qué actas debe presentar antes de acudir. '
             'Los requisitos del caso italiano no se aplican automáticamente a su situación.')
+
+
+def renovacion_adulta(general, c, pregunta):
+    """Lista cerrada desde la regla general autorizada, nunca desde el LLM."""
+    from app.graph.adult_context import valor
+    authorized = 'Corresponde únicamente si el DNI está vencido o le quedan 60 días o menos de vigencia; con más de 60 días no corresponde renovar.'
+    if authorized not in general:
+        return None
+    if valor(c, 'vigencia') == 'mas_60':
+        return ('Con más de 60 días de vigencia, no corresponde renovar el DNI. '
+                'La renovación corresponde si está vencido o le quedan 60 días o menos. '
+                'Si desea rectificar datos, puede consultar ese trámite sin asumir una renovación.')
+    fee = re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', general)
+    photo = re.search(r'Dos fotografías\. Fotografía obligatoria:.*?(?= Puede solicitar)', general)
+    url = re.search(r'https://bookeo\.com/[^\s]+', general)
+    if not fee or not photo or not url:
+        return None
+    topic = c['tema']
+    # La consulta puede pedir a la vez importe y documentos; no perder la segunda parte.
+    documents = topic in {'requisitos', 'otra', 'fotografias'} or bool(re.search(r'document|requisit|fotograf|\bfotos?\b', pregunta, re.I))
+    parts = []
+    if valor(c, 'vigencia') in {'', 'vigente'}:
+        parts.append('La renovación corresponde si el DNI está vencido o le quedan 60 días o menos; '
+                     'con más de 60 días de vigencia no corresponde renovarlo.')
+    if topic == 'coste' or topic == 'otra' or re.search(r'cu[aá]nto cuesta|coste|costo|tasa', pregunta, re.I):
+        parts.append('**Tasa de renovación individual:** ' + fee[1] + '.')
+    if documents:
+        parts.append('**Documentación confirmada para la renovación:**\n\n- ' + photo[0])
+        if topic != 'fotografias':
+            parts.append('**Cita previa:**\n' + url[0].rstrip('.'))
+    if valor(c, 'modificacion') == 'domicilio':
+        address = 'Puede solicitar cambio de dirección durante la renovación.'
+        if address in general:
+            parts.append(address)
+    if topic == 'cita':
+        parts.append('**Cita previa:**\n' + url[0].rstrip('.'))
+    return '\n\n'.join(parts)

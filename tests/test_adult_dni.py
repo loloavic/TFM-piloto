@@ -115,7 +115,7 @@ def test_combinaciones_no_verificadas_no_generan(q, motor):
     service, _, prompts = motor
     r = service.responder(q)
     assert not r['fuentes'] and not prompts
-    assert 'no está confirmada' in r['respuesta']
+    assert ('60 días' in r['respuesta'] if 'mis nombres' in q else 'no está confirmada' in r['respuesta'])
 
 
 def test_fuente_parcial_combinada_no_basta(motor):

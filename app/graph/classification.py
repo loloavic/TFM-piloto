@@ -309,7 +309,7 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         operation = '' if op_conflict else CAMBIO_AZUL
     adult_facts = extraer_adulto(text)
     if dni_vencido(role_text, True):
-        adult_facts = tuple(sorted({**dict(adult_facts), 'vigencia': 'vencido'}.items()))
+        adult_facts = tuple(sorted({'vigencia': 'vencido', **dict(adult_facts)}.items()))
     neg_rect = bool(re.search(r'\bno (?:quiero|necesito|deseo) (?:rectificar|corregir)\b', text))
     if neg_rect:
         denied.add('rectificacion')

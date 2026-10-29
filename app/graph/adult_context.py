@@ -7,7 +7,7 @@ VALORES = {
     'matrimonio': {'peru', 'extranjero'},
     'defuncion': {'peru', 'italia', 'otro'},
     'italiano': {'si', 'no'}, 'apellido': {'si', 'no'},
-    'vigencia': {'vencido', 'vigente'},
+    'vigencia': {'vencido', 'vigente', 'hasta_60', 'mas_60'},
 }
 REGLAS_COMUNES = {'plazo', 'seguimiento', 'advertencias'}
 
@@ -54,10 +54,9 @@ def extraer(text):
         facts['apellido'] = 'no' if re.search(r'\bno (?:quiero |deseo |necesito )?recuperar\b', text) else 'si'
     if re.search(r'\b(?:sin (?:cambios|modificaciones)|solo (?:quiero )?renovar|no (?:quiero|necesito) (?:rectificar|corregir|cambiar|actualizar)(?!\s+(?:mi|el)\s+apellido\b))\b', text):
         facts['modificacion'] = 'ninguna'
-    if re.search(r'\bdni\b.*\b(?:vencido|caducado|expirado)\b', text):
-        facts['vigencia'] = 'vigente' if re.search(r'\bno (?:esta |ha )?(?:vencido|caducado|expirado)\b', text) else 'vencido'
-    if re.search(r'\bdni\b.*\bvigente\b', text):
-        facts['vigencia'] = 'vigente'
+    validity = extraer_vigencia(text)
+    if validity:
+        facts['vigencia'] = validity
     if (facts.get('modificacion') == 'estado_civil'
             and re.search(r'\b(?:nombres?|datos personales|datos de nacimiento)\b', clean)):
         facts['modificacion'] = 'conflicto'
@@ -72,7 +71,12 @@ def actualizar(c, evidence):
     from app.graph.context_policy import dato
     conditions = c.setdefault('condiciones_adulto', {})
     if evidence.cambio and evidence.operacion and not evidence.observacion:
+        validity = conditions.get('vigencia')
         conditions.clear()
+        # Cambiar de operación no cambia la vigencia del mismo titular.
+        # Un cambio de titular ya invalida el contexto/revisión en la política.
+        if validity and validity.get('revision') == c['revision']:
+            conditions['vigencia'] = validity
     incoming = dict(evidence.condiciones_adulto)
     if evidence.lugar_confirmado:
         if 'adulto_matrimonio' in c['pendientes']:
@@ -119,8 +123,11 @@ def actualizar(c, evidence):
             c['pendientes']['adulto_' + key] = 'contradiccion'
     if c['edad']['estado'] != 'confirmado' or c['edad']['valor'] != 'adulto' or op not in {'renovacion','rectificacion'}:
         return
-    if op == 'rectificacion' and valor(c, 'vigencia') == 'vencido' and 'renovacion' in c['rechazadas']:
+    if op == 'rectificacion' and valor(c, 'vigencia') in {'vencido', 'hasta_60'} and 'renovacion' in c['rechazadas']:
         c['pendientes']['adulto_derivacion'] = 'contradiccion'
+    if (op == 'renovacion' and valor(c, 'modificacion') in {'datos', 'imagen_firma'}
+            and valor(c, 'vigencia') in {'', 'vigente'}):
+        c['pendientes']['adulto_vigencia'] = 'faltante'
     if op == 'renovacion' and valor(c, 'modificacion') == 'estado_civil':
         return
     topic = c['consulta_pendiente'] if c['consulta_pendiente'] and not evidence.pregunta_tema else c['tema']
@@ -169,11 +176,13 @@ def plan(c):
     """Archivos exactos. Nunca mezcla menores; solo combina la derivación documentada."""
     op = c['operacion']['valor']
     mod = valor(c, 'modificacion')
+    if op == 'renovacion' and valor(c, 'vigencia') == 'mas_60':
+        return {'dni_mayor_renovacion.txt': {'general'}}
     if c['tema'] in REGLAS_COMUNES:
         # Alcance común confirmado; no autoriza requisitos específicos ni combinaciones.
-        if op == 'renovacion' and mod in {'datos','imagen_firma'} and valor(c,'vigencia') == 'vencido':
+        if op == 'renovacion' and mod in {'datos','imagen_firma'} and valor(c,'vigencia') in {'vencido', 'hasta_60'}:
             return {file: {c['tema']} for file in ('dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt')}
-        if op == 'rectificacion' and mod != 'estado_civil' and valor(c,'vigencia') == 'vencido':
+        if op == 'rectificacion' and mod != 'estado_civil' and valor(c,'vigencia') in {'vencido', 'hasta_60'}:
             return {file: {c['tema']} for file in ('dni_mayor_renovacion.txt','dni_mayor_rectificacion.txt')}
         file = 'dni_mayor_estado_civil.txt' if mod == 'estado_civil' and op == 'rectificacion' else ADULT_FILES.get('dni_adulto_' + op)
         return {file: {c['tema']}} if file else {}
@@ -197,18 +206,19 @@ def plan(c):
         return {'dni_mayor_estado_civil.txt': rules}
     if op == 'renovacion':
         if mod in {'datos', 'imagen_firma'}:
-            if valor(c, 'vigencia') != 'vencido':
+            if valor(c, 'vigencia') not in {'vencido', 'hasta_60'}:
                 return {}
             return {'dni_mayor_renovacion.txt': {'general'}, 'dni_mayor_rectificacion.txt': {'general', mod}}
         return {'dni_mayor_renovacion.txt': {'general'}}
     result = {'dni_mayor_rectificacion.txt': {'general', mod} - {''}}
-    if valor(c, 'vigencia') == 'vencido':
+    if valor(c, 'vigencia') in {'vencido', 'hasta_60'}:
         result['dni_mayor_renovacion.txt'] = {'general'}
     return result
 
 
 PREGUNTAS = {
-    'adulto_derivacion': 'La ficha vincula la rectificación de un DNI vencido con renovación, que ha rechazado. Aclare si solicita también renovación o desea consultar al Consulado antes de continuar.',
+    'adulto_vigencia': '¿El DNI está vencido, vence dentro de 60 días o menos, o le quedan más de 60 días? No indique la fecha exacta.',
+    'adulto_derivacion': 'La vigencia indicada permite renovación, que ha rechazado. Aclare si solicita también renovación o desea consultar al Consulado antes de continuar.',
     'adulto_modificacion': '¿Desea rectificar datos personales, dirección, imagen o firma, o estado civil?',
     'adulto_transicion': '¿El cambio es a casado, divorciado o viudo?',
     'adulto_matrimonio': '¿El matrimonio se celebró en Perú o fuera de Perú?',
@@ -254,3 +264,41 @@ def respuesta_apellido(text):
     positive_text = re.sub(r'\bno (?:quiero|necesito|deseo) recuperar[^.;?!]*', ' ', text)
     positive = bool(re.search(r'\b(?:quiero|necesito|deseo) recuperar (?:mi|el) apellido materno\b', positive_text))
     return 'conflicto' if negative and positive else 'no' if negative else 'si' if positive else ''
+
+
+def extraer_vigencia(text):
+    """Solo categorías; no conservar números, fechas ni asumir meses de 30 días."""
+    no_expired = re.search(r'\bno (?:esta |ha )?(?:vencido|caducado|expirado)\b', text)
+    positive = re.sub(r'\bno (?:esta |ha )?(?:vencido|caducado|expirado)\b', ' ', text)
+    values = set()
+    if re.search(r'\b(?:vencido|caducado|expirado)\b', positive):
+        values.add('vencido')
+    if re.search(r'\b(?:mas de 60 dias|mas de sesenta dias)\b', text):
+        values.add('mas_60')
+    if re.search(r'\b(?:60 dias o menos|sesenta dias o menos|menos de 60 dias)\b', text):
+        values.add('hasta_60')
+    quantity = re.search(r'\b(?:vence en|vencera en|faltan|(?:le )?quedan|tiene)\s+'
+                         r'(\d{1,4}|un|uno|dos|tres|cuatro|cinco|seis)\s+(dias?|meses?|semanas?)\b', text)
+    if quantity and quantity[0].startswith('tiene') and not re.match(r'\s+de vigencia', text[quantity.end():]):
+        quantity = None
+    if quantity and quantity[0].startswith('faltan') and not re.match(
+            r'\s+para (?:su |el )?(?:vencimiento|vencer)', text[quantity.end():]):
+        quantity = None
+    if quantity:
+        words = {'un':1,'uno':1,'dos':2,'tres':3,'cuatro':4,'cinco':5,'seis':6}
+        n = int(quantity[1]) if quantity[1].isdigit() else words[quantity[1]]
+        unit = quantity[2]
+        if unit.startswith('mes'):
+            category = 'mas_60' if n >= 3 else 'hasta_60' if n <= 1 else 'vigente'
+        else:
+            days = n * 7 if unit.startswith('semana') else n
+            category = 'hasta_60' if days <= 60 else 'mas_60'
+        values.add(category)
+    specific = values - {'vigente'}
+    if len(specific) > 1:
+        return 'conflicto'
+    if values:
+        return next(iter(specific or values))
+    if no_expired or re.search(r'\bdni\b[^.;?!]*\bvigente\b', text):
+        return 'vigente'
+    return ''

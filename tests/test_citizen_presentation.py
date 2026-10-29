@@ -43,7 +43,9 @@ def test_instrucciones_claras_sin_segunda_reformulacion(question,motor,monkeypat
             return 'Consulte las condiciones de su trámite antes de acudir.'
     monkeypatch.setattr(dni_graph,'LLMService',Local)
     r=service.responder(question)
-    assert len(calls)==1 and r['fuentes']
+    assert len(calls)==(0 if 'renovar mi DNI' in question else 1) and r['fuentes']
+    if 'renovar mi DNI' in question:
+        assert '€7' in r['respuesta']
     state=snapshot(service,r['session_id'])
     assert r['respuesta']==state['respuesta_borrador']==state['historial'][-1]['respuesta']
 

@@ -3,7 +3,7 @@ import re
 
 from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan, valor
 from app.graph.context_policy import ruta_documental
-from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez
+from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez, renovacion_adulta
 
 COMMON_CONFLICT = 'No puedo confirmar esta información porque hay versiones incompatibles. Consulte con el Consulado antes de acudir.'
 
@@ -52,7 +52,9 @@ def _respuesta_controlada(state):
                        and c['tema'] in {'otra', 'requisitos'}
                        and any('OBSERVACIÓN PENDIENTE' in f.get('contenido', '')
                                for f in state.get('fragmentos', [])))
-    if len(required) == 1 and not common and not italian_widow and not uncertain_widow:
+    ordinary_renewal = (intent == 'dni_adulto_renovacion'
+                        and required == {'dni_mayor_renovacion.txt': {'general'}})
+    if len(required) == 1 and not common and not italian_widow and not uncertain_widow and not ordinary_renewal:
         return None
     rules = {}
     for f in state.get('fragmentos', []):
@@ -66,6 +68,10 @@ def _respuesta_controlada(state):
     expected = {(file, rule) for file, ids in required.items() for rule in ids}
     if set(rules) != expected or not all(rules.values()):
         return MISSING
+
+    if ordinary_renewal:
+        response = renovacion_adulta(rules[('dni_mayor_renovacion.txt', 'general')], c, state.get('pregunta', ''))
+        return response if response is not None else MISSING
 
     if italian_widow:
         file = 'dni_mayor_estado_civil.txt'
@@ -100,9 +106,13 @@ def _respuesta_controlada(state):
         fees = [re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', text) for text in (rect, renew)]
         if not all(fees):
             return 'Las fuentes recuperadas no permiten verificar las tasas individuales. ' + LIMIT
-        return (f'La rectificación cuesta {fees[0][1]} y la renovación {fees[1][1]}, '
+        specific = [texto_ciudadano(text.strip()) for (file, rule), text in rules.items() if rule != 'general']
+        docs = ('\n\n**Para rectificar los datos:**\n\n' + '\n\n'.join(specific)) if re.search(r'document|requisit', state.get('pregunta', ''), re.I) else ''
+        return ('Por la vigencia indicada corresponde renovar y puede incorporar la rectificación solicitada. '
+                f'La rectificación cuesta {fees[0][1]} y la renovación {fees[1][1]}, '
                 'cada una para su procedimiento individual. '
-                'No puedo confirmar el importe total ni si las tasas se acumulan para este supuesto. ' + LIMIT)
+                'No puedo confirmar el importe total ni si las tasas se acumulan para este supuesto. '
+                'No se confirma que deba pagar dos tasas. ' + LIMIT + docs)
     if topic == 'fotografias':
         # Citar el párrafo original, conservando explícitamente su ámbito.
         excerpts = []
@@ -119,7 +129,7 @@ def _respuesta_controlada(state):
             paragraphs.append('**Rectificación — documentación individual:**\n\n' + texto_ciudadano(text.strip()))
         if not specific:
             paragraphs.append('No puedo confirmar la documentación adicional que necesita en este caso.')
-        paragraphs.append('Al estar vencido el DNI, la rectificación requiere además renovación. Confirme con el Consulado cómo se presentan los requisitos de ambos trámites.')
+        paragraphs.append('Por la vigencia indicada corresponde renovar el DNI y puede incorporar la rectificación solicitada. Confirme con el Consulado cómo presentar la documentación y cuál es el importe aplicable; no se confirma que deba pagar dos tasas.')
         paragraphs.append(LIMIT)
         return '\n\n'.join(paragraphs)
     if topic == 'plazo':

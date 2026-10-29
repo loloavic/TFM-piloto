@@ -1018,7 +1018,7 @@ def test_titular_elegido_conserva_operacion_y_consulta(motor_local, answer, inte
     if group == 'adulto':
         assert state['estado_documental'] == 'disponible'
         assert {f['archivo'] for f in result['fuentes']} == {'dni_mayor_renovacion.txt'}
-        assert (len(calls['retrieval']), len(calls['llm'])) == (before[0]+1, before[1]+1)
+        assert (len(calls['retrieval']), len(calls['llm'])) == (before[0]+1, before[1])
     else:
         assert {s['archivo'] for s in result['fuentes']} == {'dni_menor_renovacion.txt'}
         assert 'Consulta pendiente: ¿Cuánto cuesta?' in calls['llm'][-1]
@@ -1175,7 +1175,7 @@ def test_seleccion_titular_sin_edad_continua_solo_con_edad_pendiente(motor_local
     assert not state['requiere_aclaracion'] and state['tramite_actual'] == 'dni_adulto_renovacion'
     assert state['tipo_consulta'] == 'coste'
     assert {f['archivo'] for f in result['fuentes']} == {'dni_mayor_renovacion.txt'}
-    assert (len(calls['retrieval']), len(calls['llm'])) == (before[0]+1, before[1]+1)
+    assert (len(calls['retrieval']), len(calls['llm'])) == (before[0]+1, before[1])
 
 
 def _pending_reasons(state):

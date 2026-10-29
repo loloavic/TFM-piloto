@@ -1,6 +1,8 @@
 # Ampliación de DNI de mayor de edad
 
-## Estado consolidado — 28 de octubre de 2026
+## Estado consolidado — 29 de octubre de 2026
+
+La [regla operativa de vigencia y fidelidad de renovación](vigencia-renovacion-pr4.md) actualiza renovación y rectificación adultas: vencido o hasta 60 días, sin importe conjunto confirmado. Requiere reconstruir el índice de siete TXT/43 fragmentos. Resultado actual: 658 pruebas aprobadas y 6 excluidas.
 
 Consulte la [corrección de la auditoría final](integridad-metricas-pr4.md): validación compartida de reglas semánticas y exactas, métricas y pruebas actuales. Los resultados iniciales son históricos.
 

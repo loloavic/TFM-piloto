@@ -8,7 +8,7 @@ from langgraph.graph import END, StateGraph
 
 from app.graph.state import DNIState
 from app.graph.presentation import incertidumbre_viudez
-from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT
+from app.graph.combination_guard import respuesta_controlada, COMMON_CONFLICT, MISSING
 from app.graph.classification import clasificar, pregunta_contextual
 from app.graph.context_policy import DOCUMENTOS_POR_INTENCION, ruta_documental
 from app.graph.adult_context import ADULT_FILES, PREGUNTAS as ADULT_PREGUNTAS, plan as plan_adulto, valor as valor_adulto
@@ -778,7 +778,7 @@ def verificar_respuesta(
     if not advertencias and incertidumbre:
         verificacion = 'abstencion_documental: condiciones parcialmente no confirmadas'
 
-    if not advertencias and (state.get('estado_documental') == 'sin_evidencia' or controlled == COMMON_CONFLICT):
+    if not advertencias and (state.get('estado_documental') == 'sin_evidencia' or controlled in {COMMON_CONFLICT, MISSING}):
         details = ('disposiciones comunes inconsistentes' if controlled == COMMON_CONFLICT else
                    ', '.join(state.get('rechazos_documentales', []) or state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada')
         verificacion = 'abstencion_documental: ' + details

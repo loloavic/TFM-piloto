@@ -91,10 +91,11 @@ def test_procedimientos_individuales_siguen_generando(question,file,motor,monkey
     monkeypatch.setattr(dni_graph,'LLMService',Individual)
     first=service.responder(question)
     assert {f['archivo'] for f in first['fuentes']} == {file}
-    assert calls and first['verificacion'] == 'ok'
+    assert (not calls if file == 'dni_mayor_renovacion.txt' else bool(calls))
+    assert first['verificacion'] == 'ok'
     if file.startswith('dni_mayor'):
         r=service.responder('¿Cuánto cuesta?',first['session_id'],first['session_token'])
-        assert '€7' in r['respuesta'] and len(calls) == 2
+        assert '€7' in r['respuesta'] and len(calls) == (0 if file == 'dni_mayor_renovacion.txt' else 2)
 
 
 def test_combinacion_civil_no_autorizada_tampoco_acepta_borrador(hostile):
