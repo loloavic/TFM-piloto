@@ -661,3 +661,12 @@ integridad, se abstiene. **681 pruebas aprobadas y 6 de integración excluidas.*
 Esta actualización requiere reconstruir FAISS: **siete TXT y 44 fragmentos**.
 Las cifras anteriores de 43 fragmentos corresponden a versiones previas.
 Ver [procedencia, alcance, pruebas y pasos Windows/Conda](docs/no-acumulacion-tasas-pr4.md).
+
+### Renovación con pronombres — PR #4
+
+Se reconocen «quiero/necesito renovarlo» y «¿puedo/me corresponde renovarlo?»
+cuando el referente DNI está establecido, manteniendo las negaciones. «Vence
+dentro de 59/60/61 días» conserva el intervalo para aplicar la política existente.
+**717 pruebas aprobadas, 6 de integración excluidas.** El corpus y FAISS no
+cambian; no requiere reconstrucción por esta corrección.
+Ver [causa, reproducción y validación Windows/Conda](docs/renovacion-pronombres-pr4.md).

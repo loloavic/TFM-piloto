@@ -14,6 +14,7 @@ from app.graph.context_policy import (
 
 OTROS = r'pasaporte|visa|visado|apostilla|matrimonio|defuncion|carta poder|poder consular|licencia de conducir|carnet de extranjeria'
 ART = r'(?:(?:un|una|el|la|mi|su)\s+)?'
+RENOVACION = r'\b(?:renovar(?:lo|la)?|renovacion|renuevo|actualizar dni)\b'
 ACCION = r'(?:renovar|tramitar|solicitar|obtener|sacar|renovacion (?:de|del)|inscripcion (?:de|del))'
 
 
@@ -222,7 +223,7 @@ def operacion(texto: str, contexto_dni: bool = False, *, inferir_tenencia: bool 
     # de un documento de apoyo no prueba tenencia del DNI del titular.
     texto_roles, _ = identificar_roles(texto)
     # La máscara elimina solo la expresión negada, no su corrección posterior.
-    neg_renew = r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
+    neg_renew = r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|corresponde|es|deseo|desea)\s+){0,3}(?:(?:un|una|la|el)\s+)?(?:renovar(?:lo|la)?|renovacion|renuevo|actualizar)(?:\s+(?:el |mi |su )?dni)?\b'
     neg_first = (r'\b(?:no|tampoco)\s+(?:(?:quiero|quiere|necesito|necesita|debo|debe|es|corresponde)\s+){0,3}'
                  r'(?:(?:tramitar|solicitar|sacar|obtener)\s+)?'
                  r'(?:(?:el|un|su|mi|la)\s+)?(?:dni\s+)?(?:por\s+)?'
@@ -235,7 +236,7 @@ def operacion(texto: str, contexto_dni: bool = False, *, inferir_tenencia: bool 
     positive = re.sub(neg_first, ' ', re.sub(neg_renew, ' ', texto))
     first = bool(re.search(r'primera vez|primera inscripcion|primer dni', positive))
     first = first or (inferir_tenencia and bool(re.search(r'\b(?:nunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve)|no (?:(?:ha|he) tenido|tuvo|tuve)) (?:un |su )?dni\b', positive)))
-    renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni)\b', positive))
+    renewal = bool(re.search(RENOVACION, positive))
     renewal = renewal or (inferir_tenencia and bool(re.search(
         r'\bya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni\b', positive)))
     renewal = renewal or (inferir_tenencia and dni_vencido(texto_roles, contexto_dni) and 'renovacion' not in denied)
@@ -299,7 +300,7 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
     denied |= original_denied
     yellow_possession = (bool(re.search(r'\b(?:ya )?(?:tengo|tiene|dispongo de|cuenta con)\b.{0,25}\bamarillo\b', positive_color))
                          and not bool(re.search(r'\bno (?:tengo|tiene)\b', positive_color)))
-    explicit_renewal = bool(re.search(r'\b(?:renovar|renovacion|renuevo|actualizar dni)\b', operation_text)) and 'renovacion' not in denied
+    explicit_renewal = (operacion(operation_text, inferir_tenencia=False)[0] == 'renovacion') and 'renovacion' not in denied
     if yellow_possession and operation == 'renovacion' and not explicit_renewal:
         operation = ''  # Tener amarillo no selecciona por sí solo renovación ni cambio a azul.
     if denied_color:
@@ -344,8 +345,6 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
     possession = dni_vencido(role_text, True) or bool(re.search(
         r'\bya (?:tuvo|tuve|tiene|tengo|tenia) (?:un |su )?dni\b|'
         r'\bnunca (?:(?:ha|he) )?(?:tenido|tuvo|tuve) (?:un |su )?dni\b', text))
-    request = (bool(operation and re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text))
-               or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
     # Extraer por separado la operación afirmada, sin inferencias de tenencia.
     # Reutilizar el detector mantiene su tratamiento de negaciones y conflictos.
     affirmative_operation = operacion(operation_text, inferir_tenencia=False)[0]
@@ -356,6 +355,9 @@ def extraer_evidencia(pregunta: str) -> EvidenciaTurno:
         # La operación específica también puede solicitarse afirmativamente;
         # mencionar tenencia junto a esa petición no la convierte en observación.
         affirmative_operation = CAMBIO_AZUL
+    request = (bool(operation and re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text))
+               or (operation == 'renovacion' and affirmative_operation == 'renovacion')
+               or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
     return EvidenciaTurno(
         condiciones_adulto=adult_facts,
         respuesta_nacionalidad=respuesta_nacionalidad(text),

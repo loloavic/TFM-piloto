@@ -277,7 +277,7 @@ def extraer_vigencia(text):
         values.add('mas_60')
     if re.search(r'\b(?:60 dias o menos|sesenta dias o menos|menos de 60 dias)\b', text):
         values.add('hasta_60')
-    quantity = re.search(r'\b(?:vence en|vencera en|faltan|(?:le )?quedan|tiene)\s+'
+    quantity = re.search(r'\b(?:vence (?:en|dentro de)|vencera (?:en|dentro de)|faltan|(?:le )?quedan|tiene)\s+'
                          r'(\d{1,4}|un|uno|dos|tres|cuatro|cinco|seis)\s+(dias?|meses?|semanas?)\b', text)
     if quantity and quantity[0].startswith('tiene') and not re.match(r'\s+de vigencia', text[quantity.end():]):
         quantity = None
