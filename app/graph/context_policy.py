@@ -199,6 +199,13 @@ def transicionar(anterior: ContextoCanonico | None, e: EvidenciaTurno) -> Contex
         doubt('operacion', 'tipo_dni')
         c['propuesta_operacion'] = ''
 
+    if (e.objetivo_independiente and e.operacion and old_op and e.operacion != old_op
+            and 'adulto_derivacion' not in c['pendientes']):
+        from dataclasses import replace
+        e = replace(e, cambio=True)
+        c['consulta_pendiente'] = e.tema
+        c['retomar'] = ''
+
     if (old_op == 'rectificacion' and _conocido(c, 'edad') and c['edad']['valor'] == 'adulto'
             and e.operacion == 'renovacion' and e.observacion):
         # Tenencia/caducidad complementa la rectificación; no sustituye su operación.

@@ -691,3 +691,15 @@ contextual autorizada, sin asignar al titular la edad de un acompañante.
 **787 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
 las tarifas ni el índice de 44 fragmentos; no requiere reconstruir FAISS.
 Ver [causas, límites, ejemplos y validación Windows/Conda](docs/continuidad-elegibilidad-edad-pr4.md).
+
+### Cambio independiente de renovación a estado civil — PR #4
+
+Una nueva solicitud de actualización de estado civil no queda bloqueada por la
+renovación anterior: conserva titular, edad y vigencia, retira el propósito
+anterior y solicita solo las aclaraciones del nuevo procedimiento. Una petición
+adicional o conjunta conserva sus controles documentales y tarifarios.
+
+**808 pruebas aprobadas, 6 de integración excluidas.** Se recuperaron y revisaron
+los cambios de la ejecución interrumpida. No cambia el corpus ni el índice de
+44 fragmentos; no requiere reconstruir FAISS. Ver [causas, recuperación, pruebas
+y validación Windows/Conda](docs/cambio-objetivo-estado-civil-pr4.md).

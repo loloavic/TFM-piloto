@@ -45,6 +45,7 @@ class ContextoCanonico(TypedDict):
 @dataclass(frozen=True)
 class EvidenciaTurno:
     """Solo categorías del mensaje actual; no texto ni datos personales nuevos."""
+    objetivo_independiente: bool = False
     consulta_renovacion: tuple[str, ...] = ()
     respuesta_apellido: str = ''
     respuesta_nacionalidad: str = ''

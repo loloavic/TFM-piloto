@@ -40,6 +40,13 @@ def extraer(text):
         facts.update(modificacion='estado_civil', transicion='divorcio')
     if re.search(r'\b(?:soy viud[oa]|de casad[oa] a viud[oa]|mi (?:conyuge|esposo|esposa) (?:murio|fallecio))\b', clean):
         facts.update(modificacion='estado_civil', transicion='viudez')
+    if facts.get('modificacion') == 'estado_civil':
+        # El destino solicitado no afirma un estado matrimonial anterior.
+        destinations = set(re.findall(r'\ba (casad[oa]|divorciad[oa]|viud[oa])\b', clean))
+        transitions = {'matrimonio' if x.startswith('casad') else 'divorcio' if x.startswith('divorciad') else 'viudez'
+                       for x in destinations}
+        if transitions:
+            facts['transicion'] = next(iter(transitions)) if len(transitions) == 1 else 'conflicto'
     if re.search(r'\b(?:matrimonio|me case|nos casamos)\b.*\b(?:en (?:el )?peru)\b', clean):
         facts['matrimonio'] = 'peru'
     elif re.search(r'\b(?:matrimonio|me case|nos casamos)\b.*(?:fuera (?:de|del) peru|en (?:italia|el extranjero))', clean):
@@ -123,7 +130,7 @@ def actualizar(c, evidence):
             c['pendientes']['adulto_' + key] = 'contradiccion'
     if c['edad']['estado'] != 'confirmado' or c['edad']['valor'] != 'adulto' or op not in {'renovacion','rectificacion'}:
         return
-    if op == 'rectificacion' and valor(c, 'vigencia') in {'vencido', 'hasta_60'} and 'renovacion' in c['rechazadas']:
+    if op == 'rectificacion' and valor(c, 'modificacion') != 'estado_civil' and valor(c, 'vigencia') in {'vencido', 'hasta_60'} and 'renovacion' in c['rechazadas']:
         c['pendientes']['adulto_derivacion'] = 'contradiccion'
     if (op == 'renovacion' and valor(c, 'modificacion') in {'datos', 'imagen_firma'}
             and valor(c, 'vigencia') in {'', 'vigente'}):

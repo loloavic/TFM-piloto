@@ -328,7 +328,10 @@ def extraer_evidencia(pregunta: str, *, aclaracion_edad: bool = False) -> Eviden
     neg_rect = bool(re.search(r'\bno (?:quiero|necesito|deseo) (?:rectificar|corregir)\b', text))
     if neg_rect:
         denied.add('rectificacion')
-    explicit_rect = bool(re.search(r'\b(?:rectificar|rectificacion|corregir|correccion)\b', text)) and not neg_rect
+    positive_updates = re.sub(r'\bno (?:quiero|necesito|deseo|debo) (?:actualizar|cambiar)[^.;?!]*', ' ', text)
+    explicit_update = (dict(adult_facts).get('modificacion') == 'estado_civil'
+                       and bool(re.search(r'\b(?:actualizar|cambiar)\b', positive_updates)))
+    explicit_rect = (bool(re.search(r'\b(?:rectificar|rectificacion|corregir|correccion)\b', text)) or explicit_update) and not neg_rect
     if explicit_rect and not neg_rect and (not operation or (
             operation == 'renovacion' and not operacion(operation_text, inferir_tenencia=False)[0])):
         operation = 'rectificacion'
@@ -372,7 +375,13 @@ def extraer_evidencia(pregunta: str, *, aclaracion_edad: bool = False) -> Eviden
     request = (bool(operation and re.search(r'\b(?:quiero|necesito|solicito|renovar|renovacion)\b', text))
                or (operation == 'renovacion' and affirmative_operation == 'renovacion')
                or doc_own or bool(explicit and re.search(r'\bpara (?:mi|su|el|la)\b', text)))
+    additive = bool(re.search(r'\b(?:ademas|tambien|junto con|al mismo tiempo|a la vez)\b', positive_updates))
+    independent = not additive and (
+        (explicit_rect and not explicit_renewal)
+        or (affirmative_operation == 'renovacion' and not explicit_rect and bool(re.search(
+            r'\b(?:quiero|necesito|deseo|puedo|podria|me corresponde|cuanto|requisitos|documentos|cita)\b', positive_updates))))
     return EvidenciaTurno(
+        objetivo_independiente=independent,
         consulta_renovacion=componentes_elegibilidad(text, topic) if 'renovacion' not in denied else (),
         condiciones_adulto=adult_facts,
         respuesta_nacionalidad=respuesta_nacionalidad(text),
@@ -391,7 +400,7 @@ def extraer_evidencia(pregunta: str, *, aclaracion_edad: bool = False) -> Eviden
         funcion_documento=role,
         cambio=bool(re.search(r'\b(?:ahora|en cambio|otro|otra|olvida|olvidemos|me equivoque|en realidad|sin renovar|solo rectificar)\b', text)),
         rectificacion=bool(re.search(r'\b(?:me equivoque|en realidad)\b', text)),
-        otro_titular=bool(re.search(r'\b(?:otro|otra)\b', text)), solicitud=request,
+        otro_titular=bool(re.search(r'\b(?:otro|otra)\b', text)), solicitud=request or independent,
         # Identificar al destinatario o la función documental no convierte
         # una observación de tenencia en una solicitud de operación.
         observacion=possession and affirmative_operation != operation,
