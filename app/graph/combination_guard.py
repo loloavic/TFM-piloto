@@ -70,7 +70,7 @@ def _respuesta_controlada(state):
         return MISSING
 
     if ordinary_renewal:
-        response = renovacion_adulta(rules[('dni_mayor_renovacion.txt', 'general')], c, state.get('pregunta', ''))
+        response = renovacion_adulta(rules[('dni_mayor_renovacion.txt', 'general')], c, state.get('pregunta', ''), state.get('historial', ()))
         return response if response is not None else MISSING
 
     if italian_widow:

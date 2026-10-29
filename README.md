@@ -670,3 +670,12 @@ dentro de 59/60/61 días» conserva el intervalo para aplicar la política exist
 **717 pruebas aprobadas, 6 de integración excluidas.** El corpus y FAISS no
 cambian; no requiere reconstrucción por esta corrección.
 Ver [causa, reproducción y validación Windows/Conda](docs/renovacion-pronombres-pr4.md).
+
+### Decisión inicial en preguntas de elegibilidad — PR #4
+
+«¿Puedo renovarlo ahora?» abre con una afirmación para DNI vencido o hasta 60
+días, con una negativa si quedan más de 60 y con una aclaración si falta la
+vigencia. No enumera tasas/fotografías salvo solicitud pertinente. No cambia la
+elegibilidad, clasificación, corpus ni índice: no requiere reconstruir FAISS.
+**743 pruebas aprobadas, 6 de integración excluidas.** Ver [evidencia, límites
+y validación Windows/Conda](docs/presentacion-elegibilidad-pr4.md).

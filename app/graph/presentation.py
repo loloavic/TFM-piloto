@@ -59,16 +59,40 @@ def incertidumbre_viudez(state):
             'Los requisitos del caso italiano no se aplican automáticamente a su situación.')
 
 
-def renovacion_adulta(general, c, pregunta):
+ACLARACION_VIGENCIA = ('¿El DNI está vencido, vence dentro de 60 días o menos, '
+                       'o le quedan más de 60 días? No indique la fecha exacta.')
+
+
+def consulta_elegibilidad(pregunta):
+    """Tema de presentación; no confirma operaciones, edad ni elegibilidad."""
+    return bool(re.search(
+        r'\b(?:puedo|puede|podr[ií]a|me corresponde|corresponde|se puede|es posible)\b'
+        r'[^?!.]{0,90}\brenovar(?:lo|la)?\b', pregunta, re.I))
+
+
+def renovacion_adulta(general, c, pregunta, historial=()):
     """Lista cerrada desde la regla general autorizada, nunca desde el LLM."""
     from app.graph.adult_context import valor
     authorized = 'Corresponde únicamente si el DNI está vencido o le quedan 60 días o menos de vigencia; con más de 60 días no corresponde renovar.'
     if authorized not in general:
         return None
-    if valor(c, 'vigencia') == 'mas_60':
-        return ('Con más de 60 días de vigencia, no corresponde renovar el DNI. '
-                'La renovación corresponde si está vencido o le quedan 60 días o menos. '
-                'Si desea rectificar datos, puede consultar ese trámite sin asumir una renovación.')
+    eligibility = consulta_elegibilidad(pregunta)
+    requested_question = pregunta
+    # Una respuesta a nuestra aclaración continúa esa pregunta, sin convertir
+    # el historial en fuente de hechos. La decisión usa solo vigencia canónica.
+    if (c['tema'] == 'otra' and re.search(r'\b(?:vence|vencera|vencido|vigencia|quedan|faltan)\b', pregunta, re.I)
+            and any(turn.get('respuesta') == ACLARACION_VIGENCIA for turn in historial[-2:])):
+        eligibility = True
+        previous = next(turn for turn in reversed(historial[-2:])
+                        if turn.get('respuesta') == ACLARACION_VIGENCIA)
+        requested_question = previous.get('pregunta', '') + '\n' + pregunta
+    validity = valor(c, 'vigencia')
+    if eligibility and validity in {'', 'vigente'}:
+        return ACLARACION_VIGENCIA
+    if validity == 'mas_60':
+        return ('No, todavía no corresponde renovar su DNI. '
+                'El DNI conserva más de 60 días de vigencia. '
+                'Podrá renovarlo cuando le queden 60 días o menos, o si ya está vencido.')
     fee = re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', general)
     photo = re.search(r'Dos fotografías\. Fotografía obligatoria:.*?(?= Puede solicitar)', general)
     url = re.search(r'https://bookeo\.com/[^\s]+', general)
@@ -76,12 +100,16 @@ def renovacion_adulta(general, c, pregunta):
         return None
     topic = c['tema']
     # La consulta puede pedir a la vez importe y documentos; no perder la segunda parte.
-    documents = topic in {'requisitos', 'otra', 'fotografias'} or bool(re.search(r'document|requisit|fotograf|\bfotos?\b', pregunta, re.I))
+    explicit_documents = bool(re.search(r'documentaci[oó]n|documentos|requisit|fotograf|\bfotos?\b|qu[eé] (?:debo )?(?:llevar|presentar)', requested_question, re.I))
+    documents = (topic == 'fotografias' or (topic in {'requisitos', 'otra'} and not eligibility) or explicit_documents)
     parts = []
+    if eligibility and validity in {'vencido', 'hasta_60'}:
+        parts.append('Sí, puede renovar su DNI ahora. '
+                     'La renovación corresponde cuando el DNI está vencido o le quedan 60 días o menos de vigencia.')
     if valor(c, 'vigencia') in {'', 'vigente'}:
         parts.append('La renovación corresponde si el DNI está vencido o le quedan 60 días o menos; '
                      'con más de 60 días de vigencia no corresponde renovarlo.')
-    if topic == 'coste' or topic == 'otra' or re.search(r'cu[aá]nto cuesta|coste|costo|tasa', pregunta, re.I):
+    if topic == 'coste' or (topic == 'otra' and not eligibility) or re.search(r'cu[aá]nto cuesta|coste|costo|tasa', requested_question, re.I):
         parts.append('**Tasa de renovación individual:** ' + fee[1] + '.')
     if documents:
         parts.append('**Documentación confirmada para la renovación:**\n\n- ' + photo[0])
