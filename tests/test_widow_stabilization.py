@@ -14,11 +14,11 @@ def test_apellido_negativo_resuelve_y_preserva_viudez(answer,motor):
     for q in [answer,'no']:
         r=service.responder(q,sid,token)
         c=snapshot(service,sid)['contexto_canonico']
-        assert valor(c,'apellido') == 'no' and not c['pendientes']
+        assert valor(c,'apellido') == ('' if answer == 'no' else 'no') and not c['pendientes']
         assert c['edad']['valor'] == 'adulto'
         assert valor(c,'italiano') == 'si' and valor(c,'defuncion') == 'italia'
         assert valor(c,'transicion') == 'viudez'
-        assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia','italiano'}
+        assert {f['regla'] for f in r['fuentes']} == ({'general','viudez_italia','italiano','apellido'} if answer == 'no' else {'general','viudez_italia','italiano'})
         assert 'OBSERVACIÓN PENDIENTE' not in r['respuesta']
         assert 'acta de defunción plurilingüe' in r['respuesta']
 
@@ -27,7 +27,7 @@ def test_regla_ausente_diagnosticada_no_es_ok(motor):
     service,retrieve,prompts=motor
     retrieve.return_value=[d for d in retrieve.return_value if not d['contenido'].startswith('[[REGLA:italiano]]')]
     first=service.responder(WIDOW)
-    r=service.responder('no',first['session_id'],first['session_token'])
+    r=service.responder('No quiero recuperar el apellido materno',first['session_id'],first['session_token'])
     s=snapshot(service,first['session_id'])
     assert s['reglas_faltantes'] == ['dni_mayor_estado_civil.txt#italiano']
     assert not r['fuentes'] and not prompts
@@ -57,8 +57,8 @@ def test_reintento_recupera_regla_omitida_por_top_k_sin_cambiar_plan(motor):
     complete=retrieve.return_value
     initial=[d for d in complete if not d['contenido'].startswith('[[REGLA:italiano]]')]
     retrieve.side_effect=[initial,complete]
-    first=service.responder(WIDOW)
-    r=service.responder('No, he mantenido siempre mi apellido materno',first['session_id'],first['session_token'])
+    first=service.responder(WIDOW + ' No quiero recuperar el apellido materno.')
+    r=first
     assert retrieve.call_count == 2
     assert 'dni_mayor_estado_civil.txt REGLA italiano' in retrieve.call_args.args[0]
     assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia','italiano'}
@@ -69,6 +69,7 @@ def test_contradiccion_apellido_y_correccion(motor):
     service,retrieve,_=motor
     first=service.responder(WIDOW)
     sid,token=first['session_id'],first['session_token']
+    retrieve.reset_mock()
     r=service.responder('No necesito cambiar mi apellido. Quiero recuperar mi apellido materno',sid,token)
     c=snapshot(service,sid)['contexto_canonico']
     assert c['pendientes']['adulto_apellido'] == 'contradiccion' and not retrieve.called
@@ -95,9 +96,9 @@ def test_fuentes_ausentes_diagnostican_todas_las_reglas(motor):
     service,retrieve,_=motor
     retrieve.return_value=[]
     first=service.responder(WIDOW)
-    r=service.responder('no',first['session_id'],first['session_token'])
+    r=first
     s=snapshot(service,first['session_id'])
-    assert s['reglas_faltantes'] == ['dni_mayor_estado_civil.txt#general',
+    assert s['reglas_faltantes'] == ['dni_mayor_estado_civil.txt#apellido','dni_mayor_estado_civil.txt#general',
         'dni_mayor_estado_civil.txt#italiano','dni_mayor_estado_civil.txt#viudez_italia']
     assert not r['fuentes'] and r['verificacion'].startswith('abstencion_documental:')
-    assert retrieve.call_count == 4  # consulta inicial + tres reintentos, sin bucle
+    assert retrieve.call_count == 5  # consulta inicial + cuatro reglas, sin bucle

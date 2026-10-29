@@ -90,9 +90,9 @@ def actualizar(c, evidence):
             incoming.setdefault('matrimonio', 'peru' if evidence.lugar_confirmado == 'peru' else 'extranjero')
         elif 'adulto_defuncion' in c['pendientes']:
             incoming.setdefault('defuncion', evidence.lugar_confirmado)
-    if (evidence.respuesta_apellido and valor(c, 'modificacion') == 'estado_civil'
-            and valor(c, 'transicion') in {'divorcio', 'viudez'}
-            and ('adulto_apellido' in c['pendientes'] or 'apellido' in conditions)):
+    if (evidence.respuesta_apellido
+            and incoming.get('modificacion', valor(c, 'modificacion')) == 'estado_civil'
+            and incoming.get('transicion', valor(c, 'transicion')) in {'divorcio', 'viudez'}):
         incoming['apellido'] = evidence.respuesta_apellido
     if (evidence.respuesta_nacionalidad
             and valor(c, 'modificacion') == 'estado_civil'
@@ -148,8 +148,6 @@ def actualizar(c, evidence):
         required = ['transicion'] if not transition else []
         if transition == 'matrimonio' and not valor(c, 'matrimonio'):
             required.append('matrimonio')
-        if transition in {'divorcio', 'viudez'} and not valor(c, 'apellido'):
-            required.append('apellido')
         if transition == 'viudez' and not valor(c, 'defuncion'):
             required.append('defuncion')
         if transition == 'viudez' and valor(c, 'defuncion') == 'italia' and not valor(c, 'italiano'):
@@ -208,7 +206,7 @@ def plan(c):
                 rules.add('viudez_' + valor(c, 'defuncion'))
                 if valor(c, 'defuncion') == 'italia' and valor(c, 'italiano') == 'si':
                     rules.add('italiano')
-            if transition in {'divorcio', 'viudez'} and valor(c, 'apellido') == 'si':
+            if transition in {'divorcio', 'viudez'} and valor(c, 'apellido') != 'no':
                 rules.add('apellido')
         return {'dni_mayor_estado_civil.txt': rules}
     if op == 'renovacion':

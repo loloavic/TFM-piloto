@@ -3,7 +3,7 @@ import re
 
 from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan, valor
 from app.graph.context_policy import ruta_documental
-from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez, renovacion_adulta
+from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez, renovacion_adulta, requisitos_civiles
 
 COMMON_CONFLICT = 'No puedo confirmar esta información porque hay versiones incompatibles. Consulte con el Consulado antes de acudir.'
 
@@ -52,9 +52,12 @@ def _respuesta_controlada(state):
                        and c['tema'] in {'otra', 'requisitos'}
                        and any('OBSERVACIÓN PENDIENTE' in f.get('contenido', '')
                                for f in state.get('fragmentos', [])))
+    civil_requirements = (valor(c, 'modificacion') == 'estado_civil'
+                          and valor(c, 'transicion') in {'divorcio', 'viudez'}
+                          and c['tema'] in {'otra', 'requisitos'})
     ordinary_renewal = (intent == 'dni_adulto_renovacion'
                         and required == {'dni_mayor_renovacion.txt': {'general'}})
-    if len(required) == 1 and not common and not italian_widow and not uncertain_widow and not ordinary_renewal:
+    if len(required) == 1 and not common and not italian_widow and not uncertain_widow and not ordinary_renewal and not civil_requirements:
         return None
     rules = {}
     for f in state.get('fragmentos', []):
@@ -80,7 +83,7 @@ def _respuesta_controlada(state):
         if not separator:
             return MISSING  # Versión incompatible: no emitir una reserva antigua.
         return requisitos_viudez(rules[(file, 'general')], marriage, rules[(file, 'italiano')],
-                                 rules.get((file, 'apellido'), ''))
+                                 rules.get((file, 'apellido'), ''), valor(c, 'apellido'))
 
     if uncertain_widow:
         file = 'dni_mayor_estado_civil.txt'
@@ -88,7 +91,18 @@ def _respuesta_controlada(state):
         if not marriage:
             marriage = 'Confirme con el Consulado cómo acreditar el matrimonio en su situación.'
         return requisitos_viudez(rules[(file, 'general')], marriage,
-                                 incertidumbre_viudez(state), rules.get((file, 'apellido'), ''))
+                                 incertidumbre_viudez(state), rules.get((file, 'apellido'), ''), valor(c, 'apellido'))
+
+    if civil_requirements:
+        file = 'dni_mayor_estado_civil.txt'
+        transition = valor(c, 'transicion')
+        rule = 'divorcio' if transition == 'divorcio' else 'viudez_' + valor(c, 'defuncion')
+        main = rules.get((file, rule))
+        if not main:
+            return MISSING
+        return requisitos_civiles(rules[(file, 'general')],
+                                  '**Documentación principal:**\n\n' + texto_ciudadano(main),
+                                  rules.get((file, 'apellido'), ''), valor(c, 'apellido'), transition)
 
     if common:
         contents = {text.strip() for text in rules.values()}

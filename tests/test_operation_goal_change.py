@@ -21,8 +21,8 @@ def test_reproduccion_renovacion_no_procede_luego_divorcio(motor):
     assert valor(c,'vigencia')=='mas_60'
     assert c['titular']==before['titular'] and c['edad']==before['edad']
     assert not c['consulta_renovacion']
-    assert c['pendientes']=={'adulto_apellido':'faltante'}
-    assert 'apellido materno' in r['respuesta'] and not r['fuentes']
+    assert not c['pendientes']
+    assert 'solo si' in r['respuesta'] and {f['archivo'] for f in r['fuentes']}=={'dni_mayor_estado_civil.txt'}
 
 
 def test_rectificar_fecha_independiente_no_se_suprime(motor):
@@ -44,8 +44,8 @@ def test_divorcio_independiente_con_apellido_y_repreguntas(recover,rules,motor):
     assert r['intencion']=='dni_adulto_rectificacion'
     assert {f['archivo'] for f in r['fuentes']}=={'dni_mayor_estado_civil.txt'}
     assert {f['regla'] for f in r['fuentes']}==rules
-    assert 'anotación de disolución del divorcio' in prompts[-1]
-    assert ('acta de nacimiento original' in prompts[-1])==recover
+    assert 'anotación de disolución del divorcio' in r['respuesta'] and not prompts
+    assert ('acta de nacimiento original' in r['respuesta'])==recover
     for q in ['¿Qué documentos debo presentar?', '¿Cuánto cuesta?', '¿Dónde solicito la cita?']:
         r=service.responder(q,sid,token)
         assert r['intencion']=='dni_adulto_rectificacion'
@@ -94,7 +94,7 @@ def test_vencido_luego_civil_no_crea_combinacion_ni_bloqueo(reject,motor):
     c=snapshot(service,sid)['contexto_canonico']
     assert c['operacion']['valor']=='rectificacion'
     assert valor(c,'vigencia')=='vencido'
-    assert c['pendientes']=={'adulto_apellido':'faltante'}
+    assert not c['pendientes']
     r=service.responder('No quiero recuperar el apellido materno',sid,token)
     assert {f['archivo'] for f in r['fuentes']}=={'dni_mayor_estado_civil.txt'}
     assert 'no_acumulacion' not in {f['regla'] for f in r['fuentes']}
@@ -120,8 +120,9 @@ def test_coste_anterior_no_bloquea_nuevo_objetivo(motor):
     service.responder('¿Cuánto cuesta?',sid,token)
     r=service.responder('pero necesito actualizar mi estado civil a divorciado',sid,token)
     c=snapshot(service,sid)['contexto_canonico']
-    assert c['operacion']['valor']=='rectificacion' and c['pendientes']=={'adulto_apellido':'faltante'}
-    assert not r['fuentes'] and 'apellido materno' in r['respuesta']
+    assert c['operacion']['valor']=='rectificacion' and not c['pendientes']
+    assert {f['archivo'] for f in r['fuentes']} == {'dni_mayor_estado_civil.txt'}
+    assert 'solo si' in r['respuesta']
 
 
 @pytest.mark.parametrize('bad_case',['ausente','obsoleta','incompleta','contradictoria'])
@@ -172,7 +173,7 @@ def test_destino_divorciado_no_se_reemplaza_por_matrimonio_historico(motor):
     r=service.responder('Necesito actualizar mi estado civil a divorciado. Me casé en Perú.',sid,token)
     c=snapshot(service,sid)['contexto_canonico']
     assert valor(c,'transicion')=='divorcio'
-    assert c['pendientes']=={'adulto_apellido':'faltante'}
+    assert not c['pendientes']
     assert 'apellido materno' in r['respuesta']
 
 
@@ -203,6 +204,6 @@ def test_nuevo_objetivo_no_retoma_coste_de_aclaracion_anterior(motor):
     r=service.responder('pero necesito actualizar mi estado civil a divorciado',sid,token)
     c=snapshot(service,sid)['contexto_canonico']
     assert c['operacion']['valor']=='rectificacion'
-    assert c['pendientes']=={'adulto_apellido':'faltante'}
-    assert c['consulta_pendiente']=='otra' and c['tema']=='otra'
-    assert 'apellido materno' in r['respuesta'] and not r['fuentes']
+    assert not c['pendientes']
+    assert not c['consulta_pendiente'] and c['tema']=='otra'
+    assert 'solo si' in r['respuesta'] and {f['archivo'] for f in r['fuentes']}=={'dni_mayor_estado_civil.txt'}

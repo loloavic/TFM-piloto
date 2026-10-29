@@ -703,3 +703,16 @@ adicional o conjunta conserva sus controles documentales y tarifarios.
 los cambios de la ejecución interrumpida. No cambia el corpus ni el índice de
 44 fragmentos; no requiere reconstruir FAISS. Ver [causas, recuperación, pruebas
 y validación Windows/Conda](docs/cambio-objetivo-estado-civil-pr4.md).
+
+### Divorcio y viudez sin aclaración obligatoria de apellido — PR #4
+
+Los documentos principales se presentan sin exigir antes una decisión sobre
+recuperación del apellido materno. Esa documentación adicional aparece en un
+apartado condicional cuando la decisión es desconocida, se incluye ante una
+solicitud expresa y se excluye ante una negativa. Las contradicciones y otras
+condiciones materiales siguen requiriendo aclaración. Los requisitos se formatean
+y verifican de forma determinista, sin reformulación LLM posterior.
+
+**839 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
+el índice de 44 fragmentos, tarifas ni vigencia; no requiere reconstruir FAISS.
+Ver [política, evidencia, límites y validación Windows/Conda](docs/apellido-condicional-estado-civil-pr4.md).

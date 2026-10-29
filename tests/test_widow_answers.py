@@ -79,7 +79,9 @@ def test_validacion_equivalente_api_gradio_rechaza_entradas_invalidas(text,motor
 @pytest.mark.parametrize('answer,value', [('sí','si'),('no','no')])
 def test_binaria_otra_aclaracion_no_se_atribuye_a_nacionalidad(answer,value,motor):
     service,_,_=motor
-    first=service.responder('Soy adulto y quiero cambiar el estado civil en mi DNI. Me divorcié')
+    first=service.responder('Soy adulto y quiero cambiar el estado civil en mi DNI. Me divorcié. '
+                            'No necesito cambiar mi apellido. Quiero recuperar mi apellido materno')
+    assert snapshot(service,first['session_id'])['contexto_canonico']['pendientes']['adulto_apellido'] == 'contradiccion'
     r=service.responder(answer,first['session_id'],first['session_token'])
     c=snapshot(service,first['session_id'])['contexto_canonico']
     assert valor(c,'apellido') == value and not valor(c,'italiano')
@@ -159,9 +161,10 @@ def test_consulta_completa_solo_pregunta_por_el_dato_realmente_pendiente(motor):
     for q in ['si era italiano','Sí, era italiano']:
         r=service.responder(q,sid,token)
         c=snapshot(service,sid)['contexto_canonico']
-        assert c['pendientes'] == {'adulto_apellido':'faltante'}
+        assert not c['pendientes'] and not valor(c,'apellido')
         assert valor(c,'italiano') == 'si'
-        assert '¿Desea recuperar el apellido materno?' in r['respuesta']
+        assert '¿Desea recuperar el apellido materno?' not in r['respuesta']
+        assert 'solo si' in r['respuesta']
     r=service.responder('sí',sid,token)
     assert {f['regla'] for f in r['fuentes']} == {'general','viudez_italia','italiano','apellido'}
 

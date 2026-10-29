@@ -1,5 +1,8 @@
 # Ampliación de DNI de mayor de edad
 
+> Estado actual de orientación: [apellido como condición adicional](apellido-condicional-estado-civil-pr4.md). Divorcio y viudez no exigen una decisión previa de apellido para presentar requisitos principales; contradicciones y condiciones materiales conservan sus aclaraciones. Corpus intacto: siete TXT/44 fragmentos, 839 pruebas aprobadas y 6 excluidas.
+
+
 ## Actualización tarifaria — 29 de octubre de 2026
 
 La [no acumulación de renovación con rectificación](no-acumulacion-tasas-pr4.md) queda confirmada operativamente por el usuario, sin fijar importe conjunto exacto. Es regla obligatoria del plan autorizado, distinta de los PDF y no extensible a estado civil o menores. Estado actual: 681 pruebas aprobadas, 6 excluidas; siete TXT y 44 fragmentos, con reconstrucción FAISS obligatoria. Las cifras inferiores reflejan entregas anteriores.

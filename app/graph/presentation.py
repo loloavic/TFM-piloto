@@ -16,6 +16,8 @@ def texto_ciudadano(text):
             'Para documentos emitidos en Perú, respete las condiciones indicadas anteriormente.',
         'Si se emitió en Perú, aplicar las condiciones generales de documentos peruanos.':
             'Si se emitió en Perú, respete las condiciones indicadas anteriormente.',
+        'Aplicar condiciones generales de actas peruanas.':
+            'Para las actas emitidas en Perú, respete las condiciones indicadas en esta respuesta.',
         'La ficha permite cambio de dirección; no detalla documentos adicionales.':
             'Puede solicitar el cambio de dirección. Confirme con el Consulado qué documentación adicional necesita.',
         'La ficha permite cambio de imagen o firma; no detalla otros documentos adicionales.':
@@ -26,8 +28,8 @@ def texto_ciudadano(text):
     return text
 
 
-def requisitos_viudez(general, marriage, death, surname=''):
-    """Conservar las condiciones completas, agrupando los documentos por finalidad."""
+def condiciones_civiles(general):
+    """Conservar completas las condiciones generales y agrupar las fotografías."""
     general = texto_ciudadano(general)
     # El detalle permanece en la respuesta, desplegable en Gradio. No se recorta
     # ninguna característica requerida ni se delega su reescritura al modelo.
@@ -38,13 +40,26 @@ def requisitos_viudez(general, marriage, death, surname=''):
         general = general[:photo.start()] + general[photo.end():]
     else:
         details = ''
-    parts = ['Para actualizar su DNI por viudez, tenga en cuenta:',
-             '- **Defunción:** ' + death.strip(),
-             '- **Matrimonio:** ' + marriage.strip()]
-    if surname:
-        parts.append('- **Recuperación del apellido materno:** ' + texto_ciudadano(surname.strip()))
-    parts.extend(['**Condiciones del trámite**\n\n' + general.strip(), details])
+    return general.strip(), details
+
+
+def apartado_apellido(surname, decision=''):
+    if not surname or decision == 'no':
+        return ''
+    label = 'Recuperación del apellido materno solicitada' if decision == 'si' else 'Recuperación del apellido materno (solo si la necesita)'
+    return '**' + label + '**\n\n' + texto_ciudadano(surname.strip()).replace('indicadas anteriormente', 'indicadas en esta respuesta')
+
+
+def requisitos_civiles(general, principal, surname='', decision='', tramite='divorcio'):
+    general, details = condiciones_civiles(general)
+    parts = ['Para actualizar su DNI por ' + tramite + ':', principal,
+             apartado_apellido(surname, decision), '**Condiciones del trámite**\n\n' + general, details]
     return '\n\n'.join(p for p in parts if p)
+
+
+def requisitos_viudez(general, marriage, death, surname='', decision=''):
+    principal = '- **Defunción:** ' + death.strip() + '\n\n- **Matrimonio:** ' + marriage.strip()
+    return requisitos_civiles(general, principal, surname, decision, 'viudez')
 
 
 def incertidumbre_viudez(state):

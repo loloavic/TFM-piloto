@@ -80,6 +80,8 @@ def test_estado_civil_solo_reglas_aplicables(case, expected, absent, motor):
         assert 'OBSERVACIÓN PENDIENTE' not in r['respuesta'] and not prompts
     elif 'viudez_italia' in rules or 'viudez_otro' in rules:
         assert 'No puedo confirmar' in r['respuesta'] and not prompts
+    elif rules & {'divorcio', 'viudez_peru'}:
+        assert not prompts and 'Documentación principal' in r['respuesta']
     else:
         assert prompts
 
@@ -146,9 +148,10 @@ def test_cambio_transicion_invalida_condiciones_dependientes(motor):
     sid, token = first['session_id'], first['session_token']
     r = service.responder('Me divorcié', sid, token)
     c = snapshot(service,sid)['contexto_canonico']
-    assert 'adulto_apellido' in c['pendientes'] and not r['fuentes']
+    assert not c['pendientes'] and not valor(c,'apellido')
+    assert {f['regla'] for f in r['fuentes']} == {'general','divorcio','apellido'}
     assert not valor(c,'matrimonio')
-    r = service.responder('No', sid, token)
+    r = service.responder('No quiero recuperar el apellido materno', sid, token)
     assert {f['regla'] for f in r['fuentes']} == {'general','divorcio'}
 
 
