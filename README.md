@@ -732,3 +732,5 @@ Windows/Conda](docs/presentacion-ciudadana-divorcio-viudez-pr4.md).
 Actualización de cortesía conversacional del PR #4: **900 pruebas deterministas aprobadas, 6 de integración excluidas**. Saludos e introducciones acotadas no consultan proveedores ni alteran el contexto canónico. Véanse alcance, trazabilidad y validación Windows en [saludos e introducción](docs/saludos-introduccion-pr4.md).
 
 Aclaraciones civiles del PR #4: **925 pruebas deterministas aprobadas, 6 de integración excluidas**. La selección ordinaria de la ficha civil se distingue de la edad declarada; véanse [política, límites y validación Windows](docs/aclaraciones-civiles-ruta-ordinaria-pr4.md).
+
+Contacto en derivaciones del PR #4: **958 pruebas deterministas aprobadas, 6 de integración excluidas**. Las recomendaciones expresas de consulta consular incorporan el canal operativo controlado, conservando su verificación. Véanse [alcance y validación Windows](docs/contacto-derivaciones-pr4.md).

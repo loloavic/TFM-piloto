@@ -6,6 +6,7 @@ from app.core.privacy import minimizar_texto
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, StateGraph
 
+from app.graph.referral import incorporar_contacto
 from app.graph.social import respuesta_social, saludo
 from app.graph.state import DNIState
 from app.graph.presentation import incertidumbre_viudez
@@ -800,6 +801,9 @@ def verificar_respuesta(
         details = ('disposiciones comunes inconsistentes' if controlled == COMMON_CONFLICT else
                    ', '.join(state.get('rechazos_documentales', []) or state.get('reglas_faltantes', [])) or 'fuentes insuficientes o combinación no autorizada')
         verificacion = 'abstencion_documental: ' + details
+
+    # Contacto operativo fijo después del verificador: no reinterpreta su dictamen.
+    respuesta = incorporar_contacto(respuesta)
 
     greeting = saludo(state["pregunta"])
     if greeting:
