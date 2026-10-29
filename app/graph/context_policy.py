@@ -2,7 +2,7 @@
 from copy import deepcopy
 
 from app.graph.state import ContextoCanonico, DatoContextual, EvidenciaTurno
-from app.graph.adult_context import ADULT_FILES, PREGUNTAS, actualizar, validar as validar_adulto
+from app.graph.adult_context import ADULT_FILES, PREGUNTAS, actualizar, ruta_civil_ordinaria, validar as validar_adulto
 
 CAMBIO_AZUL = 'amarillo_a_azul'
 OPERACIONES = {'primera_vez', 'renovacion', 'duplicado', 'rectificacion', CAMBIO_AZUL}
@@ -99,6 +99,8 @@ def tramite_candidato(c: ContextoCanonico) -> str:
     if op == 'duplicado':
         return 'dni_duplicado'
     if op:
+        if ruta_civil_ordinaria(c):
+            return 'dni_adulto_rectificacion'
         group = c['edad']['valor'] if _conocido(c, 'edad') else 'sin_edad'
         return f'dni_{group}_{op}'
     return 'dni_consulta_estado' if c['tema'] == 'seguimiento' and c['ambito'] == 'dni' else 'dni_por_aclarar'
@@ -110,12 +112,12 @@ def ruta_documental(c: dict | None) -> str:
         return ''
     if c['tema'] == 'seguimiento':
         candidate = tramite_candidato(c)
-        if candidate in ADULT_FILES and _conocido(c,'operacion') and _conocido(c,'edad'):
+        if candidate in ADULT_FILES and _conocido(c,'operacion') and (_conocido(c,'edad') or ruta_civil_ordinaria(c)):
             return candidate
         return 'dni_consulta_estado'
     if not _conocido(c, 'operacion') or c['operacion']['valor'] in c['rechazadas']:
         return ''
-    if c['operacion']['valor'] in {'primera_vez', 'renovacion', 'rectificacion'} and not _conocido(c, 'edad'):
+    if c['operacion']['valor'] in {'primera_vez', 'renovacion', 'rectificacion'} and not _conocido(c, 'edad') and not ruta_civil_ordinaria(c):
         return ''
     candidate = tramite_candidato(c)
     return candidate if candidate in DOCUMENTADOS else ''

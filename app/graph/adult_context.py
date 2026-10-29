@@ -73,6 +73,24 @@ def extraer(text):
     return tuple(sorted(facts.items()))
 
 
+def ruta_civil_ordinaria(c):
+    """Selección de ficha, NO evidencia de edad ni autorización de otros trámites.
+
+    Solo el propio DNI, rectificación civil explícita y edad desconocida sin
+    contradicción. Los bloqueos restantes siguen verificándose en la ruta.
+    """
+    return (c.get('ambito') == 'dni'
+            and c['titular']['estado'] == 'confirmado' and c['titular']['valor'] == 'propio'
+            and c['edad']['estado'] == 'desconocido' and not c['edad']['valor']
+            and c['pendientes'].get('edad') != 'contradiccion'
+            and not ({'titular', 'documento', 'contradiccion', 'dni_previo', 'tipo_dni', 'operacion'}
+                     & c['pendientes'].keys())
+            and c['operacion']['estado'] == 'confirmado'
+            and c['operacion']['valor'] == 'rectificacion'
+            and 'rectificacion' not in c['rechazadas']
+            and valor(c, 'modificacion') == 'estado_civil')
+
+
 def actualizar(c, evidence):
     """Escritor subordinado a la transición canónica y su revisión del titular."""
     from app.graph.context_policy import dato
@@ -128,7 +146,10 @@ def actualizar(c, evidence):
     for key, d in conditions.items():
         if d['estado'] == 'conflicto':
             c['pendientes']['adulto_' + key] = 'contradiccion'
-    if c['edad']['estado'] != 'confirmado' or c['edad']['valor'] != 'adulto' or op not in {'renovacion','rectificacion'}:
+    ordinary = ruta_civil_ordinaria(c)
+    if ordinary:
+        c['pendientes'].pop('edad', None)
+    if (not ordinary and (c['edad']['estado'] != 'confirmado' or c['edad']['valor'] != 'adulto')) or op not in {'renovacion','rectificacion'}:
         return
     if op == 'rectificacion' and valor(c, 'modificacion') != 'estado_civil' and valor(c, 'vigencia') in {'vencido', 'hasta_60'} and 'renovacion' in c['rechazadas']:
         c['pendientes']['adulto_derivacion'] = 'contradiccion'
@@ -138,6 +159,8 @@ def actualizar(c, evidence):
     if op == 'renovacion' and valor(c, 'modificacion') == 'estado_civil':
         return
     topic = c['consulta_pendiente'] if c['consulta_pendiente'] and not evidence.pregunta_tema else c['tema']
+    if ordinary and not valor(c, 'transicion'):
+        c['pendientes'].setdefault('adulto_transicion', 'faltante')
     if topic not in {'otra', 'requisitos'}:
         return
     mod = valor(c, 'modificacion')

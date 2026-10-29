@@ -143,6 +143,7 @@ def solicitante(texto: str, *, aclaracion_edad: bool = False) -> tuple[dict, boo
         r'\b(?:rectificar|corregir)\s+(?:mi\s+(?:dni|fecha de nacimiento|lugar de nacimiento|nombre|apellido|direccion|firma)\b|'
         r'mis\s+(?:datos|nombres|apellidos)\b|datos\s+de\s+mi\s+dni\b)', own_rectification)
     own_dni = own_dni or ((own_rectification or own_civil_update) if re.search(r'\bdni\b', texto) else None)
+    own = own or bool(own_civil_update and re.search(r'\bdni\b', texto))
     if child_dni and own_dni and re.search(
         r'\bno\s+(?:quiero|necesito|debo)\s+' + ACCION + r'\s+' + ART + r'$',
         texto[:child_dni.start()],
@@ -429,6 +430,9 @@ def proyectar(c: dict) -> dict:
         'destinatario': c['titular']['valor'] or 'desconocido',
     }
     evidence = ['operacion:' + c['operacion']['valor']] if c['operacion']['turno'] == c['turno'] and c['operacion']['valor'] else []
+    from app.graph.adult_context import ruta_civil_ordinaria
+    if ruta_civil_ordinaria(c):
+        evidence.append('ruta_ordinaria:estado_civil_sin_edad_declarada')
     evidence += ['rechazo_vigente:' + op for op in c['rechazadas']]
     return {'intencion': intent, 'tramite_actual': active, 'operacion_dni': operation,
             'contexto_solicitante': holder, 'tipo_consulta': c['tema'],
