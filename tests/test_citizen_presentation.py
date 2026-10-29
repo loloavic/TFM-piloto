@@ -57,12 +57,12 @@ def test_viudez_conserva_documentos_condiciones_y_enlace(motor):
     text=r['respuesta']
     for fact in ['municipalidad italiana','Prefectura','sustituye','No necesita presentar una certificación consular',
                  'si está registrado en Perú','si está registrado en una oficina consular peruana',
-                 'acta de nacimiento original','12 meses','apostilladas','35x43 mm','sin lentes',
+                 'acta de nacimiento original','12 meses','apostilla del Ministerio de Relaciones Exteriores','35x43 mm','sin lentes',
                  'sin marco','fondo blanco','frente descubierta','cuello visible']:
-        assert fact in text
+        assert fact.casefold() in text.casefold()
     assert '<details>' in text and '</details>' in text
     assert 'https://bookeo.com/cturin?type=223Y6PNNP174468CBDCD&option_TYPE_OF_SERVICE=YJUTCFLT' in text
-    assert text.index('**Defunción:**') < text.index('**Condiciones del trámite**')
+    assert text.index('**1. Documento de defunción') < text.index('**Condiciones del trámite**')
     assert not prompts
     assert r['verificacion'] == 'ok'
 

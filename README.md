@@ -716,3 +716,15 @@ y verifican de forma determinista, sin reformulación LLM posterior.
 **839 pruebas aprobadas, 6 de integración excluidas.** No cambian los siete TXT,
 el índice de 44 fragmentos, tarifas ni vigencia; no requiere reconstruir FAISS.
 Ver [política, evidencia, límites y validación Windows/Conda](docs/apellido-condicional-estado-civil-pr4.md).
+
+### Presentación ciudadana de divorcio y viudez italiana — PR #4
+
+Las respuestas controladas muestran documentos principales, apellido condicional
+y condiciones generales por separado. Las formalidades peruanas aparecen junto
+al acta correspondiente, sin aplicarlas a documentos italianos o copias consulares.
+No se trasladan instrucciones internas al ciudadano ni se reformula mediante LLM.
+
+**867 pruebas aprobadas, 6 de integración excluidas.** No cambian clasificación,
+contexto, fuentes, tarifas ni corpus; no requiere reconstruir FAISS (siete TXT,
+44 fragmentos). Ver [fidelidad, respuestas completas antes/después y validación
+Windows/Conda](docs/presentacion-ciudadana-divorcio-viudez-pr4.md).

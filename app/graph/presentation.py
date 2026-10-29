@@ -126,3 +126,90 @@ def renovacion_adulta(general, c, pregunta):
     if topic == 'cita' or 'cita' in requested:
         parts.append('**Cita previa:**\n' + url[0].rstrip('.'))
     return '\n\n'.join(parts)
+
+
+def _datos_civiles_ciudadanos(general):
+    """Extraer hechos de la regla autorizada; formato desconocido no se completa."""
+    formal = re.search(
+        r'Actas de sustento emitidas en Perú: originales, apostilladas por el Ministerio de Relaciones Exteriores '
+        r'y con emisión no mayor a (\d+) meses; en buen estado\.', general)
+    fee = re.search(r'\bTasa (€\d+(?:[.,]\d+)?)\.', general)
+    photo = re.search(r'(Fotografía obligatoria:.*?)(?= La ficha PDF específica no indica cantidad de fotos;)', general)
+    url = re.search(r'Cita: (https://bookeo\.com/[^\s]+)', general)
+    if not all((formal, fee, photo, url)) or 'No se confirma combinación con renovación ni suma de tasas.' not in general:
+        return None
+    return {'formalidades': ('con apostilla del Ministerio de Relaciones Exteriores, '
+                             'emisión no mayor a ' + formal[1] + ' meses y en buen estado'),
+            'tasa': fee[1], 'foto': photo[1], 'cita': url[1].rstrip('.')}
+
+
+def _apellido_ciudadano(surname, decision, data):
+    if decision == 'no':
+        return ''
+    match = re.fullmatch(
+        r'Si desea recuperar el apellido materno tras divorcio o viudez: (acta de nacimiento original)\. '
+        r'Si se emitió en Perú, aplicar las condiciones generales de documentos peruanos\.', surname.strip())
+    if not match:
+        return None
+    title = 'Recuperación del apellido materno solicitada' if decision == 'si' else 'Recuperación del apellido materno (solo si la necesita)'
+    condition = 'Para recuperar su apellido materno' if decision == 'si' else 'Si desea recuperar su apellido materno'
+    return ('**' + title + '**\n\n- ' + condition + ', presente además el ' + match[1] + '.\n'
+            '- Si se emitió en Perú: ' + data['formalidades'] + '.')
+
+
+def _condiciones_ciudadanas(data):
+    return ('**Condiciones del trámite**\n\n'
+            '- **Tasa individual:** ' + data['tasa'] + '.\n'
+            '- **Fotografías obligatorias:** confirme con el Consulado la cantidad que debe llevar.\n\n'
+            '<details><summary>Características obligatorias de las fotografías</summary>\n\n'
+            + data['foto'] + '\n\n</details>\n\n'
+            '- **Cita previa:**\n' + data['cita'] + '\n\n'
+            'Si también necesita renovar, confirme con el Consulado si puede realizar ambos trámites juntos '
+            'y qué pago corresponde.')
+
+
+def divorcio_ciudadano(general, principal, surname='', decision=''):
+    data = _datos_civiles_ciudadanos(general)
+    marriage = re.fullmatch(
+        r'De casado a divorciado: (acta de matrimonio peruana original con anotación de disolución del divorcio)\. '
+        r'Aplicar condiciones generales de documentos peruanos\.', principal.strip())
+    if not data or not marriage:
+        return None
+    optional = _apellido_ciudadano(surname, decision, data)
+    if optional is None:
+        return None
+    parts = ['**Actualización del estado civil por divorcio**',
+             '**Documentación principal:**\n\n- Presente el ' + marriage[1] + '.\n'
+             '- Para esta acta peruana: ' + data['formalidades'] + '.',
+             optional, _condiciones_ciudadanas(data)]
+    return '\n\n'.join(part for part in parts if part)
+
+
+def viudez_italiana_ciudadana(general, marriage, death, surname='', decision='', pregunta=''):
+    data = _datos_civiles_ciudadanos(general)
+    italian = re.search(
+        r'^Únicamente para cónyuge italiano fallecido en Italia: presentar un '
+        r'(acta de defunción plurilingüe emitida por la municipalidad italiana y legalizada por la Prefectura competente)\.', death)
+    peru = re.search(r'si está registrado en Perú, (acta de matrimonio peruana original) con las condiciones generales de documentos peruanos;', marriage)
+    consular = re.search(r'si está registrado en una oficina consular peruana, (copia certificada emitida por dicha oficina)\.', marriage)
+    if (not all((data, italian, peru, consular))
+            or 'Este documento sustituye a la certificación consular de defunción.' not in death
+            or 'No exigir adicionalmente otra acta de defunción por inferencia.' not in death):
+        return None
+    optional = _apellido_ciudadano(surname, decision, data)
+    if optional is None:
+        return None
+    funeral = ('**1. Documento de defunción (cónyuge italiano fallecido en Italia)**\n\n'
+               '- Para acreditar la defunción, presente únicamente el ' + italian[1] + '.\n'
+               '- No necesita presentar una certificación consular de defunción adicional: este acta la sustituye.')
+    if re.search(r'(?:por qu[eé]|explique|motivo)[^?!.]{0,160}'
+                 r'(?:certificaci[oó]n|registro|registrar|defunci[oó]n)', pregunta, re.I):
+        reason = re.search(r'su fallecimiento no se registra como defunción de un ciudadano peruano en el registro consular peruano\.', death)
+        if reason:
+            funeral += '\n\nEn este caso, ' + reason[0]
+    parts = ['**Actualización del estado civil por viudez**', funeral,
+             '**2. Documento de matrimonio (según dónde esté registrado)**\n\n'
+             '- Si está registrado en Perú: presente el ' + peru[1] + ', ' + data['formalidades'] + '.\n'
+             '- Si está registrado en una oficina consular peruana: presente la ' + consular[1] + '.',
+             optional, _condiciones_ciudadanas(data)]
+    return '\n\n'.join(part for part in parts if part)

@@ -40,13 +40,13 @@ def test_condicion_opcional_separada_y_negacion_excluye_regla(query,main,choice,
         assert 'Si se emitió en Perú' in optional
     if main=='divorcio':
         for fact in ['acta de matrimonio peruana original','anotación de disolución del divorcio',
-                     'apostilladas','12 meses']:
-            assert fact in r['respuesta']
+                     'apostilla','12 meses']:
+            assert fact.casefold() in r['respuesta'].casefold()
     if main=='italiano':
         for fact in ['plurilingüe','municipalidad italiana','Prefectura','sustituye',
                      'No necesita presentar una certificación consular',
                      'si está registrado en Perú','si está registrado en una oficina consular peruana']:
-            assert fact in r['respuesta']
+            assert fact.casefold() in r['respuesta'].casefold()
         assert 'otras nacionalidades, OBSERVACIÓN' not in r['respuesta']
     assert not prompts
 

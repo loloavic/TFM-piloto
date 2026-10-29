@@ -67,8 +67,8 @@ def test_guardia_reemplaza_borrador_no_autorizado(motor):
 def test_matrimonio_independiente_y_condicional(marriage, motor):
     service, _, _ = motor
     r = service.responder(PENDING + ' Mi esposo era italiano. ' + marriage)
-    assert 'si está registrado en Perú' in r['respuesta']
-    assert 'si está registrado en una oficina consular peruana' in r['respuesta']
+    assert 'si está registrado en perú' in r['respuesta'].casefold()
+    assert 'si está registrado en una oficina consular peruana' in r['respuesta'].casefold()
     assert 'No necesita presentar una certificación consular de defunción' in r['respuesta']
 
 

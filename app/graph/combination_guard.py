@@ -3,7 +3,7 @@ import re
 
 from app.graph.adult_context import ADULT_FILES, REGLAS_COMUNES, plan, valor
 from app.graph.context_policy import ruta_documental
-from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez, renovacion_adulta, requisitos_civiles
+from app.graph.presentation import texto_ciudadano, requisitos_viudez, incertidumbre_viudez, renovacion_adulta, requisitos_civiles, divorcio_ciudadano, viudez_italiana_ciudadana
 
 COMMON_CONFLICT = 'No puedo confirmar esta información porque hay versiones incompatibles. Consulte con el Consulado antes de acudir.'
 
@@ -82,8 +82,9 @@ def _respuesta_controlada(state):
         marriage, separator, _ = rules[(file, 'viudez_italia')].partition(' Para cónyuge italiano aplicar')
         if not separator:
             return MISSING  # Versión incompatible: no emitir una reserva antigua.
-        return requisitos_viudez(rules[(file, 'general')], marriage, rules[(file, 'italiano')],
-                                 rules.get((file, 'apellido'), ''), valor(c, 'apellido'))
+        response = viudez_italiana_ciudadana(rules[(file, 'general')], marriage, rules[(file, 'italiano')],
+                                               rules.get((file, 'apellido'), ''), valor(c, 'apellido'), state.get('pregunta', ''))
+        return response if response is not None else MISSING
 
     if uncertain_widow:
         file = 'dni_mayor_estado_civil.txt'
@@ -100,6 +101,10 @@ def _respuesta_controlada(state):
         main = rules.get((file, rule))
         if not main:
             return MISSING
+        if transition == 'divorcio':
+            response = divorcio_ciudadano(rules[(file, 'general')], main,
+                                          rules.get((file, 'apellido'), ''), valor(c, 'apellido'))
+            return response if response is not None else MISSING
         return requisitos_civiles(rules[(file, 'general')],
                                   '**Documentación principal:**\n\n' + texto_ciudadano(main),
                                   rules.get((file, 'apellido'), ''), valor(c, 'apellido'), transition)
